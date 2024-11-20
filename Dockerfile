@@ -25,7 +25,7 @@ COPY ./app .
 
 RUN npm install -g pnpm && \
     pnpm install && \
-    pnpm run build && \
+    pnpm run fast-build && \
     rm -rf node_modules src
 
 

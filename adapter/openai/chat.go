@@ -44,7 +44,6 @@ func (c *ChatInstance) GetChatBody(props *adaptercommon.ChatProps, stream bool) 
 	}
 
 	messages := formatMessages(props)
-
 	return ChatRequest{
 		Model:            props.Model,
 		Messages:         messages,
@@ -56,6 +55,8 @@ func (c *ChatInstance) GetChatBody(props *adaptercommon.ChatProps, stream bool) 
 		TopP:             props.TopP,
 		Tools:            props.Tools,
 		ToolChoice:       props.ToolChoice,
+		User:             props.User,
+		Userip:           props.Ip,
 	}
 }
 

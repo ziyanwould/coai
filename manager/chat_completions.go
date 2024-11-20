@@ -93,7 +93,15 @@ func ChatRelayAPI(c *gin.Context) {
 	}
 }
 
-func getChatProps(form RelayForm, messages []globals.Message, buffer *utils.Buffer) *adaptercommon.ChatProps {
+func getChatProps(form RelayForm, messages []globals.Message, buffer *utils.Buffer, user *auth.User, c *gin.Context) *adaptercommon.ChatProps {
+	// Access user.Username correctly if needed. Add a nil check to be safe:
+	var username string
+	if user != nil { // Nil check!
+		username = user.Username
+	} else {
+		username = "401" // Use timestamp if username is nil
+	}
+
 	return adaptercommon.CreateChatProps(&adaptercommon.ChatProps{
 		Model:             form.Model,
 		Message:           messages,
@@ -106,6 +114,8 @@ func getChatProps(form RelayForm, messages []globals.Message, buffer *utils.Buff
 		TopK:              form.TopK,
 		Tools:             form.Tools,
 		ToolChoice:        form.ToolChoice,
+		User:              username, // Use username here if needed
+		Ip:                getClientIP(c),
 	}, buffer)
 }
 
@@ -114,7 +124,7 @@ func sendTranshipmentResponse(c *gin.Context, form RelayForm, messages []globals
 	cache := utils.GetCacheFromContext(c)
 
 	buffer := utils.NewBuffer(form.Model, messages, channel.ChargeInstance.GetCharge(form.Model))
-	hit, err := channel.NewChatRequestWithCache(cache, buffer, auth.GetGroup(db, user), getChatProps(form, messages, buffer), func(data *globals.Chunk) error {
+	hit, err := channel.NewChatRequestWithCache(cache, buffer, auth.GetGroup(db, user), getChatProps(form, messages, buffer, user, c), func(data *globals.Chunk) error {
 		buffer.WriteChunk(data)
 		return nil
 	})
@@ -223,7 +233,7 @@ func sendStreamTranshipmentResponse(c *gin.Context, form RelayForm, messages []g
 	go func() {
 		buffer := utils.NewBuffer(form.Model, messages, charge)
 		hit, err := channel.NewChatRequestWithCache(
-			cache, buffer, group, getChatProps(form, messages, buffer),
+			cache, buffer, group, getChatProps(form, messages, buffer, user, c),
 			func(data *globals.Chunk) error {
 				buffer.WriteChunk(data)
 
