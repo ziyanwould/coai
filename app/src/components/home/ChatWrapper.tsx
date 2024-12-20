@@ -108,7 +108,14 @@ function ChatWrapper() {
 
     const message: string = formatMessage(files, data);
     if (message.length > 0 && data.trim().length > 0) {
-      if (await sendAction(message)) {
+      if(!auth && message.length > 4096){
+        toast({
+          title: t("温馨提示"),
+          description: t("未登录用户，消息长度已超过默认限制值。\n如有更高的上下文需求，请登录后使用。"),
+        });
+        return false;
+      }
+      else if (await sendAction(message)) {
         forgetMemory("history");
         clearFile();
         return true;
