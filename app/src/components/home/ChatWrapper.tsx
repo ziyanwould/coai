@@ -35,6 +35,7 @@ import ScrollAction from "@/components/home/assemblies/ScrollAction.tsx";
 import { cn } from "@/components/ui/lib/utils.ts";
 import { goAuth } from "@/utils/app.ts";
 import { getModelFromId } from "@/conf/model.ts";
+import { Message } from "@/api/types.tsx";
 
 type InterfaceProps = {
   scrollable: boolean;
@@ -74,6 +75,8 @@ function ChatWrapper() {
   const target = useRef(null);
   const align = useSelector(alignSelector);
 
+  const messages = useMessages(); // 将 useMessages 移到这里
+
   const working = useWorking();
   const supportModels = useSelector(selectSupportModels);
 
@@ -90,6 +93,7 @@ function ChatWrapper() {
 
   async function processSend(
     data: string,
+    messages: Message[], // 添加 messages 参数
     passAuth?: boolean,
   ): Promise<boolean> {
     if (requireAuth && !auth && !passAuth) {
@@ -106,12 +110,22 @@ function ChatWrapper() {
 
     if (working) return false;
 
+    let totalLength = 0;
+    for (const message of messages) {
+      if (message.content) {
+        if (typeof message.content === 'string') {
+          totalLength += message.content.length;
+        } 
+      }
+    }
+    
     const message: string = formatMessage(files, data);
+    console.log('当前上下文总长度（Token长度）：',message.length + totalLength);
     if (message.length > 0 && data.trim().length > 0) {
-      if(!auth && message.length > 4096){
+      if(!auth && (message.length + totalLength) > 4096){
         toast({
           title: t("温馨提示"),
-          description: t("未登录用户，消息长度已超过默认限制值。\n如有更高的上下文需求，请登录后使用。"),
+          description: t("未登录用户，消息长度已超过默认限制值。\n如有更高的上下文需求，请登录后使用。\n\n注：图片一般占用较长的Token长度，请尽量登录后使用。防止消息长度超出默认限制，导致消息发送失败或者一直等待未响应。"),
         });
         return false;
       }
@@ -126,7 +140,7 @@ function ChatWrapper() {
 
   async function handleSend() {
     // because of the function wrapper, we need to update the selector state using props.
-    if (await processSend(input)) {
+    if (await processSend(input, messages)) {
       setInput("");
     }
   }
@@ -145,7 +159,7 @@ function ChatWrapper() {
   useEffect(() => {
     if (!init) return;
     const query = getQueryParam("q").trim();
-    if (query.length > 0) processSend(query).then();
+    if (query.length > 0) processSend(query,messages).then();
     clearHistoryState();
   }, [init]);
 
