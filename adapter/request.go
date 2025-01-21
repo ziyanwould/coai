@@ -1,7 +1,7 @@
 package adapter
 
 import (
-	"chat/adapter/common"
+	adaptercommon "chat/adapter/common"
 	"chat/globals"
 	"chat/utils"
 	"fmt"
@@ -50,7 +50,7 @@ func NewChatRequest(conf globals.ChannelConfig, props *adaptercommon.ChatProps, 
 }
 
 func ClearMessages(model string, messages []globals.Message) []globals.Message {
-	if globals.IsVisionModel(model) {
+	if globals.IsVisionModel(model) || utils.IsCustomVisionModel(model) {
 		return messages
 	}
 

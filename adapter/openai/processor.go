@@ -10,7 +10,8 @@ import (
 )
 
 func formatMessages(props *adaptercommon.ChatProps) interface{} {
-	if globals.IsVisionModel(props.Model) {
+	if globals.IsVisionModel(props.Model) || utils.IsCustomVisionModel(props.Model) {
+		fmt.Printf("确认是视觉模型: %s\n", props.Model) // 添加打印模型名称的代码
 		return utils.Each[globals.Message, Message](props.Message, func(message globals.Message) Message {
 			if message.Role == globals.User {
 				content, urls := utils.ExtractImages(message.Content, true)
@@ -18,9 +19,9 @@ func formatMessages(props *adaptercommon.ChatProps) interface{} {
 					obj, err := utils.NewImage(url)
 					props.Buffer.AddImage(obj)
 					if err != nil {
-						globals.Info(fmt.Sprintf("cannot process image: %s (source: %s)", err.Error(), utils.Extract(url, 24, "...")))
+						globals.Info(fmt.Sprintf("无法处理图像: %s (来源: %s)", err.Error(), utils.Extract(url, 24, "...")))
 					}
-
+					fmt.Printf("正在处理图片URL: %s\n", url) // 打印正在处理的图片 URL
 					return &MessageContent{
 						Type: "image_url",
 						ImageUrl: &ImageUrl{
@@ -119,8 +120,8 @@ func (c *ChatInstance) ProcessLine(data string, isCompletionType bool) (*globals
 			}, nil
 		}
 
-		globals.Warn(fmt.Sprintf("openai error: cannot parse completion response: %s", data))
-		return &globals.Chunk{Content: ""}, errors.New("parser error: cannot parse completion response")
+		globals.Warn(fmt.Sprintf("openai 错误：无法解析完成响应: %s", data))
+		return &globals.Chunk{Content: ""}, errors.New("解析错误：无法解析完成响应")
 	}
 
 	if form := processChatResponse(data); form != nil {
@@ -128,9 +129,9 @@ func (c *ChatInstance) ProcessLine(data string, isCompletionType bool) (*globals
 	}
 
 	if form := processChatErrorResponse(data); form != nil {
-		return &globals.Chunk{Content: ""}, errors.New(fmt.Sprintf("openai error: %s (type: %s)", form.Error.Message, form.Error.Type))
+		return &globals.Chunk{Content: ""}, errors.New(fmt.Sprintf("openai 错误: %s (类型: %s)", form.Error.Message, form.Error.Type))
 	}
 
-	globals.Warn(fmt.Sprintf("openai error: cannot parse chat completion response: %s", data))
-	return &globals.Chunk{Content: ""}, errors.New("parser error: cannot parse chat completion response")
+	globals.Warn(fmt.Sprintf("openai 错误：无法解析聊天补全响应: %s", data))
+	return &globals.Chunk{Content: ""}, errors.New("解析错误：无法解析聊天补全响应")
 }
