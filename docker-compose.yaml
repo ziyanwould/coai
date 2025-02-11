@@ -10,8 +10,10 @@ services:
       MYSQL_USER: chatnio
       MYSQL_PASSWORD: chatnio123456!
       TZ: Asia/Shanghai
-    expose:
-      - "3306"
+    ports:
+      - "3306:3306"
+    # expose:
+    #   - "3306"
     volumes:
         - ./db:/var/lib/mysql
     networks:
@@ -21,6 +23,8 @@ services:
     image: redis:latest
     container_name: redis
     restart: always
+    ports:
+      - "6379:6379"
     expose:
       - "6379"
     volumes:
@@ -28,38 +32,38 @@ services:
     networks:
       - chatnio-network
 
-  chatnio:
-      image: programzmh/chatnio
-      container_name: chatnio
-      restart: always
-      ports:
-          - "8000:8094"
-      depends_on:
-          - mysql
-          - redis
-      links:
-          - mysql
-          - redis
-      ulimits:
-        nofile:
-          soft: 65535
-          hard: 65535
-      environment:
-          MYSQL_HOST: mysql
-          MYSQL_USER: chatnio
-          MYSQL_PASSWORD: chatnio123456!
-          MYSQL_DB: chatnio
-          REDIS_HOST: redis
-          REDIS_PORT: 6379
-          REDIS_PASSWORD: ""
-          REDIS_DB: 0
-          SERVE_STATIC: "true"
-      volumes:
-        - ./config:/config
-        - ./logs:/logs
-        - ./storage:/storage
-      networks:
-        - chatnio-network
+  # chatnio:
+  #     image: programzmh/chatnio
+  #     container_name: chatnio
+  #     restart: always
+  #     ports:
+  #         - "8000:8094"
+  #     depends_on:
+  #         - mysql
+  #         - redis
+  #     links:
+  #         - mysql
+  #         - redis
+  #     ulimits:
+  #       nofile:
+  #         soft: 65535
+  #         hard: 65535
+  #     environment:
+  #         MYSQL_HOST: mysql
+  #         MYSQL_USER: chatnio
+  #         MYSQL_PASSWORD: chatnio123456!
+  #         MYSQL_DB: chatnio
+  #         REDIS_HOST: redis
+  #         REDIS_PORT: 6379
+  #         REDIS_PASSWORD: ""
+  #         REDIS_DB: 0
+  #         SERVE_STATIC: "true"
+  #     volumes:
+  #       - ./config:/config
+  #       - ./logs:/logs
+  #       - ./storage:/storage
+  #     networks:
+  #       - chatnio-network
 
 networks:
   chatnio-network:
