@@ -25,8 +25,8 @@ services:
     restart: always
     ports:
       - "6379:6379"
-    expose:
-      - "6379"
+    # expose:
+    #   - "6379"
     volumes:
       - ./redis:/data
     networks:
@@ -37,7 +37,7 @@ services:
   #     container_name: chatnio
   #     restart: always
   #     ports:
-  #         - "8000:8094"
+  #         - "8001:8094"
   #     depends_on:
   #         - mysql
   #         - redis
@@ -57,7 +57,7 @@ services:
   #         REDIS_PORT: 6379
   #         REDIS_PASSWORD: ""
   #         REDIS_DB: 0
-  #         SERVE_STATIC: "true"
+  #         SERVE_STATIC: "false"
   #     volumes:
   #       - ./config:/config
   #       - ./logs:/logs

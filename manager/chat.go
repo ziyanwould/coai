@@ -10,6 +10,7 @@ import (
 	"chat/globals"
 	"chat/manager/conversation"
 	"chat/utils"
+	"strconv"
 	"time"
 
 	"database/sql"
@@ -80,6 +81,7 @@ func createStopSignal(conn *Connection) chan bool {
 func createChatTask(
 	conn *Connection, user *auth.User, buffer *utils.Buffer, db *sql.DB, cache *redis.Client,
 	model string, instance *conversation.Conversation, segment []globals.Message, plan bool,
+	ip string,
 ) (hit bool, err error) {
 	chunkChan := make(chan partialChunk, 24) // the channel to send the chunk data
 	interruptSignal := make(chan error, 1)   // the signal to interrupt the chat task routine
@@ -100,6 +102,12 @@ func createChatTask(
 				globals.Warn(fmt.Sprintf("caught panic from chat request: %s\n%s", r, stack))
 			}
 		}()
+		var username string
+		if user != nil { // Check if user and user.Username are not nil
+			username = user.Username
+		} else {
+			username = strconv.FormatInt(time.Now().Unix(), 10) // Use timestamp if username is nil
+		}
 
 		hit, err := channel.NewChatRequestWithCache(
 			cache, buffer,
@@ -114,6 +122,8 @@ func createChatTask(
 				PresencePenalty:   instance.GetPresencePenalty(),
 				FrequencyPenalty:  instance.GetFrequencyPenalty(),
 				RepetitionPenalty: instance.GetRepetitionPenalty(),
+				User:              username,
+				Ip:                ip,
 			}, buffer),
 
 			// the function to handle the chunk data
@@ -186,7 +196,7 @@ func createChatTask(
 	}
 }
 
-func ChatHandler(conn *Connection, user *auth.User, instance *conversation.Conversation, restart bool) string {
+func ChatHandler(conn *Connection, user *auth.User, instance *conversation.Conversation, restart bool, ip string) string {
 	defer func() {
 		if err := recover(); err != nil {
 			stack := debug.Stack()
@@ -218,7 +228,7 @@ func ChatHandler(conn *Connection, user *auth.User, instance *conversation.Conve
 	}
 
 	buffer := utils.NewBuffer(model, segment, channel.ChargeInstance.GetCharge(model))
-	hit, err := createChatTask(conn, user, buffer, db, cache, model, instance, segment, plan)
+	hit, err := createChatTask(conn, user, buffer, db, cache, model, instance, segment, plan, ip)
 
 	admin.AnalyseRequest(model, buffer, err)
 	if adapter.IsAvailableError(err) {
