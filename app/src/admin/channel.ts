@@ -66,6 +66,7 @@ export const ChannelTypes: Record<string, string> = {
   groq: "Groq Cloud",
   bing: "New Bing",
   slack: "Slack Claude",
+  deepseek: "深度求索 DeepSeek",
 };
 
 export const ShortChannelTypes: Record<string, string> = {
@@ -85,6 +86,7 @@ export const ShortChannelTypes: Record<string, string> = {
   groq: "Groq",
   bing: "Bing",
   slack: "Slack",
+  deepseek: "深度求索",
 };
 
 export const ChannelInfos: Record<string, ChannelInfo> = {
