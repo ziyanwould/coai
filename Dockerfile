@@ -2,14 +2,16 @@
 # License: Apache-2.0
 # Description: Dockerfile for chatnio
 
-FROM golang:1.20-alpine AS backend
+FROM --platform=$BUILDPLATFORM golang:1.20-alpine AS backend
 
 WORKDIR /backend
 COPY . .
 
 # Set go proxy to https://goproxy.cn (open for vps in China Mainland)
 # RUN go env -w GOPROXY=https://goproxy.cn,direct
-ENV GOOS=linux GO111MODULE=on CGO_ENABLED=1
+ARG TARGETARCH
+ARG TARGETOS
+ENV GOOS=$TARGETOS GOARCH=$TARGETARCH GO111MODULE=on CGO_ENABLED=1
 
 # Install dependencies for cgo
 RUN apk add --no-cache gcc musl-dev
