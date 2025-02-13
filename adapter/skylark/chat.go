@@ -6,9 +6,10 @@ import (
 	"chat/utils"
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/volcengine/volcengine-go-sdk/service/arkruntime/model"
 	"github.com/volcengine/volcengine-go-sdk/volcengine"
-	"io"
 )
 
 const defaultMaxTokens int = 4096
@@ -66,7 +67,7 @@ func (c *ChatInstance) CreateRequest(props *adaptercommon.ChatProps) *model.Chat
 		Messages:    getMessages(props.Message),
 		Temperature: utils.GetPtrVal(props.Temperature, 0.),
 		TopP:        utils.GetPtrVal(props.TopP, 0.),
-		// TopK无了
+		// skylark v3 not support TopK
 		PresencePenalty:   utils.GetPtrVal(props.PresencePenalty, 0.),
 		FrequencyPenalty:  utils.GetPtrVal(props.FrequencyPenalty, 0.),
 		RepetitionPenalty: utils.GetPtrVal(props.RepetitionPenalty, 0.),
