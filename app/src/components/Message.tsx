@@ -234,7 +234,7 @@ function MessageContent({
   const [open, setOpen] = useState(false);
   const [editedMessage, setEditedMessage] = useState<string | undefined>("");
 
-  // 解析思考内容
+  // parse think content
   const parseThinkContent = (content: string) => {
     if (message.role !== "assistant") return null;
     
