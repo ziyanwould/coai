@@ -108,8 +108,18 @@ func getChoice(choice model.ChatCompletionStreamResponse) *globals.Chunk {
 
 func (c *ChatInstance) CreateStreamChatRequest(props *adaptercommon.ChatProps, callback globals.Hook) error {
 	req := c.CreateRequest(props)
+	c.isFirstReasoning = true
+	c.isReasonOver = false
+
+	if globals.DebugMode {
+		globals.Debug(fmt.Sprintf("[skylark] request: %v", utils.Marshal(req)))
+	}
+
 	stream, err := c.Instance.CreateChatCompletionStream(context.Background(), req)
 	if err != nil {
+		if globals.DebugMode {
+			globals.Debug(fmt.Sprintf("[skylark] stream error: %v", err))
+		}
 		return err
 	}
 	defer stream.Close()
@@ -120,9 +130,41 @@ func (c *ChatInstance) CreateStreamChatRequest(props *adaptercommon.ChatProps, c
 			return nil
 		}
 		if err2 != nil {
+			if globals.DebugMode {
+				globals.Debug(fmt.Sprintf("[skylark] receive error: %v", err2))
+			}
 			return err2
 		}
-		if err = callback(getChoice(recv)); err != nil {
+
+		if globals.DebugMode {
+			globals.Debug(fmt.Sprintf("[skylark] response: %v", utils.Marshal(recv)))
+		}
+
+		choice := getChoice(recv)
+		if len(recv.Choices) > 0 {
+			delta := recv.Choices[0].Delta
+
+			// Handle reasoning content
+			if c.isFirstReasoning == false && !c.isReasonOver && delta.ReasoningContent == nil {
+				c.isReasonOver = true
+				if delta.Content != "" {
+					choice.Content = fmt.Sprintf("\n</think>\n\n%s", delta.Content)
+				} else {
+					choice.Content = "\n</think>\n\n"
+				}
+			}
+
+			if delta.ReasoningContent != nil {
+				if c.isFirstReasoning {
+					c.isFirstReasoning = false
+					choice.Content = fmt.Sprintf("<think>\n%s", *delta.ReasoningContent)
+				} else {
+					choice.Content = *delta.ReasoningContent
+				}
+			}
+		}
+
+		if err = callback(choice); err != nil {
 			return err
 		}
 	}
