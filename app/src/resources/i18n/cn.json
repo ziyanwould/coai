@@ -468,7 +468,7 @@
     "expired-at": "订阅到期时间",
     "enterprise": "企业版",
     "action": "操作",
-    "search-username": "搜索用户名",
+    "search-username": "搜索用户名/邮箱",
     "password-action": "修改密码",
     "password-action-desc": "请输入用户的新密码",
     "set-admin-action": "设为管理员",

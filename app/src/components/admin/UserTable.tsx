@@ -58,6 +58,8 @@ import { useSelector } from "react-redux";
 import { selectUsername } from "@/store/auth.ts";
 import { PaginationAction } from "@/components/ui/pagination.tsx";
 import Tips from "@/components/Tips.tsx";
+import { Switch } from "@/components/ui/switch.tsx"; // 引入 Switch 组件
+
 type OperationMenuProps = {
   user: UserData;
   onRefresh?: () => void;
@@ -110,6 +112,7 @@ function OperationMenu({ user, onRefresh }: OperationMenuProps) {
 
   return (
     <>
+      {/* ... PopupDialog 组件保持不变 ... */}
       <PopupDialog
         destructive={true}
         type={popupTypes.Text}
@@ -357,11 +360,14 @@ function UserTable() {
   });
   const [page, setPage] = useState<number>(0);
   const [search, setSearch] = useState<string>("");
+  const [isSubscribedFilter, setIsSubscribedFilter] = useState<boolean | null>(null); // 新增订阅状态筛选
+  const [isBannedFilter, setIsBannedFilter] = useState<boolean | null>(null); // 新增封禁状态筛选
   const [loading, setLoading] = useState<boolean>(false);
 
   async function update() {
     setLoading(true);
-    const resp = await getUserList(page, search);
+    // 修改 getUserList 的调用，传递 emailSearch 和 isSubscribedFilter 和 isBannedFilter
+    const resp = await getUserList(page, search, isSubscribedFilter, isBannedFilter);
     setLoading(false);
     if (resp.status) setData(resp as UserResponse);
     else
@@ -370,14 +376,14 @@ function UserTable() {
         description: resp.message,
       });
   }
-  useEffectAsync(update, [page]);
+  useEffectAsync(update, [page, search, isSubscribedFilter, isBannedFilter]); // 监听 search 和 isSubscribedFilter 和 isBannedFilter 的变化
 
   return (
     <div className={`user-table`}>
-      <div className={`flex flex-row mb-6`}>
+      <div className={`flex flex-row mb-6 items-center`}> {/* 使用 flex-row 和 items-center 居中对齐 */}
         <Input
           className={`search`}
-          placeholder={t("admin.search-username")}
+          placeholder={t("admin.search-username")} // 修改 placeholder 提示可以搜索用户名和邮箱
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={async (e) => {
@@ -387,6 +393,28 @@ function UserTable() {
         <Button size={`icon`} className={`flex-shrink-0 ml-2`} onClick={update}>
           <Search className={`h-4 w-4`} />
         </Button>
+        <div className={`ml-4 flex items-center`}> {/*  添加容器包裹 Switch 和 label */}
+          <Switch
+            id="is-subscribed-filter"
+            checked={isSubscribedFilter === true} //  当 isSubscribedFilter 为 true 时，Switch 选中
+            onCheckedChange={(state) => {
+              setIsSubscribedFilter(state === true ? true : state === false ? false : null); //  处理 null 情况，三元表达式更清晰
+              setPage(0); //  切换筛选条件后，重置页码到第一页
+            }}
+          />
+          <label htmlFor="is-subscribed-filter" className="ml-2 text-sm text-gray-500 dark:text-gray-400">{t("admin.is-subscribed")}</label> {/* 添加 label，并使用 htmlFor 关联 Switch */}
+        </div>
+        <div className={`ml-4 flex items-center`}> {/*  添加容器包裹 Switch 和 label */}
+          <Switch
+            id="is-banned-filter"
+            checked={isBannedFilter === true}
+            onCheckedChange={(state) => {
+              setIsBannedFilter(state === true ? true : state === false ? false : null);
+              setPage(0);
+            }}
+          />
+          <label htmlFor="is-banned-filter" className="ml-2 text-sm text-gray-500 dark:text-gray-400">{t("admin.is-banned")}</label> {/* 添加 label */}
+        </div>
       </div>
       {(data.data && data.data.length > 0) || page > 0 ? (
         <>
