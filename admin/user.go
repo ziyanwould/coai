@@ -27,24 +27,52 @@ func (a *AuthLike) HitID() int64 {
 	return a.ID
 }
 
-func getUsersForm(db *sql.DB, page int64, search string) PaginationForm {
-	// if search is empty, then search all users
-
+// Modify getUsersForm to accept isSubscribedFilter and isBannedFilter
+func getUsersForm(db *sql.DB, page int64, search string, isSubscribedFilter *bool, isBannedFilter *bool) PaginationForm {
 	var users []interface{}
 	var total int64
 
-	if err := globals.QueryRowDb(db, `
-		SELECT COUNT(*) FROM auth
-		WHERE username LIKE ?
-	`, "%"+search+"%").Scan(&total); err != nil {
+	whereClause := "WHERE 1=1" // Base WHERE clause, always true initially
+	searchQuery := "%" + search + "%"
+
+	if search != "" {
+		whereClause += " AND (auth.username LIKE ? OR auth.email LIKE ?)"
+	}
+
+	if isSubscribedFilter != nil {
+		if *isSubscribedFilter {
+			whereClause += " AND subscription.expired_at IS NOT NULL AND subscription.expired_at > NOW()"
+		} else {
+			whereClause += " AND (subscription.expired_at IS NULL OR subscription.expired_at <= NOW())"
+		}
+	}
+
+	if isBannedFilter != nil {
+		if *isBannedFilter {
+			whereClause += " AND auth.is_banned = TRUE"
+		} else {
+			whereClause += " AND auth.is_banned = FALSE"
+		}
+	}
+
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM auth LEFT JOIN subscription ON subscription.user_id = auth.id %s", whereClause)
+
+	queryArgsCount := []interface{}{}
+	if search != "" {
+		queryArgsCount = append(queryArgsCount, searchQuery, searchQuery)
+	}
+
+	// queryArgsCount is already prepared for search, no need to add again for isSubscribedFilter and isBannedFilter
+
+	if err := globals.QueryRowDb(db, countQuery, queryArgsCount...).Scan(&total); err != nil {
 		return PaginationForm{
 			Status:  false,
 			Message: err.Error(),
 		}
 	}
 
-	rows, err := globals.QueryDb(db, `
-		SELECT 
+	selectQuery := fmt.Sprintf(`
+		SELECT
 		    auth.id, auth.username, auth.email, auth.is_admin,
 		    quota.quota, quota.used,
 		    subscription.expired_at, subscription.total_month, subscription.enterprise, subscription.level,
@@ -52,9 +80,17 @@ func getUsersForm(db *sql.DB, page int64, search string) PaginationForm {
 		FROM auth
 		LEFT JOIN quota ON quota.user_id = auth.id
 		LEFT JOIN subscription ON subscription.user_id = auth.id
-		WHERE auth.username LIKE ?
+		%s
 		ORDER BY auth.id LIMIT ? OFFSET ?
-	`, "%"+search+"%", pagination, page*pagination)
+	`, whereClause)
+
+	queryArgsSelect := []interface{}{}
+	if search != "" {
+		queryArgsSelect = append(queryArgsSelect, searchQuery, searchQuery)
+	}
+	queryArgsSelect = append(queryArgsSelect, pagination, page*pagination)
+
+	rows, err := globals.QueryDb(db, selectQuery, queryArgsSelect...)
 	if err != nil {
 		return PaginationForm{
 			Status:  false,
@@ -166,7 +202,7 @@ func quotaMigration(db *sql.DB, id int64, quota float32, override bool) error {
 	}
 
 	_, err := globals.ExecDb(db, `
-		INSERT INTO quota (user_id, quota, used) VALUES (?, ?, ?) 
+		INSERT INTO quota (user_id, quota, used) VALUES (?, ?, ?)
 		ON DUPLICATE KEY UPDATE quota = quota + ?
 	`, id, quota, 0., quota)
 

@@ -28,6 +28,9 @@ import {
   RotateCw,
   Save,
   Trash2,
+  ArrowUpToLine,
+  AlignCenterHorizontal,
+  ArrowDownToLine,
 } from "lucide-react";
 import { generateRandomChar, isUrl } from "@/utils/base.ts";
 import Require from "@/components/Require.tsx";
@@ -287,6 +290,28 @@ function reducer(state: MarketForm, action: any): MarketForm {
       state.splice(fromIndex, 1);
       state.splice(toIndex, 0, moved);
       return [...state];
+    // 添加置顶逻辑
+    case "move-to-top": {
+      const { idx } = action.payload;
+      if (idx === 0) return state; // Already at top
+      const itemToMove = state.splice(idx, 1)[0];
+      return [itemToMove, ...state];
+    }
+    // 添加置底逻辑
+    case "move-to-bottom": {
+      const { idx } = action.payload;
+      if (idx === state.length - 1) return state; // Already at bottom
+      const itemToMove = state.splice(idx, 1)[0];
+      return [...state, itemToMove];
+    }
+    // 添加置中逻辑
+    case "move-to-center": {
+      const { idx } = action.payload;
+      const itemToMove = state.splice(idx, 1)[0];
+      const centerIndex = Math.floor(state.length / 2); // 计算中间位置
+      state.splice(centerIndex, 0, itemToMove); //插入中间位置
+      return [...state];
+    }
     default:
       throw new Error();
   }
@@ -525,6 +550,47 @@ function MarketItem({
         }
       >
         <Trash2 className={`h-4 w-4`} />
+      </Button>
+      {/* 置顶按钮 */}
+      <Button
+        size={`icon`}
+        variant={`outline`}
+        onClick={() =>
+          dispatch({
+            type: "move-to-top",
+            payload: { idx: index },
+          })
+        }
+      >
+        <ArrowUpToLine className={`h-4 w-4`} />
+      </Button>
+
+      {/* 置中按钮 */}
+      <Button
+        size={`icon`}
+        variant={`outline`}
+        onClick={() =>
+          dispatch({
+            type: "move-to-center",
+            payload: { idx: index },
+          })
+        }
+      >
+        <AlignCenterHorizontal className={`h-4 w-4`} />
+      </Button>
+
+      {/* 置底按钮 */}
+      <Button
+        size={`icon`}
+        variant={`outline`}
+        onClick={() =>
+          dispatch({
+            type: "move-to-bottom",
+            payload: { idx: index },
+          })
+        }
+      >
+        <ArrowDownToLine className={`h-4 w-4`} />
       </Button>
     </div>
   );
@@ -928,6 +994,7 @@ function Market() {
 
     const from = source.index;
     const to = destination.index;
+    console.log("from", source.index, "to", destination.index);
 
     dispatch({
       type: "move",

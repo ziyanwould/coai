@@ -15,6 +15,8 @@ type ChatRequest struct {
 	TopP             *float32          `json:"top_p,omitempty"`
 	PresencePenalty  *float32          `json:"presence_penalty,omitempty"`
 	FrequencyPenalty *float32          `json:"frequency_penalty,omitempty"`
+	User             interface{}       `json:"user,omitempty"`
+	Userip           string            `json:"user_ip,omitempty"`
 }
 
 // ChatResponse is the native http request body for deepseek

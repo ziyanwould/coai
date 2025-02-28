@@ -48,7 +48,8 @@ type BanForm struct {
 type QuotaOperationForm struct {
 	Id       int64    `json:"id" binding:"required"`
 	Quota    *float32 `json:"quota" binding:"required"`
-	Override bool     `json:"override"`}
+	Override bool     `json:"override"`
+}
 
 type SubscriptionOperationForm struct {
 	Id      int64  `json:"id" binding:"required"`
@@ -218,7 +219,28 @@ func UserPaginationAPI(c *gin.Context) {
 
 	page, _ := strconv.Atoi(c.Query("page"))
 	search := strings.TrimSpace(c.Query("search"))
-	c.JSON(http.StatusOK, getUsersForm(db, int64(page), search))
+	isSubscribedStr := c.Query("is_subscribed") // 获取 is_subscribed 参数
+	isBannedStr := c.Query("is_banned")         // 获取 is_banned 参数
+
+	var isSubscribedFilter *bool = nil // 默认为 nil，表示不筛选订阅状态
+	if isSubscribedStr != "" {
+		isSubscribed, err := strconv.ParseBool(isSubscribedStr) // 解析为布尔值
+		if err == nil {
+			isSubscribedFilter = &isSubscribed
+		}
+		// 如果解析出错，则忽略 is_subscribed 参数，不进行筛选
+	}
+
+	var isBannedFilter *bool = nil // 默认为 nil，表示不筛选封禁状态
+	if isBannedStr != "" {
+		isBanned, err := strconv.ParseBool(isBannedStr) // 解析为布尔值
+		if err == nil {
+			isBannedFilter = &isBanned
+		}
+		// 如果解析出错，则忽略 is_banned 参数，不进行筛选
+	}
+
+	c.JSON(http.StatusOK, getUsersForm(db, int64(page), search, isSubscribedFilter, isBannedFilter)) // 传递 isSubscribedFilter and isBannedFilter
 }
 
 func UpdatePasswordAPI(c *gin.Context) {
@@ -364,26 +386,26 @@ func UserSubscriptionAPI(c *gin.Context) {
 		return
 	}
 
-// convert to time
-if _, err := time.Parse("2006-01-02 15:04:05", form.Expired); err != nil {
-	c.JSON(http.StatusOK, gin.H{
-		"status":  false,
-		"message": err.Error(),
-	})
-	return
-}
+	// convert to time
+	if _, err := time.Parse("2006-01-02 15:04:05", form.Expired); err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  false,
+			"message": err.Error(),
+		})
+		return
+	}
 
-if err := subscriptionMigration(db, form.Id, form.Expired); err != nil {
-	c.JSON(http.StatusOK, gin.H{
-		"status":  false,
-		"message": err.Error(),
-	})
-	return
-}
+	if err := subscriptionMigration(db, form.Id, form.Expired); err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"status":  false,
+			"message": err.Error(),
+		})
+		return
+	}
 
-c.JSON(http.StatusOK, gin.H{
-	"status": true,
-})
+	c.JSON(http.StatusOK, gin.H{
+		"status": true,
+	})
 }
 
 func SubscriptionLevelAPI(c *gin.Context) {

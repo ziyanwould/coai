@@ -1,6 +1,7 @@
 version: '3'
 services:
   mysql:
+    #image: mysql:8.2
     image: mysql:latest
     container_name: db
     restart: always

@@ -165,11 +165,29 @@ export async function generateRedeem(
 export async function getUserList(
   page: number,
   search: string,
+  isSubscribedFilter: boolean | null,
+  isBannedFilter: boolean | null // 新增 isBannedFilter 参数
 ): Promise<UserResponse> {
   try {
-    const response = await axios.get(
-      `/admin/user/list?page=${page}&search=${search}`,
-    );
+    let queryString = `/admin/user/list?page=${page}&search=${search}`;
+
+    // 根据 isSubscribedFilter 的值，动态添加 is_subscribed query 参数
+    if (isSubscribedFilter === true) {
+      queryString += `&is_subscribed=true`;
+    } else if (isSubscribedFilter === false) {
+      queryString += `&is_subscribed=false`;
+    }
+    // 如果 isSubscribedFilter 为 null 或 undefined，则不添加 is_subscribed 参数，表示不进行订阅状态筛选
+
+    // 根据 isBannedFilter 的值，动态添加 is_banned query 参数
+    if (isBannedFilter === true) {
+      queryString += `&is_banned=true`;
+    } else if (isBannedFilter === false) {
+      queryString += `&is_banned=false`;
+    }
+    // 如果 isBannedFilter 为 null 或 undefined，则不添加 is_banned 参数，表示不进行封禁状态筛选
+
+    const response = await axios.get(queryString);
     return response.data as UserResponse;
   } catch (e) {
     return {

@@ -6,13 +6,13 @@ import (
 	"chat/utils"
 	"errors"
 	"fmt"
-	"strings"
 )
 
 type ChatInstance struct {
 	Endpoint         string
 	ApiKey           string
 	isFirstReasoning bool
+	isReasonOver     bool
 }
 
 func (c *ChatInstance) GetEndpoint() string {
@@ -50,15 +50,26 @@ func (c *ChatInstance) GetChatEndpoint() string {
 }
 
 func (c *ChatInstance) GetChatBody(props *adaptercommon.ChatProps, stream bool) interface{} {
+	messages := props.Message
+	// because of deepseek first message must be user role
+	// convert assistant message to user message
+	if len(messages) > 0 && messages[0].Role == globals.Assistant {
+		messages = make([]globals.Message, len(props.Message))
+		copy(messages, props.Message)
+		messages[0].Role = globals.User
+	}
+
 	return ChatRequest{
 		Model:            props.Model,
-		Messages:         props.Message,
+		Messages:         messages,
 		MaxTokens:        props.MaxTokens,
 		Stream:           stream,
 		Temperature:      props.Temperature,
 		TopP:             props.TopP,
 		PresencePenalty:  props.PresencePenalty,
 		FrequencyPenalty: props.FrequencyPenalty,
+		User:             props.User,
+		Userip:           props.Ip,
 	}
 }
 
@@ -90,18 +101,24 @@ func (c *ChatInstance) ProcessLine(data string) (string, error) {
 		}
 
 		delta := form.Choices[0].Delta
+
+		if c.isFirstReasoning == false && !c.isReasonOver && delta.ReasoningContent == nil {
+			c.isReasonOver = true
+			if delta.Content != "" {
+				return fmt.Sprintf("\n</think>\n\n%s", delta.Content), nil
+			}
+			return "\n</think>\n\n", nil
+		}
+
 		if delta.ReasoningContent != nil {
 			content := *delta.ReasoningContent
-			// replace double newlines with single newlines for markdown
-			if strings.Contains(content, "\n\n") {
-				content = strings.ReplaceAll(content, "\n\n", "\n")
-			}
 			if c.isFirstReasoning {
 				c.isFirstReasoning = false
-				return fmt.Sprintf(">%s", content), nil
+				return fmt.Sprintf("<think>\n%s", content), nil
 			}
 			return content, nil
 		}
+
 		return delta.Content, nil
 	}
 
@@ -138,7 +155,7 @@ func (c *ChatInstance) CreateChatRequest(props *adaptercommon.ChatProps) (string
 	message := data.Choices[0].Message
 	content := message.Content
 	if message.ReasoningContent != nil {
-		content = fmt.Sprintf(">%s\n\n%s", *message.ReasoningContent, content)
+		content = fmt.Sprintf("<think>\n%s\n</think>\n\n%s", *message.ReasoningContent, content)
 	}
 
 	return content, nil
@@ -146,6 +163,7 @@ func (c *ChatInstance) CreateChatRequest(props *adaptercommon.ChatProps) (string
 
 func (c *ChatInstance) CreateStreamChatRequest(props *adaptercommon.ChatProps, callback globals.Hook) error {
 	c.isFirstReasoning = true
+	c.isReasonOver = false
 	err := utils.EventScanner(&utils.EventScannerProps{
 		Method:  "POST",
 		Uri:     c.GetChatEndpoint(),
