@@ -1,0 +1,10 @@
+{
+  "custom_vision_models": [
+    "gpt-4o-mini",
+    "cogvideox-flash",
+    "gemini-2.0-flash-exp",
+    "gemini-exp-1206",
+    "Doubao-vision-pro-32k",
+    "Doubao-vision-lite-32k"
+  ]
+}
