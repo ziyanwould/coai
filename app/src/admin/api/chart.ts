@@ -161,15 +161,16 @@ export async function generateRedeem(
     return { status: false, data: [], message: getErrorMessage(e) };
   }
 }
-
+type SortOption = "id" | "quota" | "used_quota" | "total_month" | "expired_at";
 export async function getUserList(
   page: number,
   search: string,
   isSubscribedFilter: boolean | null,
-  isBannedFilter: boolean | null // 新增 isBannedFilter 参数
+  isBannedFilter: boolean | null,
+  sortKey: SortOption = "id" // 添加 sortKey 参数，默认为 "id"
 ): Promise<UserResponse> {
   try {
-    let queryString = `/admin/user/list?page=${page}&search=${search}`;
+    let queryString = `/admin/user/list?page=${page}&search=${search}&sort=${sortKey}`; // 添加 sort 参数
 
     // 根据 isSubscribedFilter 的值，动态添加 is_subscribed query 参数
     if (isSubscribedFilter === true) {

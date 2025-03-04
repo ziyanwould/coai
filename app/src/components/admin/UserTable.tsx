@@ -59,6 +59,7 @@ import { selectUsername } from "@/store/auth.ts";
 import { PaginationAction } from "@/components/ui/pagination.tsx";
 import Tips from "@/components/Tips.tsx";
 import { Switch } from "@/components/ui/switch.tsx"; // 引入 Switch 组件
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx"; // 引入 Select 组件
 
 type OperationMenuProps = {
   user: UserData;
@@ -363,11 +364,22 @@ function UserTable() {
   const [isSubscribedFilter, setIsSubscribedFilter] = useState<boolean | null>(null); // 新增订阅状态筛选
   const [isBannedFilter, setIsBannedFilter] = useState<boolean | null>(null); // 新增封禁状态筛选
   const [loading, setLoading] = useState<boolean>(false);
+  const [sortKey, setSortKey] = useState<SortOption>("id"); // 默认按 ID 排序
+
+  type SortOption = "id" | "quota" | "used_quota" | "total_month" | "expired_at";
+
+  const sortOptions: { value: SortOption; label: string }[] = [
+    { value: "id", label: "ID" },
+    { value: "quota", label: "Quota" },
+    { value: "used_quota", label: "Used Quota" },
+    { value: "total_month", label: "Total Month" },
+    { value: "expired_at", label: "Expired At" },
+  ];
 
   async function update() {
     setLoading(true);
     // 修改 getUserList 的调用，传递 emailSearch 和 isSubscribedFilter 和 isBannedFilter
-    const resp = await getUserList(page, search, isSubscribedFilter, isBannedFilter);
+    const resp = await getUserList(page, search, isSubscribedFilter, isBannedFilter, sortKey);
     setLoading(false);
     if (resp.status) setData(resp as UserResponse);
     else
@@ -376,7 +388,7 @@ function UserTable() {
         description: resp.message,
       });
   }
-  useEffectAsync(update, [page, search, isSubscribedFilter, isBannedFilter]); // 监听 search 和 isSubscribedFilter 和 isBannedFilter 的变化
+  useEffectAsync(update, [page, search, isSubscribedFilter, isBannedFilter, sortKey]); // 监听 sortKey 的变化 // 监听 search 和 isSubscribedFilter 和 isBannedFilter 的变化
 
   return (
     <div className={`user-table`}>
@@ -393,7 +405,19 @@ function UserTable() {
         <Button size={`icon`} className={`flex-shrink-0 ml-2`} onClick={update}>
           <Search className={`h-4 w-4`} />
         </Button>
-        <div className={`ml-4 flex items-center`}> {/*  添加容器包裹 Switch 和 label */}
+        <Select onValueChange={(value) => setSortKey(value as SortOption)} value={sortKey}>
+          <SelectTrigger className="w-[180px] ml-4">
+            <SelectValue placeholder={t("admin.sort-by")} />
+          </SelectTrigger>
+          <SelectContent>
+            {sortOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {t(`admin.${option.label.toLowerCase().replace(" ", "-")}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div className={`w-[200px] ml-4 flex items-center`}> {/*  添加容器包裹 Switch 和 label */}
           <Switch
             id="is-subscribed-filter"
             checked={isSubscribedFilter === true} //  当 isSubscribedFilter 为 true 时，Switch 选中
@@ -404,7 +428,7 @@ function UserTable() {
           />
           <label htmlFor="is-subscribed-filter" className="ml-2 text-sm text-gray-500 dark:text-gray-400">{t("admin.is-subscribed")}</label> {/* 添加 label，并使用 htmlFor 关联 Switch */}
         </div>
-        <div className={`ml-4 flex items-center`}> {/*  添加容器包裹 Switch 和 label */}
+        <div className={`w-[180px] ml-4 flex items-center`}> {/*  添加容器包裹 Switch 和 label */}
           <Switch
             id="is-banned-filter"
             checked={isBannedFilter === true}

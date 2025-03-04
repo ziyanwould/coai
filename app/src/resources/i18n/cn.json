@@ -405,6 +405,7 @@
     "download-format": "下载 {{name}} 格式"
   },
   "admin": {
+    "id":"ID",
     "dashboard": "仪表盘",
     "users": "后台管理",
     "user": "用户管理",

@@ -219,28 +219,27 @@ func UserPaginationAPI(c *gin.Context) {
 
 	page, _ := strconv.Atoi(c.Query("page"))
 	search := strings.TrimSpace(c.Query("search"))
-	isSubscribedStr := c.Query("is_subscribed") // 获取 is_subscribed 参数
-	isBannedStr := c.Query("is_banned")         // 获取 is_banned 参数
+	isSubscribedStr := c.Query("is_subscribed")
+	isBannedStr := c.Query("is_banned")
+	sortKey := c.DefaultQuery("sort", "id") // 获取排序参数，默认为 "id"
 
-	var isSubscribedFilter *bool = nil // 默认为 nil，表示不筛选订阅状态
+	var isSubscribedFilter *bool = nil
 	if isSubscribedStr != "" {
-		isSubscribed, err := strconv.ParseBool(isSubscribedStr) // 解析为布尔值
+		isSubscribed, err := strconv.ParseBool(isSubscribedStr)
 		if err == nil {
 			isSubscribedFilter = &isSubscribed
 		}
-		// 如果解析出错，则忽略 is_subscribed 参数，不进行筛选
 	}
 
-	var isBannedFilter *bool = nil // 默认为 nil，表示不筛选封禁状态
+	var isBannedFilter *bool = nil
 	if isBannedStr != "" {
-		isBanned, err := strconv.ParseBool(isBannedStr) // 解析为布尔值
+		isBanned, err := strconv.ParseBool(isBannedStr)
 		if err == nil {
 			isBannedFilter = &isBanned
 		}
-		// 如果解析出错，则忽略 is_banned 参数，不进行筛选
 	}
 
-	c.JSON(http.StatusOK, getUsersForm(db, int64(page), search, isSubscribedFilter, isBannedFilter)) // 传递 isSubscribedFilter and isBannedFilter
+	c.JSON(http.StatusOK, getUsersForm(db, int64(page), search, isSubscribedFilter, isBannedFilter, sortKey)) // 传递 sortKey
 }
 
 func UpdatePasswordAPI(c *gin.Context) {

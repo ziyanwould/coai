@@ -28,11 +28,11 @@ func (a *AuthLike) HitID() int64 {
 }
 
 // Modify getUsersForm to accept isSubscribedFilter and isBannedFilter
-func getUsersForm(db *sql.DB, page int64, search string, isSubscribedFilter *bool, isBannedFilter *bool) PaginationForm {
+func getUsersForm(db *sql.DB, page int64, search string, isSubscribedFilter *bool, isBannedFilter *bool, sortKey string) PaginationForm {
 	var users []interface{}
 	var total int64
 
-	whereClause := "WHERE 1=1" // Base WHERE clause, always true initially
+	whereClause := "WHERE 1=1"
 	searchQuery := "%" + search + "%"
 
 	if search != "" {
@@ -55,20 +55,29 @@ func getUsersForm(db *sql.DB, page int64, search string, isSubscribedFilter *boo
 		}
 	}
 
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM auth LEFT JOIN subscription ON subscription.user_id = auth.id %s", whereClause)
-
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM auth LEFT JOIN subscription ON subscription.user_id = auth.id LEFT JOIN quota ON quota.user_id = auth.id %s", whereClause)
 	queryArgsCount := []interface{}{}
 	if search != "" {
 		queryArgsCount = append(queryArgsCount, searchQuery, searchQuery)
 	}
-
-	// queryArgsCount is already prepared for search, no need to add again for isSubscribedFilter and isBannedFilter
-
 	if err := globals.QueryRowDb(db, countQuery, queryArgsCount...).Scan(&total); err != nil {
 		return PaginationForm{
 			Status:  false,
 			Message: err.Error(),
 		}
+	}
+
+	// 构建排序子句
+	orderByClause := "ORDER BY auth.id" // 默认按 ID 升序
+	switch sortKey {
+	case "quota":
+		orderByClause = "ORDER BY quota.quota DESC"
+	case "used_quota":
+		orderByClause = "ORDER BY quota.used DESC"
+	case "total_month":
+		orderByClause = "ORDER BY subscription.total_month DESC"
+	case "expired_at":
+		orderByClause = "ORDER BY subscription.expired_at DESC"
 	}
 
 	selectQuery := fmt.Sprintf(`
@@ -81,8 +90,9 @@ func getUsersForm(db *sql.DB, page int64, search string, isSubscribedFilter *boo
 		LEFT JOIN quota ON quota.user_id = auth.id
 		LEFT JOIN subscription ON subscription.user_id = auth.id
 		%s
-		ORDER BY auth.id LIMIT ? OFFSET ?
-	`, whereClause)
+		%s
+		LIMIT ? OFFSET ?
+	`, whereClause, orderByClause) // 添加 orderByClause
 
 	queryArgsSelect := []interface{}{}
 	if search != "" {
