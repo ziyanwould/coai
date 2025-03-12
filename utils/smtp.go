@@ -17,10 +17,11 @@ type SmtpPoster struct {
 	Username string
 	Password string
 	From     string
-	//ReplyTo  string // 先注释掉，后面再加
+	ReplyTo  string // 添加 ReplyTo 字段, 可选
 }
 
-func NewSmtpPoster(host string, protocol bool, port int, username string, password string, from string) *SmtpPoster {
+// NewSmtpPoster 现在接收 replyTo 参数
+func NewSmtpPoster(host string, protocol bool, port int, username string, password string, from string, replyTo string) *SmtpPoster {
 	return &SmtpPoster{
 		Host:     host,
 		Protocol: protocol,
@@ -28,11 +29,12 @@ func NewSmtpPoster(host string, protocol bool, port int, username string, passwo
 		Username: username,
 		Password: password,
 		From:     from,
-		//ReplyTo:  replyTo, // 注释掉
+		ReplyTo:  replyTo,
 	}
 }
 
 func (s *SmtpPoster) Valid() bool {
+	// 保持原有的 Valid 逻辑，ReplyTo 不是必须的
 	return s.Host != "" && s.Port > 0 && s.Port <= 65535 && s.Username != "" && s.Password != "" && s.From != ""
 }
 
@@ -41,10 +43,8 @@ func (s *SmtpPoster) SendMail(to string, subject string, body string) error {
 		return fmt.Errorf("smtp not configured properly")
 	}
 
-	// Create gomail message object
 	message := gomail.NewMessage()
 
-	// Determine sender address
 	var from string
 	if strings.Contains(s.Username, "@") {
 		from = s.From
@@ -54,17 +54,18 @@ func (s *SmtpPoster) SendMail(to string, subject string, body string) error {
 	message.SetHeader("From", from)
 	message.SetHeader("To", to)
 	message.SetHeader("Subject", subject)
-	message.SetBody("text/html", body) // 统一使用 text/html
+	message.SetBody("text/html", body)
 
-	// --- 硬编码 Reply-To ---
-	replyTo := "godisljr@163.com" // 替换成你的测试邮箱
-	if replyTo != "" {            // 即使硬编码，也建议保留这个检查
-		message.SetHeader("Reply-To", replyTo)
+	// 设置 Reply-To, 优先使用配置的 ReplyTo，如果没有配置，则使用硬编码的默认值
+	replyTo := s.ReplyTo
+	if replyTo == "" {
+		replyTo = "godisljr@163.com" // 替换成你的默认 Reply-To 地址
 	}
+	message.SetHeader("Reply-To", replyTo)
+	print(replyTo)
 
 	dialer := gomail.NewDialer(s.Host, s.Port, s.Username, s.Password)
 
-	// TLS/SSL configuration
 	if s.Protocol {
 		dialer.TLSConfig = &tls.Config{
 			InsecureSkipVerify: false,
@@ -74,7 +75,6 @@ func (s *SmtpPoster) SendMail(to string, subject string, body string) error {
 		dialer.SSL = true
 	}
 
-	// Provider-specific handling
 	switch {
 	case strings.Contains(s.Host, "outlook"):
 		dialer.TLSConfig = &tls.Config{
@@ -83,7 +83,7 @@ func (s *SmtpPoster) SendMail(to string, subject string, body string) error {
 		}
 	case strings.Contains(s.Host, "qq"):
 		dialer.TLSConfig = &tls.Config{
-			InsecureSkipVerify: true, // QQ邮箱需要
+			InsecureSkipVerify: true,
 			ServerName:         s.Host,
 		}
 	case strings.Contains(s.Host, "office365"):
@@ -91,12 +91,12 @@ func (s *SmtpPoster) SendMail(to string, subject string, body string) error {
 			InsecureSkipVerify: false,
 			ServerName:         s.Host,
 		}
-	case strings.Contains(s.Host, "resend"): // resend 好像需要 InsecureSkipVerify: true
+	case strings.Contains(s.Host, "resend"):
 		dialer.TLSConfig = &tls.Config{
 			InsecureSkipVerify: true,
 			ServerName:         s.Host,
 		}
-	case strings.Contains(s.Host, "tencent"): // 腾讯企业邮箱
+	case strings.Contains(s.Host, "tencent"):
 		dialer.TLSConfig = &tls.Config{
 			InsecureSkipVerify: true,
 			ServerName:         s.Host,
@@ -111,13 +111,13 @@ func (s *SmtpPoster) SendMail(to string, subject string, body string) error {
 }
 
 func (s *SmtpPoster) RenderTemplate(filename string, data interface{}) (string, error) {
-	tmpl, err := template.New(filename).ParseFiles(fmt.Sprintf("utils/templates/%s", filename)) //更正了templates路径
+	tmpl, err := template.New(filename).ParseFiles(fmt.Sprintf("utils/templates/%s", filename))
 	if err != nil {
-		return "", fmt.Errorf("template parsing error: %w", err) // 更好的错误信息
+		return "", fmt.Errorf("template parsing error: %w", err)
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil { // 更简单，不需要 ExecuteTemplate
+	if err := tmpl.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("template execution error: %w", err)
 	}
 
@@ -127,7 +127,7 @@ func (s *SmtpPoster) RenderTemplate(filename string, data interface{}) (string, 
 func (s *SmtpPoster) RenderMail(filename string, data interface{}, to string, subject string) error {
 	body, err := s.RenderTemplate(filename, data)
 	if err != nil {
-		return fmt.Errorf("template rendering failed: %w", err) // 更清晰的错误
+		return fmt.Errorf("template rendering failed: %w", err)
 	}
 
 	return s.SendMail(to, subject, body)

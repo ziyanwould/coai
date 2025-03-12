@@ -4,6 +4,7 @@ import (
 	"chat/globals"
 	"chat/utils"
 	"fmt"
+	"net/mail"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -60,6 +61,7 @@ type mailState struct {
 	Username  string    `json:"username" mapstructure:"username"`
 	Password  string    `json:"password" mapstructure:"password"`
 	From      string    `json:"from" mapstructure:"from"`
+	ReplyTo   string    `json:"reply_to" mapstructure:"replyto"` // 添加 ReplyTo
 	WhiteList whiteList `json:"white_list" mapstructure:"whitelist"`
 }
 
@@ -155,6 +157,14 @@ func (c *SystemConfig) AsInfo() ApiInfo {
 }
 
 func (c *SystemConfig) UpdateConfig(data *SystemConfig) error {
+	// 1. 数据验证 (重要!)
+	if data.Mail.ReplyTo != "" { // 只有在提供了 ReplyTo 时才验证
+		_, err := mail.ParseAddress(data.Mail.ReplyTo)
+		if err != nil {
+			return fmt.Errorf("invalid Reply-To address: %w", err)
+		}
+	}
+
 	c.General = data.General
 	c.Site = data.Site
 	c.Mail = data.Mail
@@ -183,6 +193,7 @@ func (c *SystemConfig) GetMail() *utils.SmtpPoster {
 		c.Mail.Username,
 		c.Mail.Password,
 		c.Mail.From,
+		c.Mail.ReplyTo, // 传递 ReplyTo
 	)
 }
 

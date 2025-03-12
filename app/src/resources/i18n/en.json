@@ -601,7 +601,9 @@
       "searchImageProxy": "Turn on image proxy",
       "searchImageProxyTip": "Image proxy, the image returned by the search engine after opening will be loaded through the SearXNG service node proxy",
       "searchTest": "Search Quizzes",
-      "searchTestTip": "Search test, enter the query for search test"
+      "searchTestTip": "Search test, enter the query for search test",
+      "mailReplyTo":"Reply-To Address",
+      "mailReplyToPlaceholder":"Enter reply-to address (optional)"
     },
     "user": "Users",
     "invitation-code": "Invitation Code",
