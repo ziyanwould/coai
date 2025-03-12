@@ -349,7 +349,7 @@
     "download-format": "Download {{name}} format"
   },
   "admin": {
-    "id":"ID",
+    "id": "ID",
     "dashboard": "Dashboard",
     "users": "Admin",
     "broadcast": "Broadcast",
@@ -618,8 +618,8 @@
       "searchImageProxyTip": "Image proxy, the image returned by the search engine after opening will be loaded through the SearXNG service node proxy",
       "searchTest": "Search Quizzes",
       "searchTestTip": "Search test, enter the query for search test",
-      "mailReplyTo":"Reply-To Address",
-      "mailReplyToPlaceholder":"Enter reply-to address (optional)"
+      "mailReplyTo": "Reply-To Address",
+      "mailReplyToPlaceholder": "Enter reply-to address (optional)"
     },
     "user": "Users",
     "invitation-code": "Invitation Code",
@@ -743,7 +743,20 @@
     "used-at": "Collection time",
     "used-username": "Claim User",
     "is-subscribed-tips": "Subscription judgment logic: There is a subscription tier and the subscription period has not expired",
-    "expired-at": "Subscription Expiration Time"
+    "expired-at": "Subscription Expiration Time",
+    "search-operation": "Search Action",
+    "filter-by-user-id": "Filter by user ID",
+    "sort-by": "Sort by",
+    "user-id": "User ID",
+    "operation": "Operation",
+    "quota-change": "Quota Changes",
+    "quota-before": "Quota Before Change",
+    "quota-after": "Quota after change",
+    "used-change": "Used variations",
+    "used-before": "Used before change",
+    "used-after": "Used after change",
+    "no-quota-logs": "No quota changes recorded",
+    "quota-log": "Quota Change Log"
   },
   "mask": {
     "title": "Mask Settings",

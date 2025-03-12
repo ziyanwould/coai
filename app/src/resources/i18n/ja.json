@@ -601,7 +601,9 @@
       "searchImageProxy": "画像プロキシをオンにする",
       "searchImageProxyTip": "画像プロキシ、開いた後に検索エンジンによって返される画像は、SearXNGサービスノードプロキシを介して読み込まれます",
       "searchTest": "クイズを検索",
-      "searchTestTip": "検索テスト、検索テストのクエリを入力してください"
+      "searchTestTip": "検索テスト、検索テストのクエリを入力してください",
+      "mailReplyTo": "返信先アドレス",
+      "mailReplyToPlaceholder": "返信先住所を入力してください（任意）"
     },
     "user": "ユーザー管理",
     "invitation-code": "招待コード",
@@ -726,7 +728,20 @@
     "used-username": "ユーザーを請求する",
     "is-subscribed-tips": "サブスクリプション判断ロジック：サブスクリプションティアがあり、サブスクリプション期間が満了していません",
     "expired-at": "サブスクリプションの有効期限",
-    "id": "ID"
+    "id": "ID",
+    "search-operation": "検索アクション",
+    "filter-by-user-id": "ユーザーIDで絞り込む",
+    "sort-by": "領域で",
+    "user-id": "ユーザーID",
+    "operation": "操作",
+    "quota-change": "クォータの変更",
+    "quota-before": "変更前のクォータ",
+    "quota-after": "変更後のクォータ",
+    "used-change": "使用したバリエーション",
+    "used-before": "変更前に使用",
+    "used-after": "変更後に使用",
+    "no-quota-logs": "クォータの変更は記録されていません",
+    "quota-log": "クォータ変更ログ"
   },
   "mask": {
     "title": "プリセット設定",
