@@ -520,3 +520,21 @@ func ConsoleLoggerAPI(c *gin.Context) {
 		"content": content,
 	})
 }
+func QuotaLogPaginationAPI(c *gin.Context) {
+	db := utils.GetDBFromContext(c)
+
+	page, _ := strconv.Atoi(c.Query("page"))
+	search := strings.TrimSpace(c.Query("search"))
+	userIDStr := c.Query("user_id")
+	sortKey := c.DefaultQuery("sort", "id") // 默认按 ID 排序
+
+	var userIDFilter *int64 = nil
+	if userIDStr != "" {
+		userID, err := strconv.ParseInt(userIDStr, 10, 64)
+		if err == nil {
+			userIDFilter = &userID
+		}
+	}
+
+	c.JSON(http.StatusOK, getQuotaLogs(db, int64(page), search, userIDFilter, sortKey))
+}

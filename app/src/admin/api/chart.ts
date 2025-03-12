@@ -314,3 +314,55 @@ export async function releaseUsageOperation(
     return { status: false, message: getErrorMessage(e) };
   }
 }
+// 定义 QuotaLog 的类型
+export interface QuotaLog {
+  id: number;
+  user_id: number;
+  operation: string;
+  quota_change: number;
+  quota_before: number;
+  quota_after: number;
+  used_change: number;
+  used_before: number;
+  used_after: number;
+  created_at: string;
+  username: string; // 新增 username 字段
+
+}
+
+// 定义 QuotaLogResponse 的类型
+export interface QuotaLogResponse {
+  status: boolean;
+  message?: string;
+  total: number;
+  data: QuotaLog[];
+}
+
+// 定义排序选项的类型
+export type QuotaLogSortOption = "id" | "user_id" | "operation" | "quota_change" | "created_at";
+
+// 获取 QuotaLog 列表的函数
+export async function getQuotaLogList(
+  page: number,
+  search: string,
+  userIdFilter: number | null,
+  sortKey: QuotaLogSortOption = "id"
+): Promise<QuotaLogResponse> {
+  try {
+    let queryString = `/admin/user/quota/log?page=${page}&search=${search}&sort=${sortKey}`;
+
+    if (userIdFilter !== null) {
+      queryString += `&user_id=${userIdFilter}`;
+    }
+
+    const response = await axios.get(queryString);
+    return response.data as QuotaLogResponse;
+  } catch (e) {
+    return {
+      status: false,
+      message: getErrorMessage(e), // 假设你有一个 getErrorMessage 函数来处理错误
+      data: [],
+      total: 0,
+    };
+  }
+}
