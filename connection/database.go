@@ -85,6 +85,7 @@ func ConnectDatabase() *sql.DB {
 	CreateSharingTable(db)
 	CreatePackageTable(db)
 	CreateQuotaTable(db)
+	CreateQuotaLogTable(db)
 	CreateSubscriptionTable(db)
 	CreateApiKeyTable(db)
 	CreateInvitationTable(db)
@@ -309,6 +310,28 @@ func CreateBroadcastTable(db *sql.DB) {
 		  content TEXT,
 		  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		  FOREIGN KEY (poster_id) REFERENCES auth(id)
+		);
+	`)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+// 添加这个函数来创建 quota_log 表
+func CreateQuotaLogTable(db *sql.DB) {
+	_, err := globals.ExecDb(db, `
+		CREATE TABLE IF NOT EXISTS quota_log (
+		  id INT PRIMARY KEY AUTO_INCREMENT,
+		  user_id INT,
+		  operation VARCHAR(255),
+		  quota_change DECIMAL(24, 6),
+		  quota_before DECIMAL(24, 6),
+		  quota_after DECIMAL(24, 6),
+		  used_change DECIMAL(24, 6),
+          used_before DECIMAL(24, 6),
+          used_after DECIMAL(24, 6),
+		  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		  FOREIGN KEY (user_id) REFERENCES auth(id)
 		);
 	`)
 	if err != nil {

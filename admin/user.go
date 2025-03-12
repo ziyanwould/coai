@@ -14,7 +14,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-// AuthLike is to solve the problem of import cycle
+// AuthLike is to solve the problem of import cycle.
 type AuthLike struct {
 	ID int64 `json:"id"`
 }
@@ -220,24 +220,53 @@ func banUser(db *sql.DB, id int64, isBanned bool) error {
 }
 
 func quotaMigration(db *sql.DB, id int64, quota float32, override bool) error {
-	// if quota is negative, then decrease quota
-	// if quota is positive, then increase quota
+	// 获取操作前的配额和已用配额
+	var quotaBefore, usedBefore float32
+	err := globals.QueryRowDb(db, "SELECT quota, used FROM quota WHERE user_id = ?", id).Scan(&quotaBefore, &usedBefore)
+	if err != nil && err != sql.ErrNoRows { // 检查是否是其他数据库错误
+		return fmt.Errorf("failed to get quota before operation: %w", err)
+	}
+	// 如果是 sql.ErrNoRows，则 beforeQuota 和 usedBefore 保持为 0
 
+	// 执行配额更新操作
 	if override {
-		_, err := globals.ExecDb(db, `
-			INSERT INTO quota (user_id, quota, used) VALUES (?, ?, ?)
-			ON DUPLICATE KEY UPDATE quota = ?
-		`, id, quota, 0., quota)
-
-		return err
+		_, err = globals.ExecDb(db, `
+            INSERT INTO quota (user_id, quota, used) VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE quota = ?
+        `, id, quota, 0., quota)
+	} else {
+		_, err = globals.ExecDb(db, `
+            INSERT INTO quota (user_id, quota, used) VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE quota = quota + ?
+        `, id, quota, 0., quota)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to update quota: %w", err)
 	}
 
-	_, err := globals.ExecDb(db, `
-		INSERT INTO quota (user_id, quota, used) VALUES (?, ?, ?)
-		ON DUPLICATE KEY UPDATE quota = quota + ?
-	`, id, quota, 0., quota)
+	// 获取操作后的配额和已用配额
+	var quotaAfter, usedAfter float32
+	err = globals.QueryRowDb(db, "SELECT quota, used FROM quota WHERE user_id = ?", id).Scan(&quotaAfter, &usedAfter)
+	if err != nil {
+		return fmt.Errorf("failed to get quota after operation: %w", err)
+	}
 
-	return err
+	// 记录日志
+	operation := "admin_increase"
+	if override {
+		operation = "admin_override"
+	}
+	quotaChange := quotaAfter - quotaBefore // 计算配额变化
+	usedChange := usedAfter - usedBefore    //计算已用配额变化
+	_, err = globals.ExecDb(db, `
+        INSERT INTO quota_log (user_id, operation, quota_change, quota_before, quota_after, used_change, used_before, used_after)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, id, operation, quotaChange, quotaBefore, quotaAfter, usedChange, usedBefore, usedAfter)
+	if err != nil {
+		return fmt.Errorf("failed to record quota log: %w", err)
+	}
+
+	return nil
 }
 
 func subscriptionMigration(db *sql.DB, id int64, expired string) error {
