@@ -330,6 +330,7 @@ func CreateQuotaLogTable(db *sql.DB) {
 		  used_change DECIMAL(24, 6),
           used_before DECIMAL(24, 6),
           used_after DECIMAL(24, 6),
+		  model_name VARCHAR(255) DEFAULT '',
 		  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		  FOREIGN KEY (user_id) REFERENCES auth(id)
 		);

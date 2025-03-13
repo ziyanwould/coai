@@ -26,7 +26,7 @@ import (
 const defaultMessage = "empty response"
 const interruptMessage = "interrupted"
 
-func CollectQuota(c *gin.Context, user *auth.User, buffer *utils.Buffer, uncountable bool, err error) {
+func CollectQuota(c *gin.Context, user *auth.User, buffer *utils.Buffer, uncountable bool, err error, modelName ...string) {
 	db := utils.GetDBFromContext(c)
 	quota := buffer.GetQuota()
 
@@ -39,7 +39,7 @@ func CollectQuota(c *gin.Context, user *auth.User, buffer *utils.Buffer, uncount
 	}
 
 	if !uncountable {
-		user.UseQuota(db, quota)
+		user.UseQuota(db, quota, modelName...)
 	}
 }
 
@@ -243,7 +243,7 @@ func ChatHandler(conn *Connection, user *auth.User, instance *conversation.Conve
 	}
 
 	if !hit {
-		CollectQuota(conn.GetCtx(), user, buffer, plan, err)
+		CollectQuota(conn.GetCtx(), user, buffer, plan, err, model)
 	}
 
 	if buffer.IsEmpty() {

@@ -80,7 +80,7 @@ func GenerateAPI(c *gin.Context) {
 	)
 
 	if instance != nil && !plan && instance.GetQuota() > 0 && user != nil {
-		user.UseQuota(db, instance.GetQuota())
+		user.UseQuota(db, instance.GetQuota(), form.Model)
 	}
 
 	if err != nil {
