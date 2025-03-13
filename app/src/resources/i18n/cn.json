@@ -521,6 +521,7 @@
     "used-after": "变更后已用",
     "no-quota-logs": "暂无配额变更记录",
     "quota-log": "配额变更日志",
+    "model-name": "模型名称",
     "identity": {
       "normal": "普通用户",
       "api_paid": "其他付费用户",

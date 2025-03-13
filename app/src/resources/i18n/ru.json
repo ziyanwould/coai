@@ -741,7 +741,8 @@
     "used-before": "Использовано до изменения",
     "used-after": "Используется после изменения",
     "no-quota-logs": "Изменений квот не зафиксировано",
-    "quota-log": "Журнал изменений квот"
+    "quota-log": "Журнал изменений квот",
+    "model-name": "MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS FOR TODAY. NEXT AVAILABLE IN  15 HOURS 51 MINUTES 10 SECONDS VISIT HTTPS://MYMEMORY.TRANSLATED.NET/DOC/USAGELIMITS.PHP TO TRANSLATE MORE"
   },
   "mask": {
     "title": "Настройки маски",

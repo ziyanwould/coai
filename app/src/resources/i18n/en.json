@@ -409,6 +409,7 @@
     "generate": "Generate",
     "generate-result": "Generate Result",
     "error": "Request Failed",
+    "model-name": "Model Name",
     "channels": {
       "id": "Channel ID",
       "name": "Name",

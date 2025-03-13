@@ -344,6 +344,7 @@ type QuotaLog struct {
 	UsedAfter   float32 `json:"used_after"`
 	CreatedAt   string  `json:"created_at"` // 使用字符串格式
 	Username    string  `json:"username"`   // 新增 username 字段
+	ModelName   string  `json:"model_name"` // 新增: model_name 字段
 }
 
 // QuotaLogPaginationForm，用于返回分页数据
@@ -356,24 +357,24 @@ type QuotaLogPaginationForm struct {
 
 // GetQuotaLogs 类似于 getUsersForm，用于获取 quota_log 数据
 func getQuotaLogs(db *sql.DB, page int64, search string, userIDFilter *int64, sortKey string) QuotaLogPaginationForm {
-	var logs []*QuotaLog // 使用 QuotaLog 指针的切片
+	var logs []*QuotaLog
 	var total int64
 
 	whereClause := "WHERE 1=1"
 	searchQuery := "%" + search + "%"
 
 	if search != "" {
-		whereClause += " AND (operation LIKE ?)" // 假设只搜索 operation 字段
+		whereClause += " AND (operation LIKE ? OR auth.username LIKE ? OR quota_log.model_name LIKE ?)" // 增加对 username 和 model_name 的搜索
 	}
 
 	if userIDFilter != nil {
-		whereClause += " AND quota_log.user_id = ?" // 修正: 使用 quota_log.user_id
+		whereClause += " AND quota_log.user_id = ?"
 	}
 
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM quota_log %s", whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM quota_log LEFT JOIN auth ON quota_log.user_id = auth.id %s", whereClause) // 添加 LEFT JOIN
 	queryArgsCount := []interface{}{}
 	if search != "" {
-		queryArgsCount = append(queryArgsCount, searchQuery)
+		queryArgsCount = append(queryArgsCount, searchQuery, searchQuery, searchQuery) // 对应三个 LIKE ?
 	}
 	if userIDFilter != nil {
 		queryArgsCount = append(queryArgsCount, *userIDFilter)
@@ -386,32 +387,37 @@ func getQuotaLogs(db *sql.DB, page int64, search string, userIDFilter *int64, so
 		}
 	}
 
-	// 构建排序子句
-	orderByClause := "ORDER BY id DESC" // 默认按 ID 倒序
+	orderByClause := "ORDER BY quota_log.id DESC" // 默认按 quota_log.id 倒序
 	switch sortKey {
 	case "user_id":
-		orderByClause = "ORDER BY user_id"
+		orderByClause = "ORDER BY quota_log.user_id"
 	case "operation":
-		orderByClause = "ORDER BY operation"
+		orderByClause = "ORDER BY quota_log.operation"
 	case "quota_change":
-		orderByClause = "ORDER BY quota_change" //可按变化量升序排列，如需降序排列，则加DESC
+		orderByClause = "ORDER BY quota_log.quota_change"
 	case "created_at":
-		orderByClause = "ORDER BY created_at" //按创建时间排序
-		// 可以添加更多排序选项
+		orderByClause = "ORDER BY quota_log.created_at"
+	case "username": // 增加按用户名排序
+		orderByClause = "ORDER BY auth.username"
+	case "model_name": //增加按模型名排序
+		orderByClause = "ORDER BY quota_log.model_name"
 	}
 
 	selectQuery := fmt.Sprintf(`
-        SELECT quota_log.id, quota_log.user_id, quota_log.operation, quota_log.quota_change, quota_log.quota_before, quota_log.quota_after, quota_log.used_change, quota_log.used_before, quota_log.used_after, quota_log.created_at, auth.username
-        FROM quota_log
-        LEFT JOIN auth ON quota_log.user_id = auth.id  
-        %s
-        %s
-        LIMIT ? OFFSET ?
-    `, whereClause, orderByClause)
+		SELECT quota_log.id, quota_log.user_id, quota_log.operation, quota_log.quota_change, 
+			   quota_log.quota_before, quota_log.quota_after, quota_log.used_change, 
+			   quota_log.used_before, quota_log.used_after, quota_log.created_at, 
+			   auth.username, quota_log.model_name  
+		FROM quota_log
+		LEFT JOIN auth ON quota_log.user_id = auth.id
+		%s
+		%s
+		LIMIT ? OFFSET ?
+	`, whereClause, orderByClause)
 
 	queryArgsSelect := []interface{}{}
 	if search != "" {
-		queryArgsSelect = append(queryArgsSelect, searchQuery)
+		queryArgsSelect = append(queryArgsSelect, searchQuery, searchQuery, searchQuery) // 对应三个 LIKE ?
 	}
 	if userIDFilter != nil {
 		queryArgsSelect = append(queryArgsSelect, *userIDFilter)
@@ -425,38 +431,43 @@ func getQuotaLogs(db *sql.DB, page int64, search string, userIDFilter *int64, so
 			Message: err.Error(),
 		}
 	}
-	defer rows.Close() // 确保关闭 rows
+	defer rows.Close()
 
 	for rows.Next() {
 		var log QuotaLog
-		var createdAt []uint8       // 用于接收时间戳
-		var username sql.NullString // 新增: 用于接收 username
+		var createdAt []uint8
+		var username sql.NullString
+		var modelName sql.NullString // 新增: 用于接收 model_name
 
 		if err := rows.Scan(&log.ID, &log.UserID, &log.Operation, &log.QuotaChange,
-			&log.QuotaBefore, &log.QuotaAfter, &log.UsedChange, &log.UsedBefore, &log.UsedAfter, &createdAt, &username); err != nil {
+			&log.QuotaBefore, &log.QuotaAfter, &log.UsedChange, &log.UsedBefore, &log.UsedAfter,
+			&createdAt, &username, &modelName); err != nil { // 新增 &modelName
 			return QuotaLogPaginationForm{
 				Status:  false,
 				Message: err.Error(),
 			}
 		}
 
-		// 处理 username
 		if username.Valid {
 			log.Username = username.String
 		}
 
-		// 转换时间戳为字符串
+		// 新增: 处理 model_name
+		if modelName.Valid {
+			log.ModelName = modelName.String
+		}
+
 		t := utils.ConvertTime(createdAt)
 		if t != nil {
 			log.CreatedAt = t.Format("2006-01-02 15:04:05")
 		}
 
-		logs = append(logs, &log) // 将 QuotaLog 指针添加到切片
+		logs = append(logs, &log)
 	}
 
 	return QuotaLogPaginationForm{
 		Status: true,
 		Total:  int(math.Ceil(float64(total) / float64(pagination))),
-		Data:   logs, // 返回 QuotaLog 指针的切片
+		Data:   logs,
 	}
 }

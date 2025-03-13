@@ -741,7 +741,8 @@
     "used-before": "変更前に使用",
     "used-after": "変更後に使用",
     "no-quota-logs": "クォータの変更は記録されていません",
-    "quota-log": "クォータ変更ログ"
+    "quota-log": "クォータ変更ログ",
+    "model-name": "MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS FOR TODAY. NEXT AVAILABLE IN  15 HOURS 51 MINUTES 12 SECONDS VISIT HTTPS://MYMEMORY.TRANSLATED.NET/DOC/USAGELIMITS.PHP TO TRANSLATE MORE"
   },
   "mask": {
     "title": "プリセット設定",

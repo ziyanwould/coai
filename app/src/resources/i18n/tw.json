@@ -796,7 +796,8 @@
     "used-before": "Ansa na wobesesa",
     "used-after": "Sɛ obi sesa a, na ɔyɛ adwuma",
     "no-quota-logs": "Nsakrae biara nni hɔ a wɔayɛ",
-    "quota-log": "Quota Asesae Log"
+    "quota-log": "Quota Asesae Log",
+    "model-name": "MYMEMORY WARNING: YOU USED ALL AVAILABLE FREE TRANSLATIONS FOR TODAY. NEXT AVAILABLE IN  15 HOURS 51 MINUTES 09 SECONDS VISIT HTTPS://MYMEMORY.TRANSLATED.NET/DOC/USAGELIMITS.PHP TO TRANSLATE MORE"
   },
   "mask": {
     "title": "預設設定",

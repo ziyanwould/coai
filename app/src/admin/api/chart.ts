@@ -327,6 +327,7 @@ export interface QuotaLog {
   used_after: number;
   created_at: string;
   username: string; // 新增 username 字段
+  model_name: string; // 新增 model_name 字段
 
 }
 
@@ -339,7 +340,7 @@ export interface QuotaLogResponse {
 }
 
 // 定义排序选项的类型
-export type QuotaLogSortOption = "id" | "user_id" | "operation" | "quota_change" | "created_at";
+export type QuotaLogSortOption = "id" | "user_id" | "operation" | "quota_change" | "created_at" | "username" | "model_name";
 
 // 获取 QuotaLog 列表的函数
 export async function getQuotaLogList(
