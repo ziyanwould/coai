@@ -84,7 +84,7 @@ function QuotaLogTable() {
             if (isEnter(e)) await update();
           }}
         />
-        <Button size={`icon`} className={`flex-shrink-0 ml-2`} onClick={update}>
+        <Button size={`icon`} className={`flex-shrink-0 ml-2 mr-2`} onClick={update}>
           <Search className={`h-4 w-4`} />
         </Button>
         {/* 用户 ID 筛选 */}
