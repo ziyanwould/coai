@@ -106,46 +106,37 @@ export const useTheme = () => {
 };
 
 export function ModeToggle() {
-  const { theme, toggleTheme } = useTheme();
-  const [currentIconIndex, setCurrentIconIndex] = useState(0);
-
-  const icons = [
-    <Moon key="dark" className="h-[1.2rem] w-[1.2rem]" />,
-    <Sun key="light" className="h-[1.2rem] w-[1.2rem]" />,
-    <Monitor key="system" className="h-[1.2rem] w-[1.2rem]" />,
-  ];
- 
-
+  const { toggleTheme } = useTheme();
+  const [systemMode, setSystemMode] = useState(false);
+  
   useEffect(() => {
-    const savedTheme = getTheme();
-    const index = icons.findIndex(icon => icon.key === savedTheme);
-    setCurrentIconIndex(index >= 0 ? index : 0);
-  }, [theme]);
+    const currentTheme = getTheme();
+    setSystemMode(currentTheme === "system");
+  }, []);
 
   const handleClick = () => {
     toggleTheme?.();
 
-    const currentTheme = getTheme();
-    let nextTheme: Theme;
-    if (currentTheme === "dark") {
-      nextTheme = "light";
-    } else if (currentTheme === "light") {
-      nextTheme = "system";
-    } else {
-      nextTheme = "dark";
-    }
-    const nextIndex = icons.findIndex(icon => icon.key === nextTheme);
-    setCurrentIconIndex(nextIndex >= 0 ? nextIndex : 0);
-
+    const newTheme = getTheme();
+    setSystemMode(newTheme === "system");
   };
 
+  if (systemMode) {
+    return (
+      <Button variant="outline" size="icon" onClick={handleClick}>
+        <Monitor className="h-[1.2rem] w-[1.2rem]" />
+      </Button>
+    );
+  }
+
   return (
-    <Button
-      variant="outline"
-      size="icon"
-      onClick={handleClick}
-    >
-      {icons[currentIconIndex]}
+    <Button variant="outline" size="icon" onClick={handleClick}>
+      <Sun
+        className={`relative dark:absolute h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0`}
+      />
+      <Moon
+        className={`absolute dark:relative h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100`}
+      />
     </Button>
   );
 }
