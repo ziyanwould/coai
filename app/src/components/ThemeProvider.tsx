@@ -107,7 +107,6 @@ export const useTheme = () => {
 
 export function ModeToggle() {
   const { theme, toggleTheme } = useTheme();
-  const [isAnimating, setIsAnimating] = useState(false);
   const [currentIconIndex, setCurrentIconIndex] = useState(0);
 
   const icons = [
@@ -120,24 +119,24 @@ export function ModeToggle() {
   useEffect(() => {
     const savedTheme = getTheme();
     const index = icons.findIndex(icon => icon.key === savedTheme);
-
-    setCurrentIconIndex(index);
+    setCurrentIconIndex(index >= 0 ? index : 0);
   }, [theme]);
 
   const handleClick = () => {
-    if (isAnimating) return; // 防止重复点击
-    setIsAnimating(true);
-
-
     toggleTheme?.();
 
-    setTimeout(() => {
+    const currentTheme = getTheme();
+    let nextTheme: Theme;
+    if (currentTheme === "dark") {
+      nextTheme = "light";
+    } else if (currentTheme === "light") {
+      nextTheme = "system";
+    } else {
+      nextTheme = "dark";
+    }
+    const nextIndex = icons.findIndex(icon => icon.key === nextTheme);
+    setCurrentIconIndex(nextIndex >= 0 ? nextIndex : 0);
 
-      const nextIconIndex = (currentIconIndex + 1) % icons.length;
-
-      setCurrentIconIndex(nextIconIndex);
-      setIsAnimating(false);
-    }, 500);
   };
 
   return (
@@ -145,24 +144,8 @@ export function ModeToggle() {
       variant="outline"
       size="icon"
       onClick={handleClick}
-      style={{
-        transition: "background-color 0.5s ease",
-        position: "relative",
-        overflow: "hidden",
-      }}
     >
-      <div
-        style={{
-          position: "absolute",
-          transform: isAnimating ? "scale(0)" : "scale(1)",
-          transition: "transform 0.5s ease, opacity 0.5s ease",
-        }}
-      >
-        {icons[currentIconIndex]}
-      </div>
-
+      {icons[currentIconIndex]}
     </Button>
   );
 }
-
-export default ModeToggle;
