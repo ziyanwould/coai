@@ -6,8 +6,16 @@ import (
 	"chat/utils"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	RegisterLimitPerIP  = 1         // 每个IP每小时最多注册5次
+	RegisterLimitWindow = time.Hour // 时间窗口1小时
+	VerifyLimitPerIP    = 1         // 每个IP每小时最多发送5次验证码
+	VerifyLimitWindow   = time.Hour // 时间窗口1小时
 )
 
 type RegisterForm struct {
@@ -154,6 +162,17 @@ func RegisterAPI(c *gin.Context) {
 		return
 	}
 
+	clientIP := c.ClientIP()
+	cache := utils.GetCacheFromContext(c)
+	ok, _ := utils.CheckIPLimit(cache, clientIP, "register", RegisterLimitPerIP, RegisterLimitWindow)
+	if !ok {
+		c.JSON(http.StatusOK, gin.H{
+			"status": false,
+			"error":  "该IP注册过于频繁，请稍后再试",
+		})
+		return
+	}
+
 	var form RegisterForm
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, gin.H{
@@ -221,6 +240,17 @@ func LoginAPI(c *gin.Context) {
 }
 
 func VerifyAPI(c *gin.Context) {
+	clientIP := c.ClientIP()
+	cache := utils.GetCacheFromContext(c)
+	ok, _ := utils.CheckIPLimit(cache, clientIP, "verify", VerifyLimitPerIP, VerifyLimitWindow)
+	if !ok {
+		c.JSON(http.StatusOK, gin.H{
+			"status": false,
+			"error":  "该IP请求验证码过于频繁，请稍后再试",
+		})
+		return
+	}
+
 	var form VerifyForm
 	if err := c.ShouldBind(&form); err != nil {
 		c.JSON(http.StatusOK, gin.H{
