@@ -2,7 +2,7 @@
 # License: Apache-2.0
 # Description: Dockerfile for chatnio
 
-FROM --platform=$BUILDPLATFORM golang:1.20-alpine AS backend
+FROM --platform=$TARGETPLATFORM golang:1.20-alpine AS backend
 
 WORKDIR /backend
 COPY . .
@@ -20,35 +20,10 @@ RUN apk update && \
     musl-dev \
     g++ \
     make \
-    linux-headers \
-    wget \
-    tar \
-    git \
-    bash
-
-# Install cross-compilation toolchain for ARM64
-RUN if [ "$TARGETARCH" = "arm64" ]; then \
-    git clone https://github.com/richfelker/musl-cross-make.git /tmp/musl-cross-make && \
-    cd /tmp/musl-cross-make && \
-    echo "TARGETS = aarch64-linux-musl" > config.mak && \
-    echo "OUTPUT = /usr/local" >> config.mak && \
-    make -j$(nproc) && \
-    make install && \
-    cd / && \
-    rm -rf /tmp/musl-cross-make; \
-    fi
+    linux-headers
 
 # Build backend
-RUN if [ "$TARGETARCH" = "arm64" ]; then \
-    CC=/usr/local/bin/aarch64-linux-musl-gcc \
-    CGO_ENABLED=1 \
-    GOOS=linux \
-    GOARCH=arm64 \
-    go build -o chat .; \
-    else \
-    go install && \
-    go build .; \
-    fi
+RUN go build -o chat -a -ldflags="-extldflags=-static" .
 
 FROM node:18 AS frontend
 
