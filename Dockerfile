@@ -13,8 +13,9 @@ ARG TARGETARCH
 ARG TARGETOS
 ENV GOOS=$TARGETOS GOARCH=$TARGETARCH GO111MODULE=on CGO_ENABLED=1
 
-# Install build dependencies and cross-compilation toolchain
-RUN apk add --no-cache \
+# Install build dependencies
+RUN apk update && \
+    apk add --no-cache \
     gcc \
     musl-dev \
     g++ \
@@ -22,19 +23,28 @@ RUN apk add --no-cache \
     linux-headers \
     wget \
     tar \
-    && if [ "$TARGETARCH" = "arm64" ]; then \
-    wget -q -O /tmp/cross.tgz https://musl.cc/aarch64-linux-musl-cross.tgz && \
-    tar -xf /tmp/cross.tgz -C /usr/local && \
-    rm /tmp/cross.tgz; \
+    git \
+    bash
+
+# Install cross-compilation toolchain for ARM64
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+    git clone https://github.com/richfelker/musl-cross-make.git /tmp/musl-cross-make && \
+    cd /tmp/musl-cross-make && \
+    echo "TARGETS = aarch64-linux-musl" > config.mak && \
+    echo "OUTPUT = /usr/local" >> config.mak && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && \
+    rm -rf /tmp/musl-cross-make; \
     fi
 
 # Build backend
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
-    CC=/usr/local/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc \
+    CC=/usr/local/bin/aarch64-linux-musl-gcc \
     CGO_ENABLED=1 \
     GOOS=linux \
     GOARCH=arm64 \
-    go build -o chat -a -ldflags="-extldflags=-static" .; \
+    go build -o chat .; \
     else \
     go install && \
     go build .; \

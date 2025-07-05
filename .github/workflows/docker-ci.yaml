@@ -39,5 +39,9 @@ jobs:
           tags: |
             programzmh/chatnio:latest
             programzmh/chatnio:${{ env.VERSION }}
-          cache-from: type=registry,ref=programzmh/chatnio:buildcache
-          cache-to: type=registry,ref=programzmh/chatnio:buildcache,mode=max
+          cache-from: |
+            type=registry,ref=programzmh/chatnio:buildcache
+            type=gha
+          cache-to: |
+            type=registry,ref=programzmh/chatnio:buildcache,mode=max
+            type=gha,mode=max
