@@ -803,7 +803,8 @@
     "community-confirm-close": "您確定要關閉此公告嗎？",
     "community-banner-confirm": "您真的不考慮加入社群與我們一起共建專案或是獲取專案的更新與動態嗎？該橫幅在不清除瀏覽器快取的情況下僅會顯示一次",
     "community-stay": "加入我們",
-    "community-close": "確認關閉"
+    "community-close": "確認關閉",
+    "id": "ID"
   },
   "mask": {
     "title": "預設設定",

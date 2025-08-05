@@ -2,8 +2,8 @@
  * @Author: Liu Jiarong
  * @Date: 2024-06-08 21:52:41
  * @LastEditors: Liu Jiarong
- * @LastEditTime: 2024-09-08 08:45:27
- * @FilePath: /chatnio/app/src/components/app/NavBar.tsx
+ * @LastEditTime: 2025-08-05 21:04:22
+ * @FilePath: /coai/app/src/components/app/NavBar.tsx
  * @Description: 
  * 
  * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved. 
@@ -30,13 +30,13 @@ import { goAuth } from "@/utils/app.ts";
 import Avatar from "@/components/Avatar.tsx";
 import { appLogo } from "@/conf/env.ts";
 import Announcement from "@/components/app/Announcement.tsx";
-import WebsiteIcon from "@/components/ui/icons/WebsiteIcon.tsx";
-// import DoubleBubbleIcon from "@/components/ui/icons/DoubleBubbleIcon.tsx";
-import ChatGPTIcon from "@/components/ui/icons/ChatGPTIcon.tsx";
-import AIGenerationIcon from "@/components/ui/icons/AIGenerationIcon.tsx";
-import DrawingIcon from "@/components/ui/icons/DrawingIcon.tsx";
-import NavigationIcon from "@/components/ui/icons/NavigationIcon.tsx";
-import { openWindow } from "@/utils/device.ts";
+// import WebsiteIcon from "@/components/ui/icons/WebsiteIcon.tsx";
+// // import DoubleBubbleIcon from "@/components/ui/icons/DoubleBubbleIcon.tsx";
+// import ChatGPTIcon from "@/components/ui/icons/ChatGPTIcon.tsx";
+// import AIGenerationIcon from "@/components/ui/icons/AIGenerationIcon.tsx";
+// import DrawingIcon from "@/components/ui/icons/DrawingIcon.tsx";
+// import NavigationIcon from "@/components/ui/icons/NavigationIcon.tsx";
+// import { openWindow } from "@/utils/device.ts";
 
 function NavMenu() {
   const username = useSelector(selectUsername);
@@ -78,7 +78,7 @@ function NavBar() {
         />
         <div className={`grow`} />
         <ProjectLink />
-        <Button
+        {/* <Button
           variant="outline"
           size="icon"
           title="AI-Chat国外大模型"
@@ -87,7 +87,7 @@ function NavBar() {
           }
         >
           <ChatGPTIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100" />
-        </Button>
+        </Button> */}
         {/* <Button
           variant="outline"
           size="icon"
@@ -98,7 +98,7 @@ function NavBar() {
         >
           <DoubleBubbleIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100" />
         </Button> */}
-        <Button
+        {/* <Button
           variant="outline"
           size="icon"
           title="首页"
@@ -137,7 +137,7 @@ function NavBar() {
           }
         >
           <NavigationIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100" />
-        </Button>
+        </Button> */}
         <Announcement />
         <ModeToggle />
         {auth ? (

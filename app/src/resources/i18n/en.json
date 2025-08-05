@@ -751,7 +751,20 @@
     "community-confirm-close": "Are you sure you want to close this announcement?",
     "community-banner-confirm": "Are you sure you don't want to join the community to help build the project or get updates and news? This banner will only show once unless you clear your browser cache",
     "community-stay": "Join Us",
-    "community-close": "Confirm Close"
+    "community-close": "Confirm Close",
+    "search-operation": "Search Action",
+    "filter-by-user-id": "Filter by user ID",
+    "sort-by": "Sort By",
+    "user-id": "User ID",
+    "operation": "Aksi",
+    "quota-change": "Quota Changes",
+    "quota-before": "Quota Before Change",
+    "quota-after": "Quota after change",
+    "used-change": "Used variations",
+    "used-before": "Used before change",
+    "used-after": "Used after change",
+    "no-quota-logs": "No quota changes recorded",
+    "quota-log": "Quota Change Log"
   },
   "mask": {
     "title": "Mask Settings",
