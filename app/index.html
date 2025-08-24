@@ -18,29 +18,24 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <script type="module" src="/src/main.tsx"></script>
 
-    <script>
-      (function() {
-        const hostname = window.location.hostname;
-        const umamiScript = document.createElement('script');
-        umamiScript.defer = true;
-        const analyticsScript = document.createElement('script');
-        analyticsScript.defer = true;
+    <script defer src="https://umami.liujiarong.top/script.js" data-website-id="236e9d50-e4b5-438d-99bf-167967d6616c"></script>
 
-        if (hostname.endsWith('.top')) {
-          umamiScript.src = 'https://umami.liujiarong.top/script.js';
-          umamiScript.setAttribute('data-website-id', '2bfbc2b3-1e1f-48e0-ac6b-665117069b8d');
-          analyticsScript.setAttribute('data-domain', 'liujiarong.top');
-          analyticsScript.src = 'https://analytics.liujiarong.top/js/script.js';
-        } else {
-          umamiScript.src = 'https://umami.liujiarong.top/script.js';
-          umamiScript.setAttribute('data-website-id', '4c715c06-37ac-4ee8-92ea-7169343ef4b2');
-          analyticsScript.setAttribute('data-domain', 'liujiarong.me');
-          analyticsScript.src = 'https://analytics.liujiarong.top/js/script.js';
-        }
-        
-        document.head.appendChild(umamiScript);
-        document.head.appendChild(analyticsScript);
+    <!-- Matomo -->
+    <script>
+      var _paq = window._paq = window._paq || [];
+      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+      _paq.push(['trackPageView']);
+      _paq.push(['enableLinkTracking']);
+      (function() {
+        var u="//matomo.liujiarong.top/";
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['setSiteId', '3']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
       })();
     </script>
+    <!-- End Matomo Code -->
+
+    <script defer data-domain="coai.drawaspark.com" src="https://plausible.liujiarong.top/js/script.outbound-links.js"></script>
   </body>
 </html>

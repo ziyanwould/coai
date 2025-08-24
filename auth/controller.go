@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	RegisterLimitPerIP  = 1         // 每个IP每小时最多注册5次
+	RegisterLimitPerIP  = 5         // 每个IP每小时最多注册5次
 	RegisterLimitWindow = time.Hour // 时间窗口1小时
-	VerifyLimitPerIP    = 1         // 每个IP每小时最多发送5次验证码
+	VerifyLimitPerIP    = 10        // 每个IP每小时最多发送5次验证码
 	VerifyLimitWindow   = time.Hour // 时间窗口1小时
 )
 

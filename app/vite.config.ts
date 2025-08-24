@@ -56,6 +56,14 @@ export default defineConfig({
       "/v1": {
         target: "http://localhost:8094",
         changeOrigin: true,
+      },
+      "/quota": {
+        target: "http://localhost:8094",
+        changeOrigin: true,
+      },
+      "/subscription": {
+        target: "http://localhost:8094",
+        changeOrigin: true,
       }
     }
   }
