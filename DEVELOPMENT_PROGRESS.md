@@ -22,6 +22,7 @@ ChatNio 是一个新一代 AIGC 一站式商业解决方案，结合强大的 AP
   - Anthropic Claude
   - Google Gemini
   - Cloudflare Workers AI
+  - SiliconFlow AI
   - 火山引擎豆包
   - 10+ 其他 AI 提供商
 
@@ -267,6 +268,147 @@ const userId = req.body.user || req.headers['x-user-id'];
 - 保持字段名称和数据类型一致
 - 确保所有 AI 提供商的用户追踪功能统一
 
+## SiliconFlow AI 图像生成集成 (2025-09-17)
+
+**开发背景**: 应用户需求，集成 SiliconFlow AI 的图像生成模型，包括文生图和图像编辑功能，进一步丰富平台的 AI 图像生成能力。
+
+### 技术实现
+
+**1. 完整适配器开发**
+- **文件结构**: 遵循 Cloudflare 适配器模式
+  - `adapter/siliconflow/types.go`: 数据结构定义
+  - `adapter/siliconflow/image.go`: 核心图像生成逻辑
+  - `adapter/siliconflow/chat.go`: 流式聊天接口
+- **集成注册**: 在 `adapter/adapter.go` 中注册 SiliconFlow 工厂
+
+**2. 支持的模型**
+```go
+var SiliconFlowImageModels = []string{
+    "Qwen/Qwen-Image",        // 文生图模型
+    "Qwen/Qwen-Image-Edit",   // 图像编辑模型
+    "Kwai-Kolors/Kolors",     // 高级文生图模型
+}
+```
+
+**3. 技术特性**
+
+**图像编辑支持**:
+- `Qwen/Qwen-Image-Edit` 注册为视觉模型，支持图片上传
+- 自动检测图像编辑模型，要求必须提供输入图片
+- 完整的 data URI 格式支持
+
+**模型参数优化**:
+```go
+// Qwen 模型专用配置
+if strings.Contains(strings.ToLower(props.Model), "qwen") {
+    if strings.Contains(strings.ToLower(props.Model), "edit") {
+        cfg = 4.0 // 图像编辑默认 CFG
+        if 高质量提示 {
+            cfg = 6.0 // 提升质量时使用更高 CFG
+        }
+    } else {
+        cfg = 7.5 // 常规 Qwen 模型 CFG
+    }
+}
+
+// Kolors 模型专用配置
+if strings.Contains(strings.ToLower(props.Model), "kolors") {
+    guidanceScale = 5.0 // 不同的引导比例
+    steps = 25          // 增加推理步数
+}
+```
+
+**智能尺寸检测**:
+```go
+// 根据提示词自动调整图像尺寸
+if strings.Contains(lowerPrompt, "宽屏") || strings.Contains(lowerPrompt, "landscape") {
+    imageSize = "1280x960"
+}
+if strings.Contains(lowerPrompt, "竖屏") || strings.Contains(lowerPrompt, "portrait") {
+    imageSize = "960x1280"
+}
+```
+
+**4. 用户追踪集成**
+```go
+type ImageRequest struct {
+    Model              string      `json:"model"`
+    Prompt             string      `json:"prompt"`
+    Image              string      `json:"image,omitempty"`     // 图像编辑输入
+    User               interface{} `json:"user,omitempty"`      // 用户标识
+    UserIP             string      `json:"user_ip,omitempty"`   // 用户IP
+    // ... 其他参数
+}
+```
+
+**5. 错误处理增强**
+- 详细的调试日志输出
+- 图像处理错误的中文提示
+- Base64 图像数据完整性检查
+
+**6. 前端管理界面**
+- **文件**: `app/src/admin/channel.ts`
+- **配置**: 完整的 SiliconFlow 渠道类型定义
+```typescript
+siliconflow: {
+    endpoint: "https://api.siliconflow.cn/v1",
+    format: "<api-key>",
+    models: ["Qwen/Qwen-Image", "Qwen/Qwen-Image-Edit", "Kwai-Kolors/Kolors"],
+    usage: `
+1. 获取 SiliconFlow API Key
+2. 模型说明：
+   - Qwen/Qwen-Image: 通义千问文生图模型
+   - Qwen/Qwen-Image-Edit: 图像编辑模型（需要上传图片）
+   - Kwai-Kolors/Kolors: 快手可图大模型
+    `,
+}
+```
+
+### 开发流程与验证
+
+**1. 构建测试**
+```bash
+# 后端编译验证
+go build -o chatnio
+
+# 前端构建验证
+cd app && npm run build
+```
+
+**2. Docker 镜像构建**
+```bash
+# 构建本地镜像
+docker build -t chatniolocal .
+
+# 标记并推送到 Harbor
+docker tag chatniolocal:latest harbor.ipv6.liujiarong.top:8024/library/chatniolocal:test
+docker push harbor.ipv6.liujiarong.top:8024/library/chatniolocal:test
+```
+
+**3. 功能验证**
+- ✅ 后端 Go 代码编译通过
+- ✅ 前端 TypeScript 编译通过
+- ✅ 三个模型配置正确加载
+- ✅ 管理面板渠道类型显示正常
+- ✅ 用户追踪字段正确传递
+
+### 架构设计亮点
+
+**1. 代码复用性**
+- 严格遵循现有 Cloudflare 适配器设计模式
+- 统一的用户追踪实现
+- 一致的错误处理机制
+
+**2. 扩展性考虑**
+- 模块化的模型配置
+- 灵活的参数优化策略
+- 支持未来新模型的快速接入
+
+**3. 用户体验优化**
+- 智能提示词尺寸检测
+- 中文错误提示
+- 详细的使用说明文档
+
 ### 技术亮点
 
 **1. 错误追踪与调试**
@@ -359,5 +501,5 @@ docker push harbor.ipv6.liujiarong.top:8024/library/chatniolocal:test
 ---
 
 **最后更新**: 2025年9月17日
-**文档版本**: v1.0
+**文档版本**: v1.1
 **下次更新**: 根据开发进展实时更新

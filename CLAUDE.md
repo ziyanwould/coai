@@ -56,7 +56,7 @@ Main entry point is `main.go`:
 
 ### Key Technical Details
 
-1. **Multi-Provider AI Support**: The system supports OpenAI, Anthropic Claude, Google Gemini, Midjourney, and 10+ other AI providers through the `adapter/` and `channel/` modules.
+1. **Multi-Provider AI Support**: The system supports OpenAI, Anthropic Claude, Google Gemini, Midjourney, SiliconFlow, and 10+ other AI providers through the `adapter/` and `channel/` modules.
 
 2. **Channel Management**: Advanced load balancing with priority and weight settings, automatic failover, and enterprise-level channel status management.
 
@@ -89,7 +89,7 @@ The application requires:
 - **PWA Support**: Progressive Web App capabilities
 - **Internationalization**: Multi-language support (CN, US, JP, RU)
 - **Preset System**: Custom AI model presets with cloud sync
-- **Image Generation**: Advanced support for Cloudflare Workers AI image models including inpainting functionality
+- **Image Generation**: Advanced support for Cloudflare Workers AI and SiliconFlow image models including inpainting functionality
 - **Interactive Inpainting**: Built-in canvas drawing tool for mask creation in image editing workflows
 
 ## Recent Major Updates (2025-09)
@@ -117,10 +117,24 @@ The application requires:
 - Resolved case-sensitive model detection issues
 - Enhanced error handling and debug logging
 
+### SiliconFlow Image Generation Integration (2025-09-17)
+- **Complete SiliconFlow Adapter**: Added full support for SiliconFlow image generation models following Cloudflare adapter pattern
+- **Model Support**: Integrated three key models:
+  - `Qwen/Qwen-Image`: Text-to-image generation with intelligent prompt processing
+  - `Qwen/Qwen-Image-Edit`: Image editing with mask support and vision model integration
+  - `Kwai-Kolors/Kolors`: Advanced text-to-image with optimized parameters
+- **Technical Features**:
+  - User and IP tracking for upstream middleware statistics
+  - Enhanced error handling with detailed debugging output
+  - Model-specific parameter optimization (CFG, guidance scale, steps)
+  - Automatic image size detection based on prompt hints
+  - Full data URI format support for image inputs
+- **Frontend Integration**: Complete admin panel configuration with model descriptions and usage instructions
+
 ### User Tracking Enhancement (2025-09-17)
-- **User Identification**: Added `user` and `user_ip` fields to Cloudflare image generation requests
+- **User Identification**: Added `user` and `user_ip` fields to both Cloudflare and SiliconFlow image generation requests
 - **Middleware Compatibility**: Ensures upstream middleware can properly track users and collect statistics
-- **Consistent Implementation**: Matches OpenAI adapter pattern for unified user tracking across providers
+- **Consistent Implementation**: Matches OpenAI adapter pattern for unified user tracking across all providers
 
 ## Testing and Quality
 
