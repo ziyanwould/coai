@@ -24,17 +24,19 @@ func extractPureBase64(base64Data string) string {
 }
 
 type ImageProps struct {
-	Model     string
-	Prompt    string
-	Guidance  float32
-	Seed      *int
-	Height    int
-	Width     int
-	NumSteps  int
-	InputImage string  // Base64 encoded input image for img2img
-	MaskImage  string  // Base64 encoded mask image for inpainting
-	Strength   float32 // Strength parameter for img2img (0.0-1.0)
-	Proxy     globals.ProxyConfig
+	Model      string
+	Prompt     string
+	Guidance   float32
+	Seed       *int
+	Height     int
+	Width      int
+	NumSteps   int
+	InputImage string                 // Base64 encoded input image for img2img
+	MaskImage  string                 // Base64 encoded mask image for inpainting
+	Strength   float32                // Strength parameter for img2img (0.0-1.0)
+	User       interface{}            // User identifier for tracking
+	Userip     string                 // User IP for tracking
+	Proxy      globals.ProxyConfig
 }
 
 // CreateImageRequest calls Cloudflare Workers AI to generate an image
@@ -89,6 +91,8 @@ func (c *ChatInstance) CreateImageRequest(props ImageProps) (string, error) {
 			NumSteps:  numSteps,
 			ImageB64:  inputImage,
 			MaskImage: maskImage, // Use mask_image parameter name for inpainting
+			User:      props.User,
+			Userip:    props.Userip,
 		}
 		requestBodyBytes, err = json.Marshal(inpaintingBody)
 	} else {
@@ -103,6 +107,8 @@ func (c *ChatInstance) CreateImageRequest(props ImageProps) (string, error) {
 			ImageB64: inputImage,
 			MaskB64:  maskImage,
 			Strength: strength,
+			User:     props.User,
+			Userip:   props.Userip,
 		}
 		requestBodyBytes, err = json.Marshal(requestBody)
 	}
@@ -347,6 +353,8 @@ func (c *ChatInstance) CreateImage(props *adaptercommon.ChatProps) (string, erro
 		InputImage: inputImage,
 		MaskImage:  maskImage,
 		Strength:   requestStrength,
+		User:       props.User,
+		Userip:     props.Ip,
 		Proxy:      props.Proxy,
 	})
 

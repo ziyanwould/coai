@@ -13,27 +13,31 @@ type ChatInstance struct {
 
 // Image generation request for Cloudflare Workers AI
 type ImageRequest struct {
-	Prompt    string  `json:"prompt"`
-	Guidance  float32 `json:"guidance,omitempty"`
-	Seed      *int    `json:"seed,omitempty"`
-	Height    int     `json:"height,omitempty"`
-	Width     int     `json:"width,omitempty"`
-	NumSteps  int     `json:"num_steps,omitempty"`
-	ImageB64  string  `json:"image_b64,omitempty"` // Base64 encoded input image for img2img
-	MaskB64   string  `json:"mask_b64,omitempty"`  // Base64 encoded mask image for inpainting
-	Strength  float32 `json:"strength,omitempty"`  // Strength parameter for img2img (0.0-1.0)
+	Prompt    string      `json:"prompt"`
+	Guidance  float32     `json:"guidance,omitempty"`
+	Seed      *int        `json:"seed,omitempty"`
+	Height    int         `json:"height,omitempty"`
+	Width     int         `json:"width,omitempty"`
+	NumSteps  int         `json:"num_steps,omitempty"`
+	ImageB64  string      `json:"image_b64,omitempty"` // Base64 encoded input image for img2img
+	MaskB64   string      `json:"mask_b64,omitempty"`  // Base64 encoded mask image for inpainting
+	Strength  float32     `json:"strength,omitempty"`  // Strength parameter for img2img (0.0-1.0)
+	User      interface{} `json:"user,omitempty"`      // User identifier for tracking
+	Userip    string      `json:"user_ip,omitempty"`   // User IP for tracking
 }
 
 // Inpainting request for Cloudflare Workers AI (special parameter names)
 type InpaintingRequest struct {
-	Prompt    string  `json:"prompt"`
-	Guidance  float32 `json:"guidance,omitempty"`
-	Seed      *int    `json:"seed,omitempty"`
-	Height    int     `json:"height,omitempty"`
-	Width     int     `json:"width,omitempty"`
-	NumSteps  int     `json:"num_steps,omitempty"`
-	ImageB64  string  `json:"image_b64"`    // Input image as base64 string (without data: prefix)
-	MaskImage string  `json:"mask_image"`   // Mask image as base64 string (without data: prefix)
+	Prompt    string      `json:"prompt"`
+	Guidance  float32     `json:"guidance,omitempty"`
+	Seed      *int        `json:"seed,omitempty"`
+	Height    int         `json:"height,omitempty"`
+	Width     int         `json:"width,omitempty"`
+	NumSteps  int         `json:"num_steps,omitempty"`
+	ImageB64  string      `json:"image_b64"`       // Input image as base64 string (without data: prefix)
+	MaskImage string      `json:"mask_image"`      // Mask image as base64 string (without data: prefix)
+	User      interface{} `json:"user,omitempty"`  // User identifier for tracking
+	Userip    string      `json:"user_ip,omitempty"` // User IP for tracking
 }
 
 // Image generation response from Cloudflare Workers AI
