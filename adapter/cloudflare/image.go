@@ -148,10 +148,14 @@ func (c *ChatInstance) CreateImageRequest(props ImageProps) (string, error) {
 
 // CreateImage generates an image using Cloudflare Workers AI and returns markdown
 func (c *ChatInstance) CreateImage(props *adaptercommon.ChatProps) (string, error) {
+	fmt.Printf("[DEBUG] CreateImage called with model: %s\n", props.Model)
+
 	prompt := c.GetLatestPrompt(props)
 	if prompt == "" {
 		return "", fmt.Errorf("empty prompt")
 	}
+
+	fmt.Printf("[DEBUG] Prompt: %s\n", prompt)
 
 	// Parse model to check if it's a supported image model
 	if !c.IsImageModel(props.Model) {
@@ -202,10 +206,15 @@ func (c *ChatInstance) CreateImage(props *adaptercommon.ChatProps) (string, erro
 					maskImage = mask.ToRawBase64()
 					fmt.Printf("[DEBUG] Mask image processed successfully, length: %d\n", len(maskImage))
 				} else {
-					// Create a simple center mask for inpainting
-					// For now, we'll return an error asking for a mask
-					fmt.Printf("[DEBUG] Insufficient images for inpainting: only %d found\n", len(images))
-					return "", fmt.Errorf("修复模型 %s 需要提供遮罩图片。请上传两张图片：原图和遮罩图（黑白图，白色区域为要修复的部分）", props.Model)
+					// For inpainting with single image, return special response to trigger frontend canvas
+					fmt.Printf("[DEBUG] Single image for inpainting - triggering canvas mode\n")
+					return fmt.Sprintf(`请使用涂鸦工具标记要修复的区域：
+
+![需要修复的图片](%s)
+
+<div class="inpainting-trigger" data-image="%s" data-model="%s" data-prompt="%s">
+点击开始涂鸦标记
+</div>`, inputImage, inputImage, props.Model, prompt), nil
 				}
 			}
 		} else {

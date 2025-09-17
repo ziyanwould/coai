@@ -11,6 +11,7 @@ import Label from "@/components/markdown/Label.tsx";
 import Link from "@/components/markdown/Link.tsx";
 import Code, { CodeProps } from "@/components/markdown/Code.tsx";
 import { MarkdownImage } from "@/components/plugins/image.tsx";
+import { InpaintingTrigger } from "@/components/plugins/InpaintingTrigger.tsx";
 
 type MarkdownProps = {
   children: string;
@@ -56,6 +57,19 @@ function MarkdownContent({
           enableDownload={enableImageDownload}
         />
       ),
+      div: (props: any) => {
+        // Check if this is an inpainting trigger div
+        if (props.className === 'inpainting-trigger' && props['data-image'] && props['data-prompt']) {
+          return (
+            <InpaintingTrigger
+              imageUrl={props['data-image']}
+              prompt={props['data-prompt']}
+            />
+          );
+        }
+        // Regular div
+        return <div {...props} />;
+      },
     };
   }, [codeStyle, enableImageDownload]);
 

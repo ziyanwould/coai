@@ -313,7 +313,7 @@ function MessageContent({
                   <Markdown
                     loading={message.end === false}
                     children={parsedContent.restContent}
-                    acceptHtml={false}
+                    acceptHtml={parsedContent.restContent.includes('inpainting-trigger')}
                     enableImageDownload={!isUser}
                   />
                 )}
@@ -322,7 +322,7 @@ function MessageContent({
               <Markdown
                 loading={message.end === false}
                 children={message.content}
-                acceptHtml={false}
+                acceptHtml={message.content.includes('inpainting-trigger')}
                 enableImageDownload={!isUser}
               />
             )}
