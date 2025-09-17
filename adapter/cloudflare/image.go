@@ -39,7 +39,7 @@ type ImageProps struct {
 
 // CreateImageRequest calls Cloudflare Workers AI to generate an image
 func (c *ChatInstance) CreateImageRequest(props ImageProps) (string, error) {
-	isInpainting := strings.Contains(props.Model, "inpainting")
+	isInpainting := strings.Contains(strings.ToLower(props.Model), "inpainting")
 
 	// Set default values
 	guidance := props.Guidance
@@ -70,7 +70,6 @@ func (c *ChatInstance) CreateImageRequest(props ImageProps) (string, error) {
 	var requestBodyBytes []byte
 	var err error
 
-	// Use the standard ImageRequest format for all models, including inpainting
 	// Extract pure base64 for inpainting models if needed
 	inputImage := props.InputImage
 	maskImage := props.MaskImage
@@ -78,22 +77,35 @@ func (c *ChatInstance) CreateImageRequest(props ImageProps) (string, error) {
 	if isInpainting {
 		inputImage = extractPureBase64(props.InputImage)
 		maskImage = extractPureBase64(props.MaskImage)
-		fmt.Printf("[DEBUG] Using inpainting with image_b64 length: %d, mask_b64 length: %d\n", len(inputImage), len(maskImage))
-	}
+		fmt.Printf("[DEBUG] Using inpainting with image_b64 length: %d, mask_image length: %d\n", len(inputImage), len(maskImage))
 
-	requestBody := ImageRequest{
-		Prompt:   props.Prompt,
-		Guidance: guidance,
-		Seed:     props.Seed,
-		Height:   height,
-		Width:    width,
-		NumSteps: numSteps,
-		ImageB64: inputImage,
-		MaskB64:  maskImage,
-		Strength: strength,
+		// Use InpaintingRequest for inpainting models with correct parameter names
+		inpaintingBody := InpaintingRequest{
+			Prompt:    props.Prompt,
+			Guidance:  guidance,
+			Seed:      props.Seed,
+			Height:    height,
+			Width:     width,
+			NumSteps:  numSteps,
+			ImageB64:  inputImage,
+			MaskImage: maskImage, // Use mask_image parameter name for inpainting
+		}
+		requestBodyBytes, err = json.Marshal(inpaintingBody)
+	} else {
+		// Use standard ImageRequest for non-inpainting models
+		requestBody := ImageRequest{
+			Prompt:   props.Prompt,
+			Guidance: guidance,
+			Seed:     props.Seed,
+			Height:   height,
+			Width:    width,
+			NumSteps: numSteps,
+			ImageB64: inputImage,
+			MaskB64:  maskImage,
+			Strength: strength,
+		}
+		requestBodyBytes, err = json.Marshal(requestBody)
 	}
-
-	requestBodyBytes, err = json.Marshal(requestBody)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal request: %v", err)
 	}
@@ -148,14 +160,17 @@ func (c *ChatInstance) CreateImageRequest(props ImageProps) (string, error) {
 
 // CreateImage generates an image using Cloudflare Workers AI and returns markdown
 func (c *ChatInstance) CreateImage(props *adaptercommon.ChatProps) (string, error) {
-	fmt.Printf("[DEBUG] CreateImage called with model: %s\n", props.Model)
+	fmt.Printf("[DEBUG] ========== CreateImage START ==========\n")
+	fmt.Printf("[DEBUG] Original model name: '%s'\n", props.Model)
+	fmt.Printf("[DEBUG] Model name lowercased: '%s'\n", strings.ToLower(props.Model))
+	fmt.Printf("[DEBUG] Contains 'inpainting': %v\n", strings.Contains(strings.ToLower(props.Model), "inpainting"))
 
 	prompt := c.GetLatestPrompt(props)
 	if prompt == "" {
 		return "", fmt.Errorf("empty prompt")
 	}
 
-	fmt.Printf("[DEBUG] Prompt: %s\n", prompt)
+	fmt.Printf("[DEBUG] Prompt: '%s'\n", prompt)
 
 	// Parse model to check if it's a supported image model
 	if !c.IsImageModel(props.Model) {
@@ -167,8 +182,14 @@ func (c *ChatInstance) CreateImage(props *adaptercommon.ChatProps) (string, erro
 	content, images := utils.ExtractImages(prompt, true)
 	prompt = strings.TrimSpace(content) // Clean prompt text
 
-	isInpainting := strings.Contains(props.Model, "inpainting")
+	isInpainting := strings.Contains(strings.ToLower(props.Model), "inpainting")
 	isImg2Img := globals.IsCloudflareImg2ImgModel(props.Model)
+
+	fmt.Printf("[DEBUG] After image extraction:\n")
+	fmt.Printf("[DEBUG] - Cleaned prompt: '%s'\n", prompt)
+	fmt.Printf("[DEBUG] - Number of images extracted: %d\n", len(images))
+	fmt.Printf("[DEBUG] - isInpainting: %v\n", isInpainting)
+	fmt.Printf("[DEBUG] - isImg2Img: %v\n", isImg2Img)
 
 	// Debug logging for inpainting
 	if isInpainting {
@@ -197,24 +218,50 @@ func (c *ChatInstance) CreateImage(props *adaptercommon.ChatProps) (string, erro
 			if isInpainting {
 				fmt.Printf("[DEBUG] Processing inpainting - found %d images\n", len(images))
 				if len(images) > 1 {
-					// User provided both image and mask
-					fmt.Printf("[DEBUG] Processing mask image from images[1]\n")
-					mask, err := utils.NewImage(images[1])
-					if err != nil {
-						return "", fmt.Errorf("failed to process mask image: %v", err)
-					}
-					maskImage = mask.ToRawBase64()
-					fmt.Printf("[DEBUG] Mask image processed successfully, length: %d\n", len(maskImage))
-				} else {
-					// For inpainting with single image, return special response to trigger frontend canvas
-					fmt.Printf("[DEBUG] Single image for inpainting - triggering canvas mode\n")
-					return fmt.Sprintf(`请使用涂鸦工具标记要修复的区域：
+					// Check if the two images are different (not duplicates)
+					if images[0] != images[1] {
+						// User provided both image and mask
+						fmt.Printf("[DEBUG] Processing mask image from images[1] (different from image 0)\n")
+						mask, err := utils.NewImage(images[1])
+						if err != nil {
+							return "", fmt.Errorf("failed to process mask image: %v", err)
+						}
+						maskImage = mask.ToRawBase64()
+						fmt.Printf("[DEBUG] Mask image processed successfully, length: %d\n", len(maskImage))
+					} else {
+						// Two identical images - treat as single image for inpainting
+						fmt.Printf("[DEBUG] Found duplicate images - treating as single image for inpainting\n")
+						fmt.Printf("[DEBUG] Single image for inpainting - triggering canvas mode\n")
+						fmt.Printf("[DEBUG] Returning inpainting trigger with:\n")
+						fmt.Printf("[DEBUG] - inputImage length: %d\n", len(inputImage))
+						fmt.Printf("[DEBUG] - model: %s\n", props.Model)
+						fmt.Printf("[DEBUG] - prompt: %s\n", prompt)
+						result := fmt.Sprintf(`请使用涂鸦工具标记要修复的区域：
 
 ![需要修复的图片](%s)
 
 <div class="inpainting-trigger" data-image="%s" data-model="%s" data-prompt="%s">
 点击开始涂鸦标记
-</div>`, inputImage, inputImage, props.Model, prompt), nil
+</div>`, inputImage, inputImage, props.Model, prompt)
+						fmt.Printf("[DEBUG] Generated result: %s\n", result)
+						return result, nil
+					}
+				} else {
+					// For inpainting with single image, return special response to trigger frontend canvas
+					fmt.Printf("[DEBUG] Single image for inpainting - triggering canvas mode\n")
+					fmt.Printf("[DEBUG] Returning inpainting trigger with:\n")
+					fmt.Printf("[DEBUG] - inputImage length: %d\n", len(inputImage))
+					fmt.Printf("[DEBUG] - model: %s\n", props.Model)
+					fmt.Printf("[DEBUG] - prompt: %s\n", prompt)
+					result := fmt.Sprintf(`请使用涂鸦工具标记要修复的区域：
+
+![需要修复的图片](%s)
+
+<div class="inpainting-trigger" data-image="%s" data-model="%s" data-prompt="%s">
+点击开始涂鸦标记
+</div>`, inputImage, inputImage, props.Model, prompt)
+					fmt.Printf("[DEBUG] Generated result: %s\n", result)
+					return result, nil
 				}
 			}
 		} else {

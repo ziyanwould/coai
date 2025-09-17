@@ -334,7 +334,17 @@ func ExtractBase64Images(data string) []string {
 		}
 	}
 
-	return cleanedMatches
+	// Remove duplicates
+	uniqueMatches := make([]string, 0)
+	seen := make(map[string]bool)
+	for _, match := range cleanedMatches {
+		if !seen[match] {
+			seen[match] = true
+			uniqueMatches = append(uniqueMatches, match)
+		}
+	}
+
+	return uniqueMatches
 }
 
 func ExtractExternalImages(data string) []string {

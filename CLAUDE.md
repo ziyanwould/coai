@@ -29,6 +29,9 @@ Main entry point is `main.go`:
 - `docker-compose up -d` - Run full stack (latest)
 - `docker-compose -f docker-compose.stable.yaml up -d` - Stable version
 - `docker-compose -f docker-compose.watch.yaml up -d` - With auto-updates
+- `docker build -t chatniolocal .` - Build local Docker image
+- `docker tag chatniolocal:latest harbor.ipv6.liujiarong.top:8024/library/chatniolocal:test` - Tag for Harbor
+- `docker push harbor.ipv6.liujiarong.top:8024/library/chatniolocal:test` - Push to Harbor registry
 
 ## Architecture Overview
 
@@ -86,6 +89,33 @@ The application requires:
 - **PWA Support**: Progressive Web App capabilities
 - **Internationalization**: Multi-language support (CN, US, JP, RU)
 - **Preset System**: Custom AI model presets with cloud sync
+- **Image Generation**: Advanced support for Cloudflare Workers AI image models including inpainting functionality
+- **Interactive Inpainting**: Built-in canvas drawing tool for mask creation in image editing workflows
+
+## Recent Major Updates (2025-09)
+
+### Cloudflare Workers AI Image Generation Enhancement
+- **Multi-Format Response Handling**: Added support for both JSON and binary response formats from Cloudflare API
+- **Model Support Expansion**: Fixed display issues for Flux, Leonardo Phoenix, and Leonardo Lucid-Origin models
+- **Interactive Inpainting Workflow**: Complete implementation of canvas-based mask drawing for inpainting models
+
+### Technical Implementations
+- **Backend** (`adapter/cloudflare/`):
+  - Dual response format detection (JSON vs binary)
+  - Enhanced parameter handling for inpainting models
+  - Improved base64 image processing with deduplication
+  - Model-specific parameter optimization
+
+- **Frontend** (`app/src/components/plugins/`):
+  - `InpaintingCanvas.tsx`: Full-featured drawing canvas with brush/eraser tools
+  - `InpaintingTrigger.tsx`: UI component for launching inpainting workflow
+  - Enhanced Markdown rendering for custom inpainting triggers
+
+### Bug Fixes
+- Fixed duplicate image extraction in `utils/char.go`
+- Corrected API parameter naming (`mask_image` vs `mask_b64`)
+- Resolved case-sensitive model detection issues
+- Enhanced error handling and debug logging
 
 ## Testing and Quality
 
@@ -93,3 +123,4 @@ The application requires:
 - Prettier for code formatting
 - No explicit test commands found - verify testing approach in project
 - Check Docker health and database connectivity before deployment
+- **Development Testing**: Use `harbor.ipv6.liujiarong.top:8024/library/chatniolocal:test` for latest features
