@@ -29,6 +29,7 @@ const (
 	DifyChannelType        = "dify"
 	CozeChannelType        = "coze"
 	CloudflareChannelType  = "cloudflare"
+	SiliconFlowChannelType = "siliconflow"
 )
 
 const (

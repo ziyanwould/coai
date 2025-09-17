@@ -155,6 +155,11 @@ const (
 	CloudflareSDXLLightning      = "@cf/bytedance/stable-diffusion-xl-lightning"
 	CloudflareSDXLBase           = "@cf/stabilityai/stable-diffusion-xl-base-1.0"
 	CloudflareSDImg2Img          = "@cf/runwayml/stable-diffusion-v1-5-img2img"
+
+	// SiliconFlow AI models
+	SiliconFlowQwenImage         = "Qwen/Qwen-Image"
+	SiliconFlowQwenImageEdit     = "Qwen/Qwen-Image-Edit"
+	SiliconFlowKolors            = "Kwai-Kolors/Kolors"
 )
 
 var OpenAIDalleModels = []string{
@@ -181,11 +186,22 @@ var CloudflareImg2ImgModels = []string{
 	CloudflareSDInpainting,
 }
 
+var SiliconFlowImageModels = []string{
+	SiliconFlowQwenImage,
+	SiliconFlowQwenImageEdit,
+	SiliconFlowKolors,
+}
+
+var SiliconFlowImg2ImgModels = []string{
+	SiliconFlowQwenImageEdit,
+}
+
 var VisionModels = []string{
 	GPT4VisionPreview, GPT41106VisionPreview, GPT4Turbo, GPT4Turbo20240409, GPT4O, GPT4O20240513, // openai
 	GeminiProVision, Gemini15ProLatest, Gemini15FlashLatest, // gemini
 	Claude3,             // anthropic
 	ZhiPuChatGLM4Vision, // chatglm
+	SiliconFlowQwenImageEdit, // siliconflow image editing (needs input image)
 }
 
 var VisionSkipModels = []string{
@@ -219,6 +235,16 @@ func IsCloudflareImageModel(model string) bool {
 func IsCloudflareImg2ImgModel(model string) bool {
 	// check if model supports image-to-image generation
 	return in(model, CloudflareImg2ImgModels)
+}
+
+func IsSiliconFlowImageModel(model string) bool {
+	// using image generation api if model is in siliconflow models
+	return in(model, SiliconFlowImageModels)
+}
+
+func IsSiliconFlowImg2ImgModel(model string) bool {
+	// check if model supports image-to-image editing
+	return in(model, SiliconFlowImg2ImgModels)
 }
 
 func IsVisionModel(model string) bool {

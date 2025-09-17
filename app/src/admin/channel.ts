@@ -70,6 +70,7 @@ export const ChannelTypes: Record<string, string> = {
   dify: "Dify",
   coze: "扣子 Coze",
   cloudflare: "Cloudflare Workers AI",
+  siliconflow: "硅基流动 SiliconFlow",
 };
 
 export const ShortChannelTypes: Record<string, string> = {
@@ -93,6 +94,7 @@ export const ShortChannelTypes: Record<string, string> = {
   dify: "Dify",
   coze: "Coze",
   cloudflare: "Cloudflare",
+  siliconflow: "硅基流动",
 };
 
 export const ChannelInfos: Record<string, ChannelInfo> = {
@@ -333,6 +335,24 @@ export const ChannelInfos: Record<string, ChannelInfo> = {
       "> **重要**：请将<account_id>替换为你的实际Cloudflare账户ID，不要包含尖括号 \n" +
       "> 所有模型均支持文本到图片生成，包括：Flux、Stable Diffusion、DreamShaper等 \n" +
       "> 支持参数调整：guidance、seed、width、height、steps等 \n",
+  },
+  siliconflow: {
+    endpoint: "https://api.siliconflow.cn/v1",
+    format: "<api-key>",
+    models: [
+      "Qwen/Qwen-Image",
+      "Qwen/Qwen-Image-Edit",
+      "Kwai-Kolors/Kolors",
+    ],
+    description:
+      "> 硅基流动 SiliconFlow 专门用于AI图片生成的渠道类型，支持通义千问和快手可图模型 \n" +
+      "> 支持文生图和图像编辑功能，Qwen-Image-Edit 需要上传原始图片进行编辑 \n" +
+      "> 密钥格式为 **api-key**，即你从硅基流动控制台获取的API密钥 \n" +
+      "> 接入点填写 *https://api.siliconflow.cn/v1* \n" +
+      "> **Qwen/Qwen-Image**: 通义千问文生图模型，支持高质量图像生成 \n" +
+      "> **Qwen/Qwen-Image-Edit**: 通义千问图像编辑模型，需要上传图片+编辑提示词 \n" +
+      "> **Kwai-Kolors/Kolors**: 快手可图模型，支持中文提示词和艺术风格 \n" +
+      "> 支持参数调整：cfg、guidance_scale、num_inference_steps、image_size等 \n",
   },
 };
 
