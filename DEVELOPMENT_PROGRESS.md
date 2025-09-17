@@ -198,6 +198,75 @@ type InpaintingRequest struct {
 isInpainting := strings.Contains(strings.ToLower(props.Model), "inpainting")
 ```
 
+### 用户追踪功能增强 (2025-09-17)
+
+**开发背景**: 为了让上游中间件能够正确识别用户和收集统计信息，需要在 Cloudflare 图像生成请求中添加用户标识字段。
+
+**技术实现**:
+
+**1. 结构体字段添加**
+- **文件**: `adapter/cloudflare/types.go`
+- **修改**: 为 `ImageRequest` 和 `InpaintingRequest` 添加用户字段
+```go
+type ImageRequest struct {
+    // ... 其他字段
+    User      interface{} `json:"user,omitempty"`      // 用户标识
+    Userip    string      `json:"user_ip,omitempty"`   // 用户IP
+}
+
+type InpaintingRequest struct {
+    // ... 其他字段
+    User      interface{} `json:"user,omitempty"`      // 用户标识
+    Userip    string      `json:"user_ip,omitempty"`   // 用户IP
+}
+```
+
+**2. 数据传递链路**
+- **文件**: `adapter/cloudflare/image.go`
+- **修改**: 完善数据传递链路
+```go
+// ImageProps 结构体添加字段
+type ImageProps struct {
+    // ... 其他字段
+    User       interface{}            // 用户标识
+    Userip     string                 // 用户IP
+}
+
+// CreateImage 函数传递用户信息
+base64Data, err := c.CreateImageRequest(ImageProps{
+    // ... 其他字段
+    User:       props.User,     // 从 ChatProps 获取
+    Userip:     props.Ip,       // 从 ChatProps 获取
+})
+
+// CreateImageRequest 函数设置请求体
+requestBody := ImageRequest{
+    // ... 其他字段
+    User:     props.User,
+    Userip:   props.Userip,
+}
+```
+
+**3. 上游兼容性**
+- **JSON 输出格式**:
+```json
+{
+  "prompt": "用户提示词",
+  "user": "用户标识",
+  "user_ip": "用户IP地址"
+}
+```
+- **上游获取方式**:
+```javascript
+const ip = req.body.user_ip || req.headers['x-user-ip'] || req.ip;
+const userId = req.body.user || req.headers['x-user-id'];
+```
+
+**4. 一致性设计**
+- 参考 OpenAI adapter 的实现模式
+- 保持字段名称和数据类型一致
+- 确保所有 AI 提供商的用户追踪功能统一
+
 ### 技术亮点
 
 **1. 错误追踪与调试**

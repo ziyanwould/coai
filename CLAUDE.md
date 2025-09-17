@@ -117,6 +117,11 @@ The application requires:
 - Resolved case-sensitive model detection issues
 - Enhanced error handling and debug logging
 
+### User Tracking Enhancement (2025-09-17)
+- **User Identification**: Added `user` and `user_ip` fields to Cloudflare image generation requests
+- **Middleware Compatibility**: Ensures upstream middleware can properly track users and collect statistics
+- **Consistent Implementation**: Matches OpenAI adapter pattern for unified user tracking across providers
+
 ## Testing and Quality
 
 - ESLint configuration with TypeScript support
