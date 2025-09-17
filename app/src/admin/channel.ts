@@ -69,6 +69,7 @@ export const ChannelTypes: Record<string, string> = {
   deepseek: "深度求索 DeepSeek",
   dify: "Dify",
   coze: "扣子 Coze",
+  cloudflare: "Cloudflare Workers AI",
 };
 
 export const ShortChannelTypes: Record<string, string> = {
@@ -91,6 +92,7 @@ export const ShortChannelTypes: Record<string, string> = {
   deepseek: "深度求索",
   dify: "Dify",
   coze: "Coze",
+  cloudflare: "Cloudflare",
 };
 
 export const ChannelInfos: Record<string, ChannelInfo> = {
@@ -309,6 +311,28 @@ export const ChannelInfos: Record<string, ChannelInfo> = {
       "> 例如 [https://www.coze.cn/space/341****/bot/73428668*****](https://www.coze.cn/space/341****/bot/73428668*****)，智能体 ID 为 73428668***** \n" +
       "> 确保当前使用的访问密钥已被授予智能体所属空间的 chat 权限 \n" +
       "> 如果需要让系统自动适配扣子 Coze 平台的图标（商业版 / Pro），请在 **模型映射** 中将 **bot_id** 映射为 **coze** 开头的模型，如 coze-chat>73428668***** \n",
+  },
+  cloudflare: {
+    endpoint: "https://api.cloudflare.com/client/v4/accounts/<account_id>/ai/run",
+    format: "<api-token>",
+    models: [
+      "@cf/black-forest-labs/flux-1-schnell",
+      "@cf/lykon/dreamshaper-8-lcm",
+      "@cf/leonardo/phoenix-1.0",
+      "@cf/leonardo/lucid-origin",
+      "@cf/bytedance/stable-diffusion-xl-lightning",
+      "@cf/stabilityai/stable-diffusion-xl-base-1.0",
+      "@cf/runwayml/stable-diffusion-v1-5-img2img",
+      "@cf/runwayml/stable-diffusion-v1-5-inpainting",
+    ],
+    description:
+      "> Cloudflare Workers AI 专门用于AI图片生成的渠道类型，支持多种stable diffusion和flux模型 \n" +
+      "> 支持图生图模型 (img2img) 和修复模型 (inpainting)，上传图片附件即可使用 \n" +
+      "> 密钥格式为 **api-token**，即你的 Cloudflare API Token \n" +
+      "> 接入点需要包含你的账户ID，格式为 *https://api.cloudflare.com/client/v4/accounts/你的账户ID/ai/run* \n" +
+      "> **重要**：请将<account_id>替换为你的实际Cloudflare账户ID，不要包含尖括号 \n" +
+      "> 所有模型均支持文本到图片生成，包括：Flux、Stable Diffusion、DreamShaper等 \n" +
+      "> 支持参数调整：guidance、seed、width、height、steps等 \n",
   },
 };
 

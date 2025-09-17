@@ -314,6 +314,7 @@ function MessageContent({
                     loading={message.end === false}
                     children={parsedContent.restContent}
                     acceptHtml={false}
+                    enableImageDownload={!isUser}
                   />
                 )}
               </>
@@ -322,6 +323,7 @@ function MessageContent({
                 loading={message.end === false}
                 children={message.content}
                 acceptHtml={false}
+                enableImageDownload={!isUser}
               />
             )}
           </>

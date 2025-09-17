@@ -10,6 +10,7 @@ import { cn } from "@/components/ui/lib/utils.ts";
 import Label from "@/components/markdown/Label.tsx";
 import Link from "@/components/markdown/Link.tsx";
 import Code, { CodeProps } from "@/components/markdown/Code.tsx";
+import { MarkdownImage } from "@/components/plugins/image.tsx";
 
 type MarkdownProps = {
   children: string;
@@ -17,6 +18,7 @@ type MarkdownProps = {
   acceptHtml?: boolean;
   codeStyle?: string;
   loading?: boolean;
+  enableImageDownload?: boolean;
 };
 
 function MarkdownContent({
@@ -25,6 +27,7 @@ function MarkdownContent({
   acceptHtml,
   codeStyle,
   loading,
+  enableImageDownload,
 }: MarkdownProps) {
   useEffect(() => {
     document.querySelectorAll(".file-instance").forEach((el) => {
@@ -46,8 +49,15 @@ function MarkdownContent({
       code: (props: CodeProps) => (
         <Code {...props} loading={loading} codeStyle={codeStyle} />
       ),
+      img: (props: { src?: string; alt?: string }) => (
+        <MarkdownImage
+          src={props.src}
+          alt={props.alt}
+          enableDownload={enableImageDownload}
+        />
+      ),
     };
-  }, [codeStyle]);
+  }, [codeStyle, enableImageDownload]);
 
   return (
     <ReactMarkdown
@@ -67,6 +77,7 @@ function Markdown({
   codeStyle,
   className,
   loading,
+  enableImageDownload,
 }: MarkdownProps) {
   const processedContent = useMemo(() => {
     let content = children;
@@ -91,9 +102,10 @@ function Markdown({
         codeStyle={codeStyle}
         className={className}
         loading={loading}
+        enableImageDownload={enableImageDownload}
       />
     ),
-    [processedContent, acceptHtml, codeStyle, className, loading],
+    [processedContent, acceptHtml, codeStyle, className, loading, enableImageDownload],
   );
 }
 type CodeMarkdownProps = MarkdownProps & {

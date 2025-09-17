@@ -145,6 +145,16 @@ const (
 	SkylarkChat                  = "skylark-chat"
 	DeepseekV3                   = "deepseek-chat"
 	DeepseekR1                   = "deepseek-reasoner"
+
+	// Cloudflare Workers AI models
+	CloudflareFlux1Schnell       = "@cf/black-forest-labs/flux-1-schnell"
+	CloudflareDreamshaperLCM     = "@cf/lykon/dreamshaper-8-lcm"
+	CloudflarePhoenix            = "@cf/leonardo/phoenix-1.0"
+	CloudflareLucidOrigin        = "@cf/leonardo/lucid-origin"
+	CloudflareSDInpainting       = "@cf/runwayml/stable-diffusion-v1-5-inpainting"
+	CloudflareSDXLLightning      = "@cf/bytedance/stable-diffusion-xl-lightning"
+	CloudflareSDXLBase           = "@cf/stabilityai/stable-diffusion-xl-base-1.0"
+	CloudflareSDImg2Img          = "@cf/runwayml/stable-diffusion-v1-5-img2img"
 )
 
 var OpenAIDalleModels = []string{
@@ -153,6 +163,22 @@ var OpenAIDalleModels = []string{
 
 var GoogleImagenModels = []string{
 	GoogleImagen002,
+}
+
+var CloudflareImageModels = []string{
+	CloudflareFlux1Schnell,
+	CloudflareDreamshaperLCM,
+	CloudflarePhoenix,
+	CloudflareLucidOrigin,
+	CloudflareSDXLLightning,
+	CloudflareSDXLBase,
+	CloudflareSDInpainting,  // 支持输入图片的修复模型
+	CloudflareSDImg2Img,     // 支持图生图的模型
+}
+
+var CloudflareImg2ImgModels = []string{
+	CloudflareSDImg2Img,
+	CloudflareSDInpainting,
 }
 
 var VisionModels = []string{
@@ -183,6 +209,16 @@ func IsOpenAIDalleModel(model string) bool {
 func IsGoogleImagenModel(model string) bool {
 	// using image generation api if model is in imagen models
 	return in(model, GoogleImagenModels)
+}
+
+func IsCloudflareImageModel(model string) bool {
+	// using image generation api if model is in cloudflare models
+	return in(model, CloudflareImageModels)
+}
+
+func IsCloudflareImg2ImgModel(model string) bool {
+	// check if model supports image-to-image generation
+	return in(model, CloudflareImg2ImgModels)
 }
 
 func IsVisionModel(model string) bool {

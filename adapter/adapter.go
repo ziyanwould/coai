@@ -5,6 +5,7 @@ import (
 	"chat/adapter/baichuan"
 	"chat/adapter/bing"
 	"chat/adapter/claude"
+	"chat/adapter/cloudflare"
 	adaptercommon "chat/adapter/common"
 	"chat/adapter/coze"
 	"chat/adapter/dashscope"
@@ -41,6 +42,7 @@ var channelFactories = map[string]adaptercommon.FactoryCreator{
 	globals.DeepseekChannelType:    deepseek.NewChatInstanceFromConfig,
 	globals.DifyChannelType:        dify.NewChatInstanceFromConfig,
 	globals.CozeChannelType:        coze.NewChatInstanceFromConfig,
+	globals.CloudflareChannelType:  cloudflare.NewChatInstanceFromConfig,
 
 	globals.MoonshotChannelType: openai.NewChatInstanceFromConfig, // openai format
 	globals.GroqChannelType:     openai.NewChatInstanceFromConfig, // openai format
