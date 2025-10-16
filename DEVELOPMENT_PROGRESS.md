@@ -48,6 +48,7 @@ ChatNio 是一个新一代 AIGC 一站式商业解决方案，结合强大的 AP
   - 语法高亮 (react-syntax-highlighter)
   - HTML5 Canvas (图像编辑)
   - PWA 支持
+  - WebSocket (实时通信)
 
 ### 基础设施
 - **容器化**: Docker + Docker Compose
@@ -55,6 +56,440 @@ ChatNio 是一个新一代 AIGC 一站式商业解决方案，结合强大的 AP
 - **开发环境**:
   - nodemon (后端热重载)
   - Vite HMR (前端热重载)
+
+## 快速开始指南
+
+### 环境要求
+
+- **Node.js** >= 16.0.0
+- **Go** >= 1.19
+- **MySQL** >= 8.0
+- **Redis** >= 6.0
+- **Docker** & **Docker Compose**（推荐）
+
+### 本地开发环境搭建
+
+#### 1. 克隆项目
+
+```bash
+git clone https://github.com/Deeptrain-Community/chatnio.git
+cd coai
+```
+
+#### 2. 使用 Docker Compose（推荐）
+
+```bash
+# 启动所有服务
+docker-compose up -d
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f
+```
+
+#### 3. 手动安装
+
+**前端安装：**
+```bash
+cd app
+npm install -g pnpm
+pnpm install
+pnpm dev
+```
+
+**后端安装：**
+```bash
+# 配置数据库连接
+cp config/config.example.yaml config/config.yaml
+# 编辑 config/config.yaml 配置数据库信息
+
+# 编译运行
+go build -o chatnio
+./chatnio
+```
+
+### 项目结构
+
+```
+coai/
+├── app/                    # 前端代码
+│   ├── public/            # 静态资源
+│   ├── src/               # 源代码
+│   │   ├── components/    # React 组件
+│   │   ├── pages/         # 页面组件
+│   │   ├── store/         # Redux store
+│   │   ├── utils/         # 工具函数
+│   │   └── assets/        # 资源文件
+│   ├── package.json       # 前端依赖
+│   └── tailwind.config.js # Tailwind 配置
+├── adapter/               # AI 模型适配器
+├── admin/                 # 管理后台
+├── auth/                  # 认证模块
+├── channel/               # 渠道管理
+├── config/                # 配置文件
+│   └── config.yaml        # 主配置文件
+├── docker/               # Docker 相关文件
+├── utils/                 # 工具函数
+├── go.mod                # Go 依赖
+├── main.go               # Go 入口文件
+├── docker-compose.yaml   # Docker Compose 配置
+└── README.md            # 项目说明
+```
+
+## 开发规范
+
+### 代码规范
+
+#### 前端代码规范
+- 使用 **ESLint** 和 **Prettier** 进行代码格式化
+- 组件命名使用 **PascalCase**
+- 文件命名使用 **kebab-case**
+- 变量命名使用 **camelCase**
+- 常量命名使用 **UPPER_CASE**
+
+```javascript
+// 组件示例
+const ChatComponent = () => {
+  const [messages, setMessages] = useState([]);
+
+  return (
+    <div className="chat-container">
+      {/* 组件内容 */}
+    </div>
+  );
+};
+```
+
+#### 后端代码规范
+- 使用 **gofmt** 进行代码格式化
+- 包命名使用 **lowercase**
+- 函数命名使用 **CamelCase**
+- 变量命名使用 **camelCase**
+- 常量命名使用 **UPPER_SNAKE_CASE**
+
+```go
+// 控制器示例
+func HandleChatRequest(c *gin.Context) {
+    var req ChatRequest
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+    // 处理逻辑
+    c.JSON(http.StatusOK, gin.H{"data": response})
+}
+```
+
+### 分支管理
+
+- `main` - 主分支，用于生产环境
+- `develop` - 开发分支
+- `feature/*` - 功能分支
+- `hotfix/*` - 热修复分支
+- `release/*` - 发布分支
+
+### 提交规范
+
+使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+类型说明：
+- `feat`: 新功能
+- `fix`: 修复 bug
+- `docs`: 文档更新
+- `style`: 代码格式（不影响功能）
+- `refactor`: 重构
+- `test`: 测试相关
+- `chore`: 构建过程或辅助工具的变动
+
+示例：
+```
+feat(chat): add message pagination support
+
+- Add pagination controls to chat interface
+- Implement backend API for message pagination
+- Update database schema for message indexing
+
+Closes #123
+```
+
+### 开发流程
+
+1. **创建功能分支**
+```bash
+git checkout develop
+git pull origin develop
+git checkout -b feature/your-feature-name
+```
+
+2. **开发和测试**
+```bash
+# 运行前端开发服务器
+cd app && pnpm dev
+
+# 运行后端开发服务器
+go run main.go
+
+# 运行测试
+pnpm test        # 前端测试
+go test ./...    # 后端测试
+```
+
+3. **提交代码**
+```bash
+git add .
+git commit -m "feat: add new feature"
+git push origin feature/your-feature-name
+```
+
+4. **创建 Pull Request**
+- 在 GitHub/GitLab 上创建 PR
+- 填写 PR 模板
+- 等待代码审查
+- 合并到 `develop` 分支
+
+## 配置管理
+
+### 环境变量
+
+主要环境变量：
+
+```bash
+# 数据库配置
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_DB=chatnio
+MYSQL_USER=root
+MYSQL_PASSWORD=your_password
+
+# Redis 配置
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# 应用配置
+SECRET=your_jwt_secret_key
+SERVE_STATIC=true
+PORT=8094
+```
+
+### 配置文件
+
+主配置文件 `config/config.yaml`：
+
+```yaml
+app:
+  name: "CoAI"
+  version: "1.0.0"
+  port: 8094
+  debug: true
+
+mysql:
+  host: "${MYSQL_HOST}"
+  port: "${MYSQL_PORT}"
+  database: "${MYSQL_DB}"
+  username: "${MYSQL_USER}"
+  password: "${MYSQL_PASSWORD}"
+
+redis:
+  host: "${REDIS_HOST}"
+  port: "${REDIS_PORT}"
+
+jwt:
+  secret: "${SECRET}"
+  expire: 24h
+```
+
+## 测试
+
+### 前端测试
+
+```bash
+cd app
+
+# 运行所有测试
+pnpm test
+
+# 运行测试并生成覆盖率报告
+pnpm test:coverage
+
+# 监听模式运行测试
+pnpm test:watch
+```
+
+### 后端测试
+
+```bash
+# 运行所有测试
+go test ./...
+
+# 运行测试并生成覆盖率报告
+go test -cover ./...
+
+# 运行特定包的测试
+go test ./pkg/handler
+```
+
+### API 测试
+
+使用 Postman 或 curl 测试 API：
+
+```bash
+# 健康检查
+curl http://localhost:8094/api/health
+
+# 用户登录
+curl -X POST http://localhost:8094/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"root","password":"chatnio123456"}'
+```
+
+## 部署
+
+### Docker 部署
+
+```bash
+# 构建镜像
+docker build -t coai:latest .
+
+# 运行容器
+docker run -d --name coai \
+  --network host \
+  -v ~/config:/config \
+  -v ~/logs:/logs \
+  coai:latest
+```
+
+### Docker Compose 部署
+
+```bash
+# 生产环境部署
+docker-compose -f docker-compose.prod.yaml up -d
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f coai
+```
+
+### 生产环境配置
+
+1. **反向代理配置（Nginx）**
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:8094;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location /ws {
+        proxy_pass http://localhost:8094;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+2. **SSL 证书配置**
+```bash
+# 使用 Let's Encrypt
+certbot --nginx -d your-domain.com
+```
+
+## 故障排除
+
+### 常见问题
+
+1. **数据库连接失败**
+```bash
+# 检查 MySQL 服务状态
+systemctl status mysql
+
+# 检查连接配置
+mysql -h localhost -u root -p
+
+# 查看错误日志
+tail -f logs/error.log
+```
+
+2. **前端构建失败**
+```bash
+# 清除缓存
+pnpm store prune
+
+# 重新安装依赖
+rm -rf node_modules package-lock.json
+pnpm install
+```
+
+3. **Redis 连接问题**
+```bash
+# 检查 Redis 服务
+redis-cli ping
+
+# 查看连接配置
+redis-cli -h localhost -p 6379 info
+```
+
+### 日志查看
+
+```bash
+# 应用日志
+tail -f logs/app.log
+
+# 错误日志
+tail -f logs/error.log
+
+# Docker 日志
+docker-compose logs -f coai
+```
+
+## 性能优化
+
+### 前端优化
+- 使用 React.memo 优化组件渲染
+- 实现虚拟滚动处理大列表
+- 使用 Web Workers 处理重计算
+- 启用 Gzip 压缩
+
+### 后端优化
+- 使用 Redis 缓存热点数据
+- 优化数据库查询和索引
+- 实现连接池管理
+- 使用 goroutine 处理并发
+
+## 安全最佳实践
+
+1. **输入验证** - 严格验证所有用户输入
+2. **SQL 注入防护** - 使用参数化查询
+3. **XSS 防护** - 对输出进行转义
+4. **CSRF 防护** - 使用 CSRF token
+5. **密码安全** - 使用 bcrypt 加密存储
+6. **JWT 安全** - 设置合理的过期时间
+
+## 贡献指南
+
+1. Fork 项目仓库
+2. 创建功能分支
+3. 编写代码和测试
+4. 确保所有测试通过
+5. 提交 Pull Request
+6. 等待代码审查
 
 ## 主要功能模块
 
@@ -498,8 +933,12 @@ docker push harbor.ipv6.liujiarong.top:8024/library/chatniolocal:test
 - **AI 辅助开发**: 使用 Claude Code 进行代码生成和优化
 - **问题驱动**: 基于实际用户问题进行功能开发
 
+## 许可证
+
+本项目采用 Apache-2.0 开源许可证，详情请参阅 [LICENSE](LICENSE) 文件。
+
 ---
 
-**最后更新**: 2025年9月17日
-**文档版本**: v1.1
+**最后更新**: 2025年10月14日
+**文档版本**: v1.2 (合并开发指南)
 **下次更新**: 根据开发进展实时更新
