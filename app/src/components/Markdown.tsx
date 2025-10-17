@@ -11,6 +11,7 @@ import Label from "@/components/markdown/Label.tsx";
 import Link from "@/components/markdown/Link.tsx";
 import Code, { CodeProps } from "@/components/markdown/Code.tsx";
 import { MarkdownImage } from "@/components/plugins/image.tsx";
+import { MarkdownVideo } from "@/components/plugins/video.tsx";
 import { InpaintingTrigger } from "@/components/plugins/InpaintingTrigger.tsx";
 
 type MarkdownProps = {
@@ -50,13 +51,25 @@ function MarkdownContent({
       code: (props: CodeProps) => (
         <Code {...props} loading={loading} codeStyle={codeStyle} />
       ),
-      img: (props: { src?: string; alt?: string }) => (
-        <MarkdownImage
-          src={props.src}
-          alt={props.alt}
-          enableDownload={enableImageDownload}
-        />
-      ),
+      img: (props: { src?: string; alt?: string }) => {
+        // Check if this is a video URL
+        const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.m4v', '.ogv'];
+        const isVideo = props.src && videoExtensions.some(ext =>
+          props.src!.toLowerCase().includes(ext) || props.src!.toLowerCase().endsWith(ext)
+        );
+
+        if (isVideo) {
+          return <MarkdownVideo src={props.src} alt={props.alt} />;
+        }
+
+        return (
+          <MarkdownImage
+            src={props.src}
+            alt={props.alt}
+            enableDownload={enableImageDownload}
+          />
+        );
+      },
       div: (props: any) => {
         // Check if this is an inpainting trigger div
         if (props.className === 'inpainting-trigger' && props['data-image'] && props['data-prompt']) {

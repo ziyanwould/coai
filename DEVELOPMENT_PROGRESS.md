@@ -881,9 +881,171 @@ docker push harbor.ipv6.liujiarong.top:8024/library/chatniolocal:test
 - Docker 容器化部署测试
 - Harbor 仓库版本管理
 
+## Markdown 视频播放功能集成 (2025-10-17)
+
+**开发背景**: 用户需求在 Markdown 渲染的消息中自动显示视频播放器，实现类似图片的内嵌播放体验，而非仅显示视频链接。
+
+### 技术实现
+
+**1. 视频播放器组件开发**
+- **文件**: `app/src/components/plugins/video.tsx`
+- **核心功能**:
+  - 创建 `MarkdownVideo` 组件用于视频渲染
+  - 支持多种视频格式: `.mp4`, `.webm`, `.mov`, `.avi`, `.m4v`, `.ogv`
+  - 自动 MIME 类型检测和适配
+  - HTML5 原生视频控制器（播放、暂停、进度、音量、全屏）
+  - 播放前显示播放按钮 overlay 视觉提示
+  - 响应式设计，自适应容器宽度
+
+**2. Markdown 渲染器增强**
+- **文件**: `app/src/components/Markdown.tsx`
+- **修改内容**:
+  - 导入视频播放器组件
+  - 在 `img` 标签处理器中添加视频 URL 检测逻辑
+  - 自动识别视频链接并渲染为 `MarkdownVideo` 组件
+  ```tsx
+  img: (props: { src?: string; alt?: string }) => {
+    const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.m4v', '.ogv'];
+    const isVideo = props.src && videoExtensions.some(ext =>
+      props.src!.toLowerCase().includes(ext) || props.src!.toLowerCase().endsWith(ext)
+    );
+
+    if (isVideo) {
+      return <MarkdownVideo src={props.src} alt={props.alt} />;
+    }
+    // ... 原图片处理逻辑
+  }
+  ```
+
+**3. 链接组件优化**
+- **文件**: `app/src/components/markdown/Link.tsx`
+- **增强功能**:
+  - 检测 `<a>` 标签中的视频 URL
+  - 在链接文本下方自动嵌入视频播放器
+  - 保留原始链接文本（如"点击查看视频"）
+  ```tsx
+  if (isVideo) {
+    return (
+      <div className="video-link-wrapper">
+        <a href={url} target="_blank" rel="noopener noreferrer">
+          {children}
+        </a>
+        <MarkdownVideo src={url} alt={children?.toString()} />
+      </div>
+    );
+  }
+  ```
+
+**4. 样式系统集成**
+- **文件**: `app/src/assets/markdown/theme.less`
+- **新增样式**:
+  ```less
+  .markdown-body .markdown-video-wrapper {
+    position: relative;
+    display: block;
+    margin: 1rem 0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+
+    video {
+      display: block;
+      width: 100%;
+      background-color: #000;
+      border-radius: 0.5rem;
+    }
+  }
+  ```
+- **暗色主题适配**: 完整支持明暗主题切换
+- **Hover 效果**: 阴影增强交互反馈
+
+### 使用方式
+
+用户可通过以下 Markdown 语法嵌入视频：
+
+```markdown
+# 方式 1: 图片语法（自动识别为视频）
+![视频描述](https://example.com/video.mp4)
+
+# 方式 2: 链接语法（链接下方显示播放器）
+[点击查看视频](https://harbor.example.com/video.mp4)
+```
+
+### 技术特性
+
+- **🎬 自动识别**: 通过文件扩展名智能检测视频 URL
+- **📱 响应式设计**: 视频播放器自适应容器宽度，支持移动端
+- **🎨 UI 一致性**: 与图片渲染样式保持一致的视觉风格
+- **🌙 主题支持**: 完整适配明暗主题切换
+- **⚡ 性能优化**:
+  - 使用 `preload="metadata"` 仅预加载元数据
+  - 懒加载策略，避免影响页面性能
+- **🔊 原生控制**:
+  - 浏览器原生 `<video>` 控件
+  - 支持所有标准功能（播放/暂停/进度/音量/画中画/全屏）
+  - 跨平台兼容性良好
+
+### 关键问题修复
+
+**问题**: 播放按钮 overlay 阻挡视频控件点击
+
+**原因**: 装饰性的播放按钮 overlay 层覆盖在视频元素上方，拦截了所有鼠标事件。
+
+**解决方案**: 添加 CSS `pointer-events-none` 属性
+```tsx
+<div className="... pointer-events-none">
+  <div className="w-16 h-16 rounded-full ...">
+    <Play className="w-8 h-8 text-black ml-1" />
+  </div>
+</div>
+```
+
+**效果**: 鼠标事件穿透 overlay 层，直接触达底层视频控件，保持视觉提示的同时确保交互正常。
+
+### 构建与部署
+
+**前端构建**:
+```bash
+cd app && npm run build
+# ✓ 6538 modules transformed
+# ✓ built in 21.19s
+```
+
+**验证状态**:
+- ✅ TypeScript 编译通过，无类型错误
+- ✅ 视频播放器组件正常渲染
+- ✅ 自动视频格式检测功能正常
+- ✅ 明暗主题样式适配完成
+- ✅ 交互功能测试通过
+
+### 架构亮点
+
+**1. 组件化设计**
+- 独立的 `MarkdownVideo` 组件，职责单一
+- 可复用性强，易于维护和扩展
+- 符合 React 组件最佳实践
+
+**2. 渐进增强**
+- 向后兼容，不影响现有功能
+- 自动检测，无需手动配置
+- 优雅降级，不支持的格式回退到链接
+
+**3. 用户体验优化**
+- 零配置，开箱即用
+- 视觉反馈丰富（播放按钮提示、hover 效果）
+- 移动端友好，触控操作流畅
+
+### 开发工具链
+
+- **开发环境**: React 18 + TypeScript + Vite HMR
+- **构建工具**: Vite 4.5.3 生产构建优化
+- **样式处理**: Tailwind CSS + Less 预处理器
+- **图标库**: Lucide React (Play 图标)
+
 ## 待开发功能规划
 
 ### 短期目标 (1-2 周)
+- [x] Markdown 视频播放功能 (已完成 2025-10-17)
 - [ ] Inpainting 功能用户测试和优化
 - [ ] 更多 Cloudflare 模型支持测试
 - [ ] 图像生成参数微调界面
@@ -894,6 +1056,7 @@ docker push harbor.ipv6.liujiarong.top:8024/library/chatniolocal:test
 - [ ] 批量图像处理
 - [ ] 高级画笔工具 (渐变、纹理)
 - [ ] 模型性能监控面板
+- [ ] 视频播放器增强（字幕支持、播放速度控制）
 
 ### 长期目标 (3-6 月)
 - [ ] 视频生成集成
@@ -939,6 +1102,6 @@ docker push harbor.ipv6.liujiarong.top:8024/library/chatniolocal:test
 
 ---
 
-**最后更新**: 2025年10月14日
-**文档版本**: v1.2 (合并开发指南)
+**最后更新**: 2025年10月17日
+**文档版本**: v1.3 (新增视频播放功能)
 **下次更新**: 根据开发进展实时更新
