@@ -804,7 +804,20 @@
     "community-banner-confirm": "您真的不考慮加入社群與我們一起共建專案或是獲取專案的更新與動態嗎？該橫幅在不清除瀏覽器快取的情況下僅會顯示一次",
     "community-stay": "加入我們",
     "community-close": "確認關閉",
-    "id": "ID"
+    "id": "ID",
+    "vision": {
+      "title": "視覺模型",
+      "description": "在這裡配置支援圖像輸入的視覺模型列表。配置後,系統將正確處理這些模型的影像資料。每行輸入一個模型ID。",
+      "models-label": "視覺模型列表",
+      "models-placeholder": "每行輸入一個模型ID&#10;例如:&#10; gpt-4o-mini&#10; gpt-4-vision-preview&#10; claude-3-opus&#10; gemini-pro-vision",
+      "models-hint": "每行一個模型ID,修改後點選儲存,然後點選應用使配置生效",
+      "save": "儲存配置",
+      "saving": "儲存中...",
+      "refresh": "應用程式配置",
+      "refreshing": "應用中...",
+      "refresh-hint": "點擊&quot;應用程式配置&quot;按鈕使已儲存的配置立即生效。應用後,系統會重新載入視覺模型列表。",
+      "load-error": "載入配置失敗"
+    }
   },
   "mask": {
     "title": "預設設定",

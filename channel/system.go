@@ -84,12 +84,17 @@ type commonState struct {
 	PromptStore bool     `json:"prompt_store" mapstructure:"promptstore"`
 }
 
+type visionState struct {
+	Models []string `json:"models" mapstructure:"models"`
+}
+
 type SystemConfig struct {
 	General generalState `json:"general" mapstructure:"general"`
 	Site    siteState    `json:"site" mapstructure:"site"`
 	Mail    mailState    `json:"mail" mapstructure:"mail"`
 	Search  SearchState  `json:"search" mapstructure:"search"`
 	Common  commonState  `json:"common" mapstructure:"common"`
+	Vision  visionState  `json:"vision" mapstructure:"vision"`
 }
 
 func NewSystemConfig() *SystemConfig {
@@ -129,6 +134,9 @@ func (c *SystemConfig) Load() {
 	globals.SearchEngines = c.GetSearchEngines()
 	globals.SearchImageProxy = c.GetImageProxy()
 	globals.SearchSafeSearch = c.Search.SafeSearch
+
+	// 刷新视觉模型配置
+	utils.RefreshCustomVisionModels(c.Vision.Models)
 }
 
 func (c *SystemConfig) SaveConfig() error {
@@ -170,6 +178,7 @@ func (c *SystemConfig) UpdateConfig(data *SystemConfig) error {
 	c.Mail = data.Mail
 	c.Search = data.Search
 	c.Common = data.Common
+	c.Vision = data.Vision
 
 	utils.ApplySeo(c.General.Title, c.General.Logo)
 	utils.ApplyPWAManifest(c.General.PWAManifest)
@@ -316,4 +325,8 @@ func (c *SystemConfig) AcceptImageStore() bool {
 
 func (c *SystemConfig) SupportRelayPlan() bool {
 	return c.Site.RelayPlan
+}
+
+func (c *SystemConfig) GetVisionModels() []string {
+	return c.Vision.Models
 }

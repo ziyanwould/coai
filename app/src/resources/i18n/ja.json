@@ -749,7 +749,20 @@
     "community-confirm-close": "このお知らせを閉じてもよろしいですか？",
     "community-banner-confirm": "プロジェクトの構築を手伝ったり、更新情報やニュースを受け取るためにコミュニティに参加しないのですか？このバナーは、ブラウザのキャッシュをクリアしない限り1回だけ表示されます",
     "community-stay": "参加する",
-    "community-close": "閉じる"
+    "community-close": "閉じる",
+    "vision": {
+      "title": "ビジュアルモデル",
+      "description": "ここでは、画像入力をサポートするビジュアルモデルのリストを設定します。設定が完了すると、システムはこれらのモデルの画像データを正しく処理します。1行に1つのモデルIDを入力します。",
+      "models-label": "ビジュアルモデルのリスト",
+      "models-placeholder": "1行に1つのモデルIDを入力してください\n例：\ngpt -4 - o - mini\ngpt -4 - vision - preview\nclaude -3 - opus\ngemini - pro - vision",
+      "models-hint": "1行に1つのモデルID、変更後に[保存]をクリックし、[適用]をクリックして構成を有効にします",
+      "save": "設定を保存",
+      "saving": "保存",
+      "refresh": "アプリの設定",
+      "refreshing": "適用しています...",
+      "refresh-hint": "保存した設定をすぐに有効にするには、[設定の適用]ボタンをクリックします。適用すると、ビジュアルモデルのリストが再読み込みされます。",
+      "load-error": "設定の読み込みに失敗しました"
+    }
   },
   "mask": {
     "title": "プリセット設定",

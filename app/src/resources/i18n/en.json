@@ -678,6 +678,19 @@
       "console": "Console",
       "consoleLength": "Number of log entries"
     },
+    "vision": {
+      "title": "Vision Models",
+      "description": "Configure the list of vision models that support image inputs. After configuration, the system will correctly handle image data for these models. Enter one model ID per line.",
+      "models-label": "Vision Model List",
+      "models-placeholder": "Enter one model ID per line\nExamples:\ngpt-4o-mini\ngpt-4-vision-preview\nclaude-3-opus\ngemini-pro-vision",
+      "models-hint": "One model ID per line. Click Save after modification, then click Apply to make the configuration effective",
+      "save": "Save Configuration",
+      "saving": "Saving...",
+      "refresh": "Apply Configuration",
+      "refreshing": "Applying...",
+      "refresh-hint": "Click the \"Apply Configuration\" button to make the saved configuration take effect immediately. After applying, the system will reload the vision model list.",
+      "load-error": "Failed to load configuration"
+    },
     "plan": {
       "enable": "Enable subscriptions",
       "price": "Price",

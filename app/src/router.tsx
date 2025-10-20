@@ -31,6 +31,7 @@ const Subscription = lazyFactor(
   () => import("@/routes/admin/Subscription.tsx"),
 );
 const Logger = lazyFactor(() => import("@/routes/admin/Logger.tsx"));
+const Vision = lazyFactor(() => import("@/routes/admin/Vision.tsx"));
 
 const router = createBrowserRouter(
   [
@@ -195,6 +196,15 @@ const router = createBrowserRouter(
           element: (
             <Suspense>
               <Logger />
+            </Suspense>
+          ),
+        },
+        {
+          id: "admin-vision",
+          path: "vision",
+          element: (
+            <Suspense>
+              <Vision />
             </Suspense>
           ),
         },

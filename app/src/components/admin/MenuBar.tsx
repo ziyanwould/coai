@@ -5,6 +5,7 @@ import {
   BookCopy,
   CalendarRange,
   CloudCog,
+  Eye,
   FileClock,
   Gauge,
   GitFork,
@@ -84,6 +85,11 @@ function MenuBar() {
         title={t("admin.settings")}
         icon={<Settings />}
         path={"/system"}
+      />
+      <MenuItem
+        title={t("admin.vision.title")}
+        icon={<Eye />}
+        path={"/vision"}
       />
       <MenuItem
         title={t("admin.logger.title")}
