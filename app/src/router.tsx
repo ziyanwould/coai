@@ -11,6 +11,7 @@ import React, { Suspense, useEffect } from "react";
 import { useDeeptrain } from "@/conf/env.ts";
 import Register from "@/routes/Register.tsx";
 import Forgot from "@/routes/Forgot.tsx";
+import OAuthCallback from "@/routes/OAuthCallback.tsx";
 import { lazyFactor } from "@/utils/loader.tsx";
 import { useSelector } from "react-redux";
 import { selectAdmin, selectAuthenticated, selectInit } from "@/store/auth.ts";
@@ -72,6 +73,12 @@ const router = createBrowserRouter(
         ),
         ErrorBoundary: NotFound,
       } as any),
+    {
+      id: "oauth-callback",
+      path: "/oauth-success",
+      element: <OAuthCallback />,
+      ErrorBoundary: NotFound,
+    },
     {
       id: "generation",
       path: "/generate",

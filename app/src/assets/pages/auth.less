@@ -84,3 +84,38 @@
     }
   }
 }
+
+.oauth-divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin: 1.5rem 0;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: hsla(var(--border));
+  }
+
+  .oauth-divider-text {
+    padding: 0 0.75rem;
+    color: hsla(var(--text-secondary));
+    font-size: 0.875rem;
+  }
+}
+
+.oauth-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  .oauth-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+  }
+}

@@ -1042,12 +1042,187 @@ cd app && npm run build
 - **样式处理**: Tailwind CSS + Less 预处理器
 - **图标库**: Lucide React (Play 图标)
 
+## Linux.do OAuth2 单点登录集成 (2025-10-20)
+
+### 功能概述
+
+完整集成 Linux.do OAuth2 单点登录功能,用户可使用 Linux.do 账号一键登录 CoAI 系统。
+
+### 技术实现
+
+**后端开发** (Go):
+- **核心文件**: `auth/oauth.go` (新建)
+  - OAuth2 授权流程实现
+  - CSRF 防护 (state 参数验证)
+  - 用户信息获取和解析
+  - 自动注册/登录逻辑
+- **路由注册**: `auth/router.go`
+  - `GET /oauth/linux-do/login` - 生成授权 URL
+  - `GET /callback` - OAuth 回调处理
+- **配置管理**: `config/config.yaml`
+  - Linux.do OAuth 应用配置
+  - Client ID/Secret 管理
+  - 回调地址配置
+
+**前端开发** (React + TypeScript):
+- **登录页面**: `app/src/routes/Auth.tsx`
+  - 添加 "使用 Linux.do 登录" 按钮
+  - OAuth 授权流程触发
+  - 错误处理和用户提示
+- **回调页面**: `app/src/routes/OAuthCallback.tsx` (新建)
+  - Token 接收和验证
+  - 自动跳转到首页
+- **路由配置**: `app/src/router.tsx`
+  - `/oauth-success` 路由注册
+- **样式设计**: `app/src/assets/pages/auth.less`
+  - OAuth 按钮样式
+  - 分隔线设计
+
+### 关键技术特性
+
+**1. 安全机制**
+- **CSRF 防护**: state 参数随机生成,存储在 Redis 10分钟,单次使用后删除
+- **Token 验证**: 完整的 OAuth2 授权码流程
+- **用户追踪**: token 字段存储 `linux_do:{user_id}` 标识
+
+**2. 用户管理**
+- **自动注册**: 新用户自动创建账号,无需手动注册
+- **邮箱绑定**: 通过邮箱识别已有账号,自动登录
+- **用户名生成**: `linux_do_{username}` 格式,冲突时自动添加随机后缀
+
+**3. 数据结构**
+```go
+type LinuxDoUserInfo struct {
+    ID         int64  `json:"id"`        // Linux.do 用户 ID (数字类型)
+    Username   string `json:"username"`  // 用户名
+    Name       string `json:"name"`      // 显示名称
+    Email      string `json:"email"`     // 电子邮箱
+    AvatarURL  string `json:"avatar_url"` // 头像 URL
+}
+```
+
+**4. OAuth2 配置**
+```yaml
+system:
+  oauth:
+    linux_do:
+      enabled: true
+      client_id: "iqrFITZB00hqvayAvSsDIhP9cykpjpqG"
+      client_secret: "6EgtXxqMWg3PZehaEIIT1JmXLSCfL0ax"
+      redirect_url: "https://coai.liujiarong.me/api/callback"
+```
+
+### 开发过程中解决的问题
+
+**1. 双重 API 前缀问题**
+- **问题**: 请求变成 `/api/api/oauth/linux-do/login`
+- **原因**: axios baseURL 设置为 `/api`,前端请求又加了 `/api`
+- **解决**: 前端请求路径改为 `/oauth/linux-do/login`,由 axios 自动加 baseURL
+
+**2. 回调 404 错误**
+- **问题**: 访问 `/callback` 返回 404
+- **原因**: 前后端分离部署,前端 Router 优先匹配
+- **解决**: 修改回调地址为 `/api/callback`,确保请求到达后端
+
+**3. redirect_uri 不匹配**
+- **问题**: `invalid_request` 错误
+- **原因**: 配置文件中的回调地址与 Linux.do 注册的不一致
+- **解决**: 统一回调地址为 `https://coai.liujiarong.me/api/callback`
+
+**4. 用户信息解析失败**
+- **问题**: `json: cannot unmarshal number into Go struct field`
+- **原因**: Linux.do 返回的 `id` 是数字类型,代码定义为字符串
+- **解决**: 将 `LinuxDoUserInfo.ID` 类型从 `string` 改为 `int64`
+
+### 登录流程
+
+```
+1. 用户点击 "使用 Linux.do 登录"
+   ↓
+2. 前端调用 /api/oauth/linux-do/login
+   ↓
+3. 后端生成授权 URL (包含 state 参数)
+   ↓
+4. 跳转到 Linux.do 授权页面
+   ↓
+5. 用户同意授权
+   ↓
+6. Linux.do 回调到 /api/callback?code=xxx&state=xxx
+   ↓
+7. 后端验证 state 参数
+   ↓
+8. 用 code 换取 access_token
+   ↓
+9. 调用 /api/user 获取用户信息
+   ↓
+10. 检查邮箱是否存在
+    ├─ 存在 → 直接登录
+    └─ 不存在 → 自动注册新用户
+   ↓
+11. 生成 JWT token
+   ↓
+12. 重定向到 /oauth-success?token=xxx
+   ↓
+13. 前端验证 token 并跳转到首页
+```
+
+### 配置要求
+
+**Linux.do SSO 应用配置**:
+- **应用名**: coai
+- **应用主页**: https://coai.liujiarong.me
+- **回调地址**: https://coai.liujiarong.me/api/callback
+- **权限范围**: openid, profile, email
+
+**后端配置** (`config/config.yaml`):
+- 设置 `system.oauth.linux_do.enabled: true`
+- 配置 Client ID 和 Client Secret
+- 设置正确的 redirect_url (必须包含 `/api`)
+
+**依赖库**:
+- Go: `golang.org/x/oauth2` (v0.32.0)
+- React: axios (已有)
+
+### 文件清单
+
+| 类型 | 文件路径 | 说明 |
+|------|---------|------|
+| **后端** | `auth/oauth.go` | OAuth 核心逻辑 (新建) |
+| | `auth/router.go` | 路由注册 (修改) |
+| | `config/config.yaml` | OAuth 配置 (修改) |
+| | `config.example.yaml` | 配置模板 (修改) |
+| **前端** | `app/src/routes/Auth.tsx` | 登录页面 (修改) |
+| | `app/src/routes/OAuthCallback.tsx` | 回调页面 (新建) |
+| | `app/src/router.tsx` | 路由配置 (修改) |
+| | `app/src/assets/pages/auth.less` | 样式文件 (修改) |
+| **文档** | `LINUX_DO_OAUTH_SETUP.md` | 配置指南 (新建) |
+
+### 验证状态
+
+- ✅ 后端 OAuth2 授权流程
+- ✅ 前端 UI 集成
+- ✅ CSRF 防护机制
+- ✅ 用户自动注册/登录
+- ✅ 错误处理和日志
+- ✅ 生产环境部署测试
+- ✅ 数据类型兼容性修复
+
+### 技术亮点
+
+1. **完整的 OAuth2 实现**: 严格遵循 RFC 6749 标准
+2. **安全性优先**: state 参数、单次使用、过期控制
+3. **用户体验优化**: 一键登录、自动注册、错误提示
+4. **生产环境适配**: 前后端分离部署支持
+5. **详细的调试日志**: 方便问题排查和维护
+6. **向后兼容**: 不影响现有用户名密码登录方式
+
 ## 待开发功能规划
 
 ### 短期目标 (1-2 周)
 - [x] Markdown 视频播放功能 (已完成 2025-10-17)
+- [x] Linux.do OAuth2 单点登录集成 (已完成 2025-10-20)
 - [ ] Inpainting 功能用户测试和优化
-- [ ] 更多 Cloudflare 模型支持测试
+- [ ] 更多 OAuth 提供商支持 (GitHub、Google)
 - [ ] 图像生成参数微调界面
 - [ ] 错误处理和用户反馈改进
 
@@ -1102,6 +1277,6 @@ cd app && npm run build
 
 ---
 
-**最后更新**: 2025年10月17日
-**文档版本**: v1.3 (新增视频播放功能)
+**最后更新**: 2025年10月20日
+**文档版本**: v1.4 (新增 Linux.do OAuth2 单点登录)
 **下次更新**: 根据开发进展实时更新

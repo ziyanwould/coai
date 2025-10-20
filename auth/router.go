@@ -18,4 +18,8 @@ func Register(app *gin.RouterGroup) {
 	app.POST("/subscribe", SubscribeAPI)
 	app.GET("/invite", InviteAPI)
 	app.GET("/redeem", RedeemAPI)
+
+	// OAuth 路由
+	app.GET("/oauth/linux-do/login", LinuxDoOAuthLoginAPI)
+	app.GET("/callback", LinuxDoOAuthCallbackAPI)
 }

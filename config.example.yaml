@@ -30,3 +30,9 @@ system:
   search:
     endpoint: https://duckduckgo-api.vercel.app
     query: 5
+  oauth:
+    linux_do:
+      enabled: true
+      client_id: ""
+      client_secret: ""
+      redirect_url: "https://coai.drawaspark.com/callback"
