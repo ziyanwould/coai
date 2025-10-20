@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { formReducer, isTextInRange } from "@/utils/form.ts";
 import { doLogin, LoginForm } from "@/api/auth.ts";
 import { getErrorMessage, isEnter } from "@/utils/base.ts";
+import axios from "axios";
 
 function DeepAuth() {
   const { toast } = useToast();
@@ -143,6 +144,26 @@ function Login() {
     }
   };
 
+  const handleLinuxDoLogin = async () => {
+    try {
+      const resp = await axios.get("/oauth/linux-do/login");
+      if (resp.data?.status && resp.data?.url) {
+        window.location.href = resp.data.url;
+      } else {
+        toast({
+          title: t("login-failed"),
+          description: "无法获取 Linux.do 授权链接",
+        });
+      }
+    } catch (err) {
+      console.debug(err);
+      toast({
+        title: t("server-error"),
+        description: t("request-error", { reason: getErrorMessage(err) }),
+      });
+    }
+  };
+
   useEffect(() => {
     // listen to enter key and auto submit
     const listener = async (e: KeyboardEvent) => {
@@ -201,6 +222,23 @@ function Login() {
 
             <Button onClick={onSubmit} className={`mt-2`} loading={true}>
               {t("login")}
+            </Button>
+
+            <div className={`oauth-divider`}>
+              <span className={`oauth-divider-text`}>或</span>
+            </div>
+
+            <Button
+              variant={`outline`}
+              className={`oauth-button`}
+              onClick={handleLinuxDoLogin}
+            >
+              <img
+                src="https://linux.do/uploads/default/original/4X/c/c/d/ccd8c210609d498cbeb3d5201d4c259348447562.png"
+                alt="Linux.do"
+                className={`oauth-icon`}
+              />
+              使用 Linux.do 登录
             </Button>
           </div>
         </CardContent>
