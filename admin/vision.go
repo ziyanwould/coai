@@ -9,7 +9,8 @@ import (
 )
 
 type VisionConfigForm struct {
-	Models []string `json:"models"`
+	Models           []string `json:"models"`
+	TreatAllAsVision bool     `json:"treat_all_as_vision"`
 }
 
 // GetVisionConfigAPI 获取视觉模型配置
@@ -33,6 +34,7 @@ func UpdateVisionConfigAPI(c *gin.Context) {
 
 	// 更新配置
 	channel.SystemInstance.Vision.Models = form.Models
+	channel.SystemInstance.Vision.TreatAllAsVision = form.TreatAllAsVision
 
 	// 保存配置
 	err := channel.SystemInstance.SaveConfig()

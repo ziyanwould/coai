@@ -1216,11 +1216,146 @@ system:
 5. **详细的调试日志**: 方便问题排查和维护
 6. **向后兼容**: 不影响现有用户名密码登录方式
 
+## 视觉模型管理系统增强 (2025-10-21)
+
+**开发背景**: 用户需要更灵活的视觉模型配置管理,并解决配置保存时 OAuth 配置丢失的问题。
+
+### 技术实现
+
+**1. 修复 OAuth 配置丢失 Bug**
+
+**问题根源**:
+- `SystemConfig` 结构体缺少 `OAuth` 字段
+- `viper.Set("system", c)` 保存配置时会覆盖整个 `system` 节点,导致 OAuth 配置丢失
+- `mapstructure` 标签格式不一致导致配置保存后下划线丢失
+
+**解决方案**:
+- **文件**: `channel/system.go:92-104`
+- **添加 OAuth 结构体**:
+  ```go
+  type linuxDoOAuthState struct {
+      Enabled      bool   `json:"enabled" mapstructure:"enabled"`
+      ClientID     string `json:"client_id" mapstructure:"client_id"`
+      ClientSecret string `json:"client_secret" mapstructure:"client_secret"`
+      RedirectURL  string `json:"redirect_url" mapstructure:"redirect_url"`
+  }
+
+  type oauthState struct {
+      LinuxDo linuxDoOAuthState `json:"linux_do" mapstructure:"linux_do"`
+  }
+  ```
+- **在 `SystemConfig` 中添加**: `OAuth oauthState`
+- **在 `UpdateConfig()` 中添加**: `c.OAuth = data.OAuth`
+- **统一 mapstructure 标签**: 使用下划线格式 (`client_id`, `client_secret`, `redirect_url`)
+
+**2. 全局视觉模型开关**
+
+**功能说明**: 添加一个开关,允许将所有模型都当做视觉模型处理,支持图像输入。
+
+**后端实现**:
+- **文件**: `channel/system.go:87-90`
+  ```go
+  type visionState struct {
+      Models           []string `json:"models" mapstructure:"models"`
+      TreatAllAsVision bool     `json:"treat_all_as_vision" mapstructure:"treat_all_as_vision"`
+  }
+  ```
+- **全局变量**: `globals/variables.go:37`
+  ```go
+  var TreatAllAsVision bool // 是否将所有模型都作为视觉模型处理
+  ```
+- **配置加载**: `channel/system.go:154-155`
+  ```go
+  globals.TreatAllAsVision = c.Vision.TreatAllAsVision
+  ```
+- **模型检测逻辑**: `globals/variables.go:252-258`
+  ```go
+  func IsVisionModel(model string) bool {
+      // 如果开启了全局视觉模型开关,所有模型都作为视觉模型处理
+      if TreatAllAsVision {
+          return true
+      }
+      return in(model, VisionModels) && !in(model, VisionSkipModels)
+  }
+  ```
+
+**前端实现**:
+- **类型定义**: `app/src/admin/api/vision.ts:5-8`
+  ```typescript
+  export type VisionConfig = {
+    models: string[];
+    treat_all_as_vision?: boolean;
+  };
+  ```
+- **API 调用**: `app/src/admin/api/vision.ts:23-36`
+- **UI 组件**: `app/src/routes/admin/Vision.tsx:105-119`
+  - 导入 `Switch` 和 `Label` 组件
+  - 添加开关状态管理
+  - 实现切换逻辑
+
+**UI 效果**:
+```
+┌─────────────────────────────────────────────────┐
+│  将所有模型作为视觉模型处理         [Toggle]  │
+│  开启后,所有模型默认都支持图像输入,无需单独配置 │
+└─────────────────────────────────────────────────┘
+```
+
+### 配置文件格式修复
+
+**问题**: Viper 保存配置时使用 `mapstructure` 标签,导致下划线丢失
+
+**解决**: 统一所有 `mapstructure` 标签使用下划线格式
+
+**最终配置格式**:
+```yaml
+system:
+    vision:
+        models:
+            - gpt-5-nano
+            - gpt-4.1-nano
+        treat_all_as_vision: false
+    oauth:
+        linux_do:
+            enabled: true
+            client_id: "xxx"
+            client_secret: "xxx"
+            redirect_url: "https://coai.liujiarong.me/api/callback"
+```
+
+### 文件修改清单
+
+| 类型 | 文件路径 | 说明 |
+|------|---------|------|
+| **后端** | `channel/system.go` | 添加 OAuth 结构体、全局视觉模型开关 |
+| | `globals/variables.go` | 添加全局变量、修改 IsVisionModel 逻辑 |
+| | `admin/vision.go` | 更新 API 支持新字段 |
+| **前端** | `app/src/admin/api/vision.ts` | 更新类型定义和 API 调用 |
+| | `app/src/routes/admin/Vision.tsx` | 添加开关 UI 组件 |
+| **配置** | `config/config.yaml` | 修正配置格式 |
+| | `config.example.yaml` | 同步更新示例配置 |
+
+### 验证状态
+
+- ✅ 后端 Go 代码编译通过
+- ✅ 前端 React 代码编译通过
+- ✅ OAuth 配置保存后不再丢失
+- ✅ 配置格式保持下划线格式
+- ✅ 全局视觉模型开关功能正常
+
+### 技术亮点
+
+1. **配置完整性保障**: 通过完善结构体定义,确保配置保存时不丢失任何字段
+2. **灵活的模型管理**: 支持全局开关和细粒度列表两种配置方式
+3. **格式一致性**: 统一使用下划线格式,避免 Viper 序列化问题
+4. **向后兼容**: 新字段默认值保持原有行为不变
+
 ## 待开发功能规划
 
 ### 短期目标 (1-2 周)
 - [x] Markdown 视频播放功能 (已完成 2025-10-17)
 - [x] Linux.do OAuth2 单点登录集成 (已完成 2025-10-20)
+- [x] 视觉模型管理系统增强 (已完成 2025-10-21)
 - [ ] Inpainting 功能用户测试和优化
 - [ ] 更多 OAuth 提供商支持 (GitHub、Google)
 - [ ] 图像生成参数微调界面
@@ -1277,6 +1412,6 @@ system:
 
 ---
 
-**最后更新**: 2025年10月20日
-**文档版本**: v1.4 (新增 Linux.do OAuth2 单点登录)
+**最后更新**: 2025年10月21日
+**文档版本**: v1.5 (新增视觉模型管理系统增强)
 **下次更新**: 根据开发进展实时更新

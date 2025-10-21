@@ -4,6 +4,7 @@ import { getErrorMessage } from "@/utils/base.ts";
 
 export type VisionConfig = {
   models: string[];
+  treat_all_as_vision?: boolean;
 };
 
 export type VisionResponse = CommonResponse & {
@@ -21,9 +22,13 @@ export async function getVisionConfig(): Promise<VisionResponse> {
 
 export async function updateVisionConfig(
   models: string[],
+  treatAllAsVision?: boolean,
 ): Promise<CommonResponse> {
   try {
-    const response = await axios.post("/admin/vision/config", { models });
+    const response = await axios.post("/admin/vision/config", {
+      models,
+      treat_all_as_vision: treatAllAsVision,
+    });
     return response.data as CommonResponse;
   } catch (e) {
     return { status: false, error: getErrorMessage(e) };

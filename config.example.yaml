@@ -30,6 +30,9 @@ system:
   search:
     endpoint: https://duckduckgo-api.vercel.app
     query: 5
+  vision:
+    models: []
+    treat_all_as_vision: false
   oauth:
     linux_do:
       enabled: true

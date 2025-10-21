@@ -34,6 +34,8 @@ var SearchEngines string    // e.g. "google,bing"
 var SearchImageProxy string // e.g. "True", "False"
 var SearchSafeSearch int    // e.g. 0: None, 1: Moderation, 2: Strict
 
+var TreatAllAsVision bool // 是否将所有模型都作为视觉模型处理
+
 func OriginIsAllowed(uri string) bool {
 	if len(AllowedOrigins) == 0 {
 		// if allowed origins is empty, allow all origins
@@ -248,5 +250,9 @@ func IsSiliconFlowImg2ImgModel(model string) bool {
 }
 
 func IsVisionModel(model string) bool {
+	// 如果开启了全局视觉模型开关,所有模型都作为视觉模型处理
+	if TreatAllAsVision {
+		return true
+	}
 	return in(model, VisionModels) && !in(model, VisionSkipModels)
 }

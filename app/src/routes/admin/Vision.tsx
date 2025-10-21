@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { toastState } from "@/api/common.ts";
 import {
@@ -17,6 +19,7 @@ function Vision() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [models, setModels] = useState<string>("");
+  const [treatAllAsVision, setTreatAllAsVision] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -29,6 +32,7 @@ function Vision() {
         const res = await getVisionConfig();
         if (res.status && res.data) {
           setModels(res.data.models ? res.data.models.join("\n") : "");
+          setTreatAllAsVision(res.data.treat_all_as_vision || false);
         } else if (res.error) {
           toast({
             title: t("admin.vision.load-error"),
@@ -37,6 +41,7 @@ function Vision() {
           });
           // 即使出错也设置空值,让用户可以继续操作
           setModels("");
+          setTreatAllAsVision(false);
         }
       } catch (error) {
         console.error("Failed to load vision config:", error);
@@ -46,6 +51,7 @@ function Vision() {
           variant: "destructive",
         });
         setModels("");
+        setTreatAllAsVision(false);
       } finally {
         setLoading(false);
       }
@@ -61,7 +67,7 @@ function Vision() {
       .map((m) => m.trim())
       .filter((m) => m.length > 0);
 
-    const res = await updateVisionConfig(modelList);
+    const res = await updateVisionConfig(modelList, treatAllAsVision);
     toastState(toast, t, res, true);
     setSaving(false);
   };
@@ -95,6 +101,22 @@ function Vision() {
               {t("admin.vision.description")}
             </AlertDescription>
           </Alert>
+
+          <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/50">
+            <div className="space-y-0.5">
+              <Label htmlFor="treat-all-vision" className="text-base font-medium">
+                将所有模型作为视觉模型处理
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                开启后,所有模型默认都支持图像输入,无需单独配置
+              </p>
+            </div>
+            <Switch
+              id="treat-all-vision"
+              checked={treatAllAsVision}
+              onCheckedChange={setTreatAllAsVision}
+            />
+          </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium">

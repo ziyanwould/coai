@@ -85,7 +85,19 @@ type commonState struct {
 }
 
 type visionState struct {
-	Models []string `json:"models" mapstructure:"models"`
+	Models           []string `json:"models" mapstructure:"models"`
+	TreatAllAsVision bool     `json:"treat_all_as_vision" mapstructure:"treat_all_as_vision"`
+}
+
+type linuxDoOAuthState struct {
+	Enabled      bool   `json:"enabled" mapstructure:"enabled"`
+	ClientID     string `json:"client_id" mapstructure:"client_id"`
+	ClientSecret string `json:"client_secret" mapstructure:"client_secret"`
+	RedirectURL  string `json:"redirect_url" mapstructure:"redirect_url"`
+}
+
+type oauthState struct {
+	LinuxDo linuxDoOAuthState `json:"linux_do" mapstructure:"linux_do"`
 }
 
 type SystemConfig struct {
@@ -95,6 +107,7 @@ type SystemConfig struct {
 	Search  SearchState  `json:"search" mapstructure:"search"`
 	Common  commonState  `json:"common" mapstructure:"common"`
 	Vision  visionState  `json:"vision" mapstructure:"vision"`
+	OAuth   oauthState   `json:"oauth" mapstructure:"oauth"`
 }
 
 func NewSystemConfig() *SystemConfig {
@@ -134,6 +147,9 @@ func (c *SystemConfig) Load() {
 	globals.SearchEngines = c.GetSearchEngines()
 	globals.SearchImageProxy = c.GetImageProxy()
 	globals.SearchSafeSearch = c.Search.SafeSearch
+
+	// 设置全局视觉模型开关
+	globals.TreatAllAsVision = c.Vision.TreatAllAsVision
 
 	// 刷新视觉模型配置
 	utils.RefreshCustomVisionModels(c.Vision.Models)
@@ -179,6 +195,7 @@ func (c *SystemConfig) UpdateConfig(data *SystemConfig) error {
 	c.Search = data.Search
 	c.Common = data.Common
 	c.Vision = data.Vision
+	c.OAuth = data.OAuth
 
 	utils.ApplySeo(c.General.Title, c.General.Logo)
 	utils.ApplyPWAManifest(c.General.PWAManifest)
