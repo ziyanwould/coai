@@ -3,6 +3,7 @@ package utils
 import (
 	"chat/globals"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -34,6 +35,8 @@ func ReadConf() {
 		panic(err)
 	}
 
+	normalizeLinuxDoConfig()
+
 	viper.AutomaticEnv()
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
@@ -41,6 +44,123 @@ func ReadConf() {
 		globals.HttpMaxTimeout = time.Second * time.Duration(timeout)
 		globals.Debug(fmt.Sprintf("[service] http client timeout set to %ds from env", timeout))
 	}
+}
+
+// normalizeLinuxDoConfig ensures legacy linuxdo keys without underscores map to the canonical linux_do keys.
+func normalizeLinuxDoConfig() {
+	const canonicalBase = "system.oauth.linux_do"
+	const altBase = "system.oauth.linuxdo"
+
+	if !viper.IsSet(altBase) {
+		return
+	}
+
+	raw := viper.GetStringMap(altBase)
+	if len(raw) == 0 {
+		return
+	}
+
+	setBoolIfMissing(canonicalBase+".enabled", raw, "enabled")
+	setStringIfMissing(canonicalBase+".client_id", raw, "client_id", "clientid")
+	setStringIfMissing(canonicalBase+".client_secret", raw, "client_secret", "clientsecret")
+	setStringIfMissing(canonicalBase+".redirect_url", raw, "redirect_url", "redirecturl")
+}
+
+func setBoolIfMissing(path string, source map[string]any, key string) {
+	if viper.IsSet(path) {
+		return
+	}
+
+	val, ok := source[key]
+	if !ok {
+		return
+	}
+
+	if boolVal, valid := coerceBool(val); valid {
+		viper.Set(path, boolVal)
+	}
+}
+
+func setStringIfMissing(path string, source map[string]any, keys ...string) {
+	if viper.IsSet(path) {
+		return
+	}
+
+	if strVal, ok := findStringValue(source, keys...); ok {
+		viper.Set(path, strVal)
+	}
+}
+
+func coerceBool(val any) (bool, bool) {
+	switch v := val.(type) {
+	case bool:
+		return v, true
+	case string:
+		str := strings.TrimSpace(v)
+		if str == "" {
+			return false, false
+		}
+
+		parsed, err := strconv.ParseBool(str)
+		if err == nil {
+			return parsed, true
+		}
+		if num, err := strconv.ParseFloat(str, 64); err == nil {
+			return num != 0, true
+		}
+	case int:
+		return v != 0, true
+	case int8:
+		return v != 0, true
+	case int16:
+		return v != 0, true
+	case int32:
+		return v != 0, true
+	case int64:
+		return v != 0, true
+	case uint:
+		return v != 0, true
+	case uint8:
+		return v != 0, true
+	case uint16:
+		return v != 0, true
+	case uint32:
+		return v != 0, true
+	case uint64:
+		return v != 0, true
+	case float32:
+		return v != 0, true
+	case float64:
+		return v != 0, true
+	}
+
+	if num, err := strconv.ParseFloat(fmt.Sprint(val), 64); err == nil {
+		return num != 0, true
+	}
+
+	return false, false
+}
+
+func findStringValue(source map[string]any, keys ...string) (string, bool) {
+	for _, key := range keys {
+		if val, ok := source[key]; ok {
+			if val == nil {
+				continue
+			}
+			switch v := val.(type) {
+			case string:
+				return v, true
+			case fmt.Stringer:
+				return v.String(), true
+			case []byte:
+				return string(v), true
+			}
+
+			return fmt.Sprint(val), true
+		}
+	}
+
+	return "", false
 }
 
 func NewEngine() *gin.Engine {

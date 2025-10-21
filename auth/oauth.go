@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"chat/channel"
 	"chat/globals"
 	"chat/utils"
 	"context"
@@ -15,25 +16,32 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
-	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 )
 
 // LinuxDoUserInfo Linux.do 用户信息结构
 type LinuxDoUserInfo struct {
-	ID         int64  `json:"id"`
-	Username   string `json:"username"`
-	Name       string `json:"name"`
-	Email      string `json:"email"`
-	AvatarURL  string `json:"avatar_url"`
+	ID        int64  `json:"id"`
+	Username  string `json:"username"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 // getLinuxDoOAuthConfig 获取 Linux.do OAuth 配置
 func getLinuxDoOAuthConfig() *oauth2.Config {
+	var clientID, clientSecret, redirectURL string
+	if channel.SystemInstance != nil {
+		state := channel.SystemInstance.OAuth.LinuxDo
+		clientID = state.ClientID
+		clientSecret = state.ClientSecret
+		redirectURL = state.RedirectURL
+	}
+
 	return &oauth2.Config{
-		ClientID:     viper.GetString("system.oauth.linux_do.client_id"),
-		ClientSecret: viper.GetString("system.oauth.linux_do.client_secret"),
-		RedirectURL:  viper.GetString("system.oauth.linux_do.redirect_url"),
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		RedirectURL:  redirectURL,
 		Scopes:       []string{"openid", "profile", "email"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://connect.linux.do/oauth2/authorize",
@@ -44,11 +52,13 @@ func getLinuxDoOAuthConfig() *oauth2.Config {
 
 // isLinuxDoOAuthEnabled 检查 Linux.do OAuth 是否启用
 func isLinuxDoOAuthEnabled() bool {
-	enabled := viper.GetBool("system.oauth.linux_do.enabled")
-	clientID := viper.GetString("system.oauth.linux_do.client_id")
-	clientSecret := viper.GetString("system.oauth.linux_do.client_secret")
+	if channel.SystemInstance == nil {
+		return false
+	}
 
-	return enabled && len(clientID) > 0 && len(clientSecret) > 0
+	state := channel.SystemInstance.OAuth.LinuxDo
+
+	return state.Enabled && len(state.ClientID) > 0 && len(state.ClientSecret) > 0
 }
 
 // generateOAuthState 生成 OAuth state 参数并存储到 Redis
