@@ -1,7 +1,8 @@
-import { useReducer, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import ChannelTable from "@/components/admin/assemblies/ChannelTable.tsx";
 import ChannelEditor from "@/components/admin/assemblies/ChannelEditor.tsx";
 import { Channel, getChannelInfo } from "@/admin/channel.ts";
+import { useSearchParams } from "react-router-dom";
 
 const initialProxyState = {
   proxy: "",
@@ -17,7 +18,7 @@ const initialState: Channel = {
   models: [],
   priority: 0,
   weight: 1,
-  retry: 1,
+  retry: 3,
   secret: "",
   endpoint: getChannelInfo().endpoint,
   mapper: "",
@@ -125,18 +126,42 @@ function reducer(state: Channel, action: any): Channel {
           username: state?.proxy?.username || "",
         },
       };
+    case "set-first-message-as-user":
+      return { ...state, first_message_as_user: action.value };
+    case "set-merge-consecutive-user-messages":
+      return { ...state, merge_consecutive_user_messages: action.value };
     case "set":
       return { ...state, ...action.value };
+    case "import":
+      return { ...state, ...action.value, id: state.id, state: state.state };
     default:
       return state;
   }
 }
 
 function ChannelSettings() {
-  const [enabled, setEnabled] = useState<boolean>(false);
-  const [id, setId] = useState<number>(-1);
+  const [search] = useSearchParams();
 
+  const [enabled, setEnabled] = useState<boolean>(
+    search.get("editor_id") !== null && search.get("editor_id") !== "empty",
+  );
+  const [id, setId] = useState<number>(
+    search.get("editor_id") !== null && search.get("editor_id") !== "empty"
+      ? parseInt(search.get("editor_id") || "-1")
+      : -1,
+  );
+
+  const [data, setData] = useState<Channel[]>([]);
   const [edit, dispatch] = useReducer(reducer, { ...initialState });
+
+  useEffect(() => {
+    // set uri to ?editor_id=${id} if enabled is true, otherwise remove it
+    if (enabled) {
+      window.history.replaceState({}, "", `?editor_id=${id}`);
+    } else {
+      window.history.replaceState({}, "", "?editor_id=empty");
+    }
+  }, [enabled, id]);
 
   return (
     <>
@@ -145,12 +170,15 @@ function ChannelSettings() {
         setId={setId}
         display={!enabled}
         dispatch={dispatch}
+        data={data}
+        setData={setData}
       />
       <ChannelEditor
         setEnabled={setEnabled}
         id={id}
         display={enabled}
         edit={edit}
+        data={data}
         dispatch={dispatch}
       />
     </>

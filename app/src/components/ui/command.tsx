@@ -5,6 +5,7 @@ import { Search } from "lucide-react";
 
 import { cn } from "@/components/ui/lib/utils";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
@@ -65,7 +66,17 @@ const CommandList = React.forwardRef<
   />
 ));
 
+const ScrollCommandList = React.forwardRef<
+  React.ElementRef<typeof CommandPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof CommandPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <ScrollArea className={cn("max-h-[300px] overflow-y-auto", className)}>
+    <CommandList ref={ref} {...props} />
+  </ScrollArea>
+));
+
 CommandList.displayName = CommandPrimitive.List.displayName;
+ScrollCommandList.displayName = CommandList.displayName;
 
 const CommandEmpty = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Empty>,
@@ -150,4 +161,5 @@ export {
   CommandItem,
   CommandShortcut,
   CommandSeparator,
+  ScrollCommandList,
 };

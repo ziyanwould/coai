@@ -8,7 +8,7 @@ import {
   Copy,
   File,
   Loader2,
-  MousePointerSquare,
+  SquareMousePointer,
   PencilLine,
   Power,
   RotateCcw,
@@ -34,6 +34,7 @@ import Avatar from "@/components/Avatar.tsx";
 import { useSelector } from "react-redux";
 import { selectUsername } from "@/store/auth.ts";
 import { appLogo } from "@/conf/env.ts";
+import { motion } from "framer-motion";
 import { ThinkContent } from "@/components/ThinkContent";
 
 type MessageProps = {
@@ -88,21 +89,37 @@ function MessageQuota({ message }: MessageQuotaProps) {
   return (
     message.quota &&
     message.quota !== 0 && (
-      <div
+      <motion.div
         className={cn("message-quota", message.plan && "subscription")}
         onClick={() => setDetail(!detail)}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
-        {message.plan ? (
-          <CalendarCheck2 className={`h-4 w-4 icon`} />
-        ) : detail ? (
-          <CloudCog className={`h-4 w-4 icon`} />
-        ) : (
-          <Cloud className={`h-4 w-4 icon`} />
-        )}
-        <span className={`quota`}>
+        <motion.div
+          initial={{ rotate: 0 }}
+          animate={{ rotate: detail ? 360 : 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+        >
+          {message.plan ? (
+            <CalendarCheck2 className={`h-4 w-4 icon`} />
+          ) : detail ? (
+            <CloudCog className={`h-4 w-4 icon`} />
+          ) : (
+            <Cloud className={`h-4 w-4 icon`} />
+          )}
+        </motion.div>
+        <motion.span
+          className={`quota`}
+          initial={{ y: 10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
+        >
           {(message.quota < 0 ? 0 : message.quota).toFixed(detail ? 6 : 2)}
-        </span>
-      </div>
+        </motion.span>
+      </motion.div>
     )
   );
 }
@@ -132,7 +149,8 @@ function MessageMenu({
 }: MessageMenuProps) {
   const { t } = useTranslation();
   const isAssistant = message.role === "assistant";
-
+  const notInOutput = message.end !== false;
+  const disableDelete = isAssistant && end && !notInOutput;
   const [dropdown, setDropdown] = useState(false);
 
   return (
@@ -148,7 +166,7 @@ function MessageMenu({
               setDropdown(false);
             }}
           >
-            {message.end !== false ? (
+            {notInOutput ? (
               <>
                 <RotateCcw className={`h-4 w-4 mr-1.5`} />
                 {t("message.restart")}
@@ -161,7 +179,7 @@ function MessageMenu({
             )}
           </DropdownMenuItem>
         ) : (
-          message.end !== false && (
+          notInOutput && (
             <DropdownMenuItem
               onClick={() => {
                 onEvent && onEvent("restart");
@@ -188,10 +206,11 @@ function MessageMenu({
             }
           }}
         >
-          <MousePointerSquare className={`h-4 w-4 mr-1.5`} />
+          <SquareMousePointer className={`h-4 w-4 mr-1.5`} />
           {t("message.use")}
         </DropdownMenuItem>
         <DropdownMenuItem
+          disabled={disableDelete}
           onClick={() => {
             editedMessage?.length === 0 && setEditedMessage(message.content);
             setOpen(true);
@@ -200,7 +219,10 @@ function MessageMenu({
           <PencilLine className={`h-4 w-4 mr-1.5`} />
           {t("message.edit")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onEvent && onEvent("remove", index)}>
+        <DropdownMenuItem
+          disabled={disableDelete}
+          onClick={() => onEvent && onEvent("remove", index)}
+        >
           <Trash className={`h-4 w-4 mr-1.5`} />
           {t("message.remove")}
         </DropdownMenuItem>
@@ -229,6 +251,9 @@ function MessageContent({
   username,
 }: MessageProps) {
   const isUser = message.role === "user";
+  const hasContent = message.content.length > 0;
+  const isAssistant = message.role === "assistant";
+  const isOutput = message.end === false;
   const user = useSelector(selectUsername);
 
   const [open, setOpen] = useState(false);
@@ -236,11 +261,13 @@ function MessageContent({
 
   // parse think content
   const parseThinkContent = (content: string) => {
-    if (message.role !== "assistant") return null;
-    
+    // check if there is a start tag
+
     const startMatch = content.match(/<think>\n?(.*?)(?:<\/think>|$)/s);
     if (startMatch) {
       const thinkContent = startMatch[1];
+      // if there is an end tag, remove the whole matching part;
+      // if not, keep the remaining content
       const hasEndTag = content.includes('</think>');
       const restContent = hasEndTag ? 
         content.replace(startMatch[0], "").trim() :
@@ -300,8 +327,10 @@ function MessageContent({
           </MessageMenu>
         )}
       </div>
-      <div className={`message-content`}>
-        {message.content.length ? (
+      <div
+        className={`relative message-content dark:bg-muted/40 border dark:border-transparent hover:border-border`}
+      >
+        {hasContent ? (
           <>
             {parsedContent ? (
               <>
@@ -312,7 +341,7 @@ function MessageContent({
                 {parsedContent.restContent && (
                   <Markdown
                     loading={message.end === false}
-                    children={parsedContent.restContent}
+                    children={message.content}
                     acceptHtml={false}
                   />
                 )}
@@ -329,6 +358,12 @@ function MessageContent({
           <CircleSlash className={`h-5 w-5 m-1`} />
         ) : (
           <Loader2 className={`h-5 w-5 m-1 animate-spin`} />
+        )}
+
+        {isAssistant && hasContent && isOutput && (
+          <Loader2
+            className={`absolute right-0 bottom-0 h-3.5 w-3.5 m-1 animate-spin`}
+          />
         )}
       </div>
     </div>

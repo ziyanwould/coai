@@ -15,6 +15,7 @@ export type GenerationSegmentResponse = {
   end: boolean;
   error: string;
   hash: string;
+  title?: string;
 };
 
 export type MessageEvent = {

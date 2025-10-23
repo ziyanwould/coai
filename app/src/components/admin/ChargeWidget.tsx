@@ -15,7 +15,9 @@ import { Button } from "@/components/ui/button.tsx";
 import {
   Activity,
   AlertCircle,
+  BoxIcon,
   Cloud,
+  Copy,
   DownloadCloud,
   Eraser,
   EyeOff,
@@ -33,6 +35,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu.tsx";
 import {
   Command,
@@ -40,7 +43,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command.tsx";
-import { toastState } from "@/api/common.ts";
+import { withNotify } from "@/api/common.ts";
 import { Switch } from "@/components/ui/switch.tsx";
 import { NumberInput } from "@/components/ui/number-input.tsx";
 import {
@@ -52,20 +55,20 @@ import {
 } from "@/components/ui/table.tsx";
 import OperationAction from "@/components/OperationAction.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
-import { useToast } from "@/components/ui/use-toast";
 import {
   deleteCharge,
   listCharge,
   setCharge,
   syncCharge,
+  fetchUpstreamCharge,
 } from "@/admin/api/charge.ts";
 import { useEffectAsync } from "@/utils/hook.ts";
 import { cn } from "@/components/ui/lib/utils.ts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert.tsx";
 import Tips from "@/components/Tips.tsx";
-import { getQuerySelector, scrollUp } from "@/utils/dom.ts";
+import { getQuerySelector, scrollUp, useClipboard } from "@/utils/dom.ts";
 import PopupDialog, { popupTypes } from "@/components/PopupDialog.tsx";
-import { getApiCharge, getV1Path } from "@/api/v1.ts";
+import { getV1Path } from "@/api/v1.ts";
 import {
   Dialog,
   DialogContent,
@@ -78,6 +81,8 @@ import { getUniqueList, isEnter, parseNumber } from "@/utils/base.ts";
 import { defaultChannelModels } from "@/admin/channel.ts";
 import { getPricing } from "@/admin/datasets/charge.ts";
 import { useAllModels } from "@/admin/hook.tsx";
+import { toast } from "sonner";
+import { formatDecimal } from "@/utils/base.ts";
 
 const initialState: ChargeProps = {
   id: -1,
@@ -158,6 +163,7 @@ type SyncDialogProps = {
   open: boolean;
   setOpen: (open: boolean) => void;
   onRefresh: () => void;
+  system: string;
 };
 
 function SyncDialog({
@@ -166,9 +172,9 @@ function SyncDialog({
   open,
   setOpen,
   onRefresh,
+  system,
 }: SyncDialogProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
 
   const [siteCharge, setSiteCharge] = useState<ChargeProps[]>([]);
   const [siteOpen, setSiteOpen] = useState(false);
@@ -213,14 +219,15 @@ function SyncDialog({
         open={open && !builtin}
         setOpen={setOpen}
         defaultValue={"https://api.chatnio.net"}
-        alert={t("admin.chatnio-format-only")}
+        alert={system === "" ? t("admin.coai-format-only") : undefined}
         onSubmit={async (endpoint): Promise<boolean> => {
-          const path = getV1Path("/v1/charge", { endpoint });
-          const charge = await getApiCharge({ endpoint });
+          const path = system === "newapi"
+            ? `${endpoint.replace(/\/$/, "")}/api/ratio_config`
+            : getV1Path("/v1/charge", { endpoint });
+          const resp = await fetchUpstreamCharge({ endpoint, system });
 
-          if (charge.length === 0) {
-            toast({
-              title: t("admin.charge.sync-failed"),
+          if (!resp.status || resp.data.length === 0) {
+            toast.error(t("admin.charge.sync-failed"), {
               description: t("admin.charge.sync-failed-prompt", {
                 endpoint: path,
               }),
@@ -228,7 +235,7 @@ function SyncDialog({
             return false;
           }
 
-          setSiteCharge(charge);
+          setSiteCharge(resp.data);
           setSiteOpen(true);
           return true;
         }}
@@ -252,6 +259,7 @@ function SyncDialog({
           </div>
           <DialogFooter>
             <Button
+              unClickable
               variant={`outline`}
               onClick={() => {
                 setSiteOpen(false);
@@ -261,6 +269,7 @@ function SyncDialog({
               {t("cancel")}
             </Button>
             <Button
+              unClickable
               loading={true}
               variant={overwrite ? `destructive` : `default`}
               onClick={async () => {
@@ -268,7 +277,7 @@ function SyncDialog({
                   data: siteCharge,
                   overwrite,
                 });
-                toastState(toast, t, resp, true);
+                withNotify(t, resp, true);
 
                 if (resp.status) {
                   setOpen(false);
@@ -302,6 +311,7 @@ function ChargeAction({
   const { t } = useTranslation();
   const [popup, setPopup] = useState(false);
   const [builtin, setBuiltin] = useState(false);
+  const [system, setSystem] = useState("");
 
   const open = (builtin: boolean) => {
     setBuiltin(builtin);
@@ -316,15 +326,38 @@ function ChargeAction({
         current={currentModels}
         open={popup}
         setOpen={setPopup}
+        system={system}
       />
       <Button variant={`default`} className={`mr-2`} onClick={() => open(true)}>
         <KanbanSquareDashed className={`w-4 h-4 mr-2`} />
         {t("admin.charge.sync-builtin")}
       </Button>
-      <Button variant={`outline`} onClick={() => open(false)}>
-        <Activity className={`w-4 h-4 mr-2`} />
-        {t("admin.charge.sync")}
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant={`outline`}>
+            <Activity className={`w-4 h-4 mr-2`} />
+            {t("admin.charge.sync")}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align={`start`}>
+          <DropdownMenuItem
+            onSelect={() => {
+              setSystem("");
+              open(false);
+            }}
+          >
+            CoAI
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              setSystem("newapi");
+              open(false);
+            }}
+          >
+            NewAPI
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <div className={`grow`} />
       <Button variant={`outline`} size={`icon`} onClick={onRefresh}>
         <RotateCw className={cn("w-4 h-4", loading && "animate-spin")} />
@@ -350,14 +383,16 @@ function ChargeAlert({ models, onClick }: ChargeAlertProps) {
           <Tips content={t("admin.charge.unused-model-tip")} />
         </AlertTitle>
         <AlertDescription className={`model-list`}>
-          {models.map((model, index) => (
-            <div
+          {models.slice(0, 15).map((model, index) => (
+            <Button
               key={index}
-              className={`model cursor-pointer select-none`}
+              variant={`outline`}
+              className={`cursor-pointer h-8 select-none flex flex-row items-center`}
               onClick={() => onClick(model)}
             >
+              <BoxIcon className={`w-3.5 h-3.5 mr-1`} />
               {model}
-            </div>
+            </Button>
           ))}
         </AlertDescription>
       </Alert>
@@ -381,7 +416,6 @@ function ChargeEditor({
   allModels,
 }: ChargeEditorProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
 
   const [model, setModel] = useState("");
 
@@ -415,7 +449,7 @@ function ChargeEditor({
     }
 
     const resp = await setCharge(data);
-    toastState(toast, t, resp, true);
+    withNotify(t, resp, true);
 
     if (resp.status) clear();
     onRefresh();
@@ -642,7 +676,7 @@ type ChargeTableProps = {
 
 function ChargeTable({ data, dispatch, onRefresh }: ChargeTableProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
+  const copy = useClipboard();
 
   return (
     <div className={`charge-table`}>
@@ -668,13 +702,22 @@ function ChargeTable({ data, dispatch, onRefresh }: ChargeTableProps) {
                 </Badge>
               </TableCell>
               <TableCell>
-                <pre>{charge.models.join("\n")}</pre>
+                {charge.models.map((model, index) => (
+                  <p
+                    key={index}
+                    className={`whitespace-nowrap cursor-pointer`}
+                    onClick={() => copy(model)}
+                  >
+                    {model}
+                    <Copy className={`inline w-3 h-3 ml-1`} />
+                  </p>
+                ))}
               </TableCell>
               <TableCell>
-                {charge.input === 0 ? 0 : charge.input.toFixed(3)}
+                {formatDecimal(charge.input)}
               </TableCell>
               <TableCell>
-                {charge.output === 0 ? 0 : charge.output.toFixed(3)}
+                {formatDecimal(charge.output)}
               </TableCell>
               <TableCell>{t(String(charge.anonymous))}</TableCell>
               <TableCell>
@@ -700,7 +743,7 @@ function ChargeTable({ data, dispatch, onRefresh }: ChargeTableProps) {
                     variant={`destructive`}
                     onClick={async () => {
                       const resp = await deleteCharge(charge.id);
-                      toastState(toast, t, resp, true);
+                      withNotify(t, resp, true);
                       onRefresh();
                     }}
                   >
@@ -718,7 +761,6 @@ function ChargeTable({ data, dispatch, onRefresh }: ChargeTableProps) {
 
 function ChargeWidget() {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [data, setData] = useState<ChargeProps[]>([]);
   const [form, dispatch] = useReducer(reducer, initialState);
   const [loading, setLoading] = useState(false);
@@ -746,7 +788,7 @@ function ChargeWidget() {
     if (!ignoreUpdate) await update();
 
     setLoading(false);
-    toastState(toast, t, resp);
+    withNotify(t, resp);
     setData(resp.data);
   }
 

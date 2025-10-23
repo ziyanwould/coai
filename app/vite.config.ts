@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import path from "path"
-import { createHtmlPlugin } from 'vite-plugin-html'
-import { createTranslationPlugin } from "./src/translator";
+import { createHtmlPlugin } from 'vite-plugin-html' //@ts-ignore
+import { createTranslationPlugin } from "./src/translator"
 
 // https://vitejs.dev/config/
 export default defineConfig({

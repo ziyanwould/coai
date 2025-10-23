@@ -26,16 +26,11 @@ import {
   Save,
   Trash,
 } from "lucide-react";
-import {
-  getPlanName,
-  SubscriptionIcon,
-  subscriptionIconsList,
-} from "@/conf/subscription.tsx";
+import { getPlanName } from "@/conf/subscription.tsx";
 import { Plan, PlanItem } from "@/api/types.tsx";
 import Tips from "@/components/Tips.tsx";
 import { NumberInput } from "@/components/ui/number-input.tsx";
 import { Input } from "@/components/ui/input.tsx";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group.tsx";
 import { MultiCombobox } from "@/components/ui/multi-combobox.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import {
@@ -44,8 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
-import { toastState } from "@/api/common.ts";
-import { useToast } from "@/components/ui/use-toast.ts";
+import { withNotify } from "@/api/common.ts";
 import { dispatchSubscriptionData } from "@/store/globals.ts";
 import { useDispatch } from "react-redux";
 import { cn } from "@/components/ui/lib/utils.ts";
@@ -181,7 +175,7 @@ function reducer(state: PlanConfig, action: Record<string, any>): PlanConfig {
                   id: "",
                   name: "",
                   value: 0,
-                  icon: subscriptionIconsList[0],
+                  icon: "",
                   models: [],
                 },
               ],
@@ -286,32 +280,39 @@ function reducer(state: PlanConfig, action: Record<string, any>): PlanConfig {
           return p;
         }),
       };
+    case "set-discount":
+      return {
+        ...state,
+        plans: state.plans.map((plan: Plan) => {
+          if (plan.level === action.payload.level) {
+            const discounts = plan.discounts || {};
+            discounts[action.payload.month] = action.payload.value;
+            return {
+              ...plan,
+              discounts,
+            };
+          }
+          return plan;
+        }),
+      };
+    case "remove-discount":
+      return {
+        ...state,
+        plans: state.plans.map((plan: Plan) => {
+          if (plan.level === action.payload.level && plan.discounts) {
+            const discounts = { ...plan.discounts };
+            delete discounts[action.payload.month];
+            return {
+              ...plan,
+              discounts,
+            };
+          }
+          return plan;
+        }),
+      };
     default:
       throw new Error();
   }
-}
-
-type ItemIconEditorProps = {
-  value: string;
-  onValueChange: (value: string) => void;
-};
-
-function ItemIconEditor({ value, onValueChange }: ItemIconEditorProps) {
-  return (
-    <ToggleGroup
-      variant={`outline`}
-      type={`single`}
-      value={value}
-      onValueChange={onValueChange}
-      className={`flex-wrap`}
-    >
-      {subscriptionIconsList.map((key, index) => (
-        <ToggleGroupItem value={key} key={index}>
-          <SubscriptionIcon type={key} className={`h-4 w-4`} />
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
-  );
 }
 
 type ImportActionProps = {
@@ -370,7 +371,6 @@ function PlanConfig() {
   const [form, formDispatch] = useReducer(reducer, planInitialConfig);
   const [loading, setLoading] = useState<boolean>(false);
   const dispatch = useDispatch();
-  const { toast } = useToast();
 
   const { channelModels, update } = useChannelModels();
 
@@ -399,7 +399,7 @@ function PlanConfig() {
 
   const save = async (data?: PlanConfig) => {
     const res = await setPlanConfig(data ?? form);
-    toastState(toast, t, res, true);
+    withNotify(t, res, true);
     if (res.status)
       dispatchSubscriptionData(dispatch, form.enabled ? form.plans : []);
   };
@@ -416,7 +416,7 @@ function PlanConfig() {
         open={open}
         setOpen={setOpen}
         defaultValue={"https://api.chatnio.net"}
-        alert={t("admin.chatnio-format-only")}
+        alert={t("admin.coai-format-only")}
         onSubmit={async (endpoint): Promise<boolean> => {
           const conf = await getExternalPlanConfig(endpoint);
           setConf(conf);
@@ -514,7 +514,10 @@ function PlanConfig() {
             <div className={`plan-items-wrapper`}>
               {plan.items.map((item: PlanItem, index: number) => (
                 <div
-                  className={cn("plan-item", stacked && "stacked")}
+                  className={cn(
+                    "plan-item grid grid-cols-1 md:grid-cols-2 gap-4",
+                    stacked && "stacked",
+                  )}
                   key={index}
                 >
                   <div className={`plan-editor-row`}>
@@ -608,26 +611,6 @@ function PlanConfig() {
                           className={`w-full max-w-full`}
                         />
                       </div>
-                      <div className={`plan-editor-row`}>
-                        <p className={`plan-editor-label mr-2`}>
-                          {t(`admin.plan.item-icon`)}
-                          <Tips content={t("admin.plan.item-icon-tip")} />
-                        </p>
-                        <div className={`grow`} />
-                        <ItemIconEditor
-                          value={item.icon}
-                          onValueChange={(value: string) => {
-                            formDispatch({
-                              type: "set-item-icon",
-                              payload: {
-                                level: plan.level,
-                                icon: value,
-                                index,
-                              },
-                            });
-                          }}
-                        />
-                      </div>
                     </>
                   )}
                   <div
@@ -636,7 +619,6 @@ function PlanConfig() {
                       !stacked && "flex-wrap",
                     )}
                   >
-                    {!stacked && <div className={`grow`} />}
                     <Button
                       variant={`outline`}
                       size={stacked ? "icon" : "default"}
@@ -687,7 +669,6 @@ function PlanConfig() {
               ))}
             </div>
             <div className={`plan-items-action`}>
-              <div className={`grow`} />
               <ImportAction
                 plans={form.plans}
                 level={plan.level}
@@ -705,6 +686,93 @@ function PlanConfig() {
                 <Plus className={`h-4 w-4 mr-1`} />
                 {t("admin.plan.add-item")}
               </Button>
+            </div>
+            <div className="mt-6 border-t pt-4">
+              <p className={`plan-config-title flex items-center`}>
+                {t("admin.plan.discounts")}
+                <Tips content={t("admin.plan.discounts-tip")} className="ml-1" />
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-3">
+                {[1, 3, 6, 12, 36].map((month) => {
+                  const hasDiscount = plan.discounts && plan.discounts[month.toString()] !== undefined;
+                  const discountValue = hasDiscount ? plan.discounts?.[month.toString()] : null;
+                  
+                  return (
+                    <div key={month} className="flex flex-col space-y-2 p-3 border rounded-md">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{t(`sub.time.${month}`)}</span>
+                        <Switch
+                          checked={hasDiscount}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              let discountPercent = 0;
+                              if (month >= 36) {
+                                discountPercent = 30;
+                              } else if (month >= 12) {
+                                discountPercent = 20;
+                              } else if (month >= 6) {
+                                discountPercent = 10;
+                              }
+                              
+                              const discountFactor = 1 - (discountPercent / 100);
+                              
+                              formDispatch({
+                                type: "set-discount",
+                                payload: { 
+                                  level: plan.level, 
+                                  month: month.toString(),
+                                  value: discountFactor
+                                },
+                              });
+                            } else {
+                              formDispatch({
+                                type: "remove-discount",
+                                payload: { 
+                                  level: plan.level, 
+                                  month: month.toString() 
+                                },
+                              });
+                            }
+                          }}
+                        />
+                      </div>
+                      
+                      {hasDiscount && (
+                        <div className="mt-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">
+                              {t("admin.plan.discount-value")}
+                            </span>
+                            <span className="text-sm font-medium">
+                              {Math.round((1 - (discountValue || 1)) * 100)}% {t("admin.plan.discount-off")}
+                            </span>
+                          </div>
+                          <div className="mt-2">
+                            <NumberInput
+                              value={Math.round((1 - (discountValue || 1)) * 100)}
+                              min={0}
+                              max={90}
+                              step={5}
+                              onValueChange={(value) => {
+                                const discountFactor = 1 - (value / 100);
+                                formDispatch({
+                                  type: "set-discount",
+                                  payload: { 
+                                    level: plan.level, 
+                                    month: month.toString(),
+                                    value: discountFactor
+                                  },
+                                });
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ))}

@@ -12,12 +12,13 @@ import { useTranslation } from "react-i18next";
 import { formReducer, isEmailValid, isTextInRange } from "@/utils/form.ts";
 import React, { useReducer, useState } from "react";
 import { doRegister, RegisterForm, sendCode } from "@/api/auth.ts";
-import { useToast } from "@/components/ui/use-toast.ts";
 import TickButton from "@/components/TickButton.tsx";
 import { validateToken } from "@/store/auth.ts";
 import { useDispatch, useSelector } from "react-redux";
 import { appLogo, appName } from "@/conf/env.ts";
 import { infoMailSelector } from "@/store/info.ts";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
+import { toast } from "sonner";
 
 type CompProps = {
   form: RegisterForm;
@@ -106,7 +107,12 @@ function Preflight({ form, dispatch, setNext }: CompProps) {
         }
       />
 
-      <Button className={`mt-2`} onClick={onSubmit}>
+      <Button
+        tapScale={0.975}
+        classNameWrapper={`mt-2`}
+        className={`w-full`}
+        onClick={onSubmit}
+      >
         {t("auth.next-step")}
       </Button>
     </div>
@@ -126,7 +132,6 @@ function doFormat(form: RegisterForm): RegisterForm {
 
 function Verify({ form, dispatch, setNext }: CompProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const globalDispatch = useDispatch();
 
   const mail = useSelector(infoMailSelector);
@@ -139,15 +144,13 @@ function Verify({ form, dispatch, setNext }: CompProps) {
 
     const resp = await doRegister(data);
     if (!resp.status) {
-      toast({
-        title: t("error"),
+      toast.error(t("error"), {
         description: resp.error,
       });
       return;
     }
 
-    toast({
-      title: t("auth.register-success"),
+    toast.success(t("auth.register-success"), {
       description: t("auth.register-success-prompt"),
     });
 
@@ -155,7 +158,7 @@ function Verify({ form, dispatch, setNext }: CompProps) {
     await router.navigate("/");
   };
 
-  const onVerify = async () => await sendCode(t, toast, form.email, true);
+  const onVerify = async () => await sendCode(t, form.email, true);
 
   return (
     <div className={`auth-wrapper`}>
@@ -206,7 +209,13 @@ function Verify({ form, dispatch, setNext }: CompProps) {
         </TickButton>
       </div>
 
-      <Button className={`mt-2`} loading={true} onClick={onSubmit}>
+      <Button
+        tapScale={0.975}
+        classNameWrapper={`mt-2`}
+        className={`w-full`}
+        loading={true}
+        onClick={onSubmit}
+      >
         {t("register")}
       </Button>
 
@@ -235,45 +244,47 @@ function Register() {
   });
 
   return (
-    <div className={`auth-container`}>
-      <img className={`logo`} src={appLogo} alt="" />
-      <div className={`title`}>
-        {t("register")} {appName}
-      </div>
-      <Card className={`auth-card`}>
-        <CardContent className={`pb-0`}>
-          {!next ? (
-            <Preflight
-              form={form}
-              dispatch={dispatch}
-              next={next}
-              setNext={setNext}
-            />
-          ) : (
-            <Verify
-              form={form}
-              dispatch={dispatch}
-              next={next}
-              setNext={setNext}
-            />
-          )}
-        </CardContent>
-      </Card>
-      <div className={`auth-card addition-wrapper`}>
-        <div className={`row`}>
-          {t("auth.have-account")}
-          <a className={`link`} onClick={() => router.navigate("/login")}>
-            {t("auth.login")}
-          </a>
+    <ScrollArea className={`w-full h-full grid place-items-center`}>
+      <div className={`auth-container`}>
+        <img className={`logo`} src={appLogo} alt="" />
+        <div className={`title`}>
+          {t("register")} {appName}
         </div>
-        <div className={`row`}>
-          {t("auth.forgot-password")}
-          <a className={`link`} onClick={() => router.navigate("/forgot")}>
-            {t("auth.reset-password")}
-          </a>
+        <Card className={`auth-card`}>
+          <CardContent className={`pb-0`}>
+            {!next ? (
+              <Preflight
+                form={form}
+                dispatch={dispatch}
+                next={next}
+                setNext={setNext}
+              />
+            ) : (
+              <Verify
+                form={form}
+                dispatch={dispatch}
+                next={next}
+                setNext={setNext}
+              />
+            )}
+          </CardContent>
+        </Card>
+        <div className={`auth-card addition-wrapper`}>
+          <div className={`row`}>
+            {t("auth.have-account")}
+            <a className={`link`} onClick={() => router.navigate("/login")}>
+              {t("auth.login")}
+            </a>
+          </div>
+          <div className={`row`}>
+            {t("auth.forgot-password")}
+            <a className={`link`} onClick={() => router.navigate("/forgot")}>
+              {t("auth.reset-password")}
+            </a>
+          </div>
         </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 }
 

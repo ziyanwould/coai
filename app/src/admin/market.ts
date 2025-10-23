@@ -1,17 +1,15 @@
 export const marketEditableTags = [
   "official",
-  "unstable",
+  "multi-modal",
   "web",
   "high-quality",
   "high-price",
   "open-source",
   "image-generation",
-  "multi-modal",
-  "fast",
-  "english-model",
+  "unstable",
 ];
 
-export const modelImages = [
+export const deprecatedModelImages = [
   "gpt35turbo.png",
   "gpt35turbo16k.webp",
   "gpt4.png",
@@ -37,4 +35,4 @@ export const modelImages = [
   "skylark.jpg",
 ];
 
-export const marketTags = [...marketEditableTags, "free", "high-context"];
+export const marketTags = ["high-context", ...marketEditableTags, "free"];

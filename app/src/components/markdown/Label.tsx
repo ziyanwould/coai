@@ -1,4 +1,3 @@
-import { appLogo } from "@/conf/env.ts";
 import {
   CalendarPlus,
   Cloud,
@@ -8,12 +7,15 @@ import {
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
-import { openDialog as openQuotaDialog } from "@/store/quota.ts";
-import { openDialog as openSubscriptionDialog } from "@/store/subscription.ts";
 import React from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector } from "react-redux";
 import { subscriptionDataSelector } from "@/store/globals.ts";
 import { useTranslation } from "react-i18next";
+import router from "@/router.tsx";
+import Emoji from "../Emoji";
+import { cn } from "../ui/lib/utils";
+import ModelAvatar from "../ModelAvatar";
+import { selectSupportModels } from "@/store/chat";
 
 type QuotaExceededFormProps = {
   model: string;
@@ -29,58 +31,88 @@ function QuotaExceededForm({
   plan,
 }: QuotaExceededFormProps) {
   const { t } = useTranslation();
-  const dispatch = useDispatch();
+  const supportModels = useSelector(selectSupportModels);
+  const modelInfo = supportModels.find((m) => m.id === model);
 
   return (
-    <div className={`flex flex-col items-center min-w-[40vw] p-2`}>
-      <img src={appLogo} alt={""} className={`w-16 h-16 m-6 inline-block`} />
-      <div
-        className={`prompt-row flex flex-row w-full items-center justify-center px-4 py-2`}
-      >
-        <Package className={`h-4 w-4 mr-1`} />
-        {t("model")}
-        <div className={`grow`} />
-        <p className={`value`}>{model}</p>
-      </div>
-      <div
-        className={`prompt-row flex flex-row w-full items-center justify-center px-4 py-2`}
-      >
-        <Cloudy className={`h-4 w-4 mr-1`} />
-        {t("your-quota")}
-        <div className={`grow`} />
-        <p className={`value`}>
-          {quota}
-          <Cloud className={`h-4 w-4 ml-1`} />
-        </p>
-      </div>
-      <div
-        className={`prompt-row flex flex-row w-full items-center justify-center px-4 py-2`}
-      >
-        <CloudCog className={`h-4 w-4 mr-1`} />
-        {t("min-quota")}
-        <div className={`grow`} />
-        <p className={`value`}>
-          {minimum}
-          <Cloud className={`h-4 w-4 ml-1`} />
-        </p>
-      </div>
-      <Button
-        className={`mt-4 w-full`}
-        onClick={() => dispatch(openQuotaDialog())}
-      >
-        <Plus className={`h-4 w-4 mr-1`} />
-        {t("buy.dialog-title")}
-      </Button>
-      {plan && (
-        <Button
-          variant={`outline`}
-          className={`mt-2 w-full`}
-          onClick={() => dispatch(openSubscriptionDialog())}
+    <div className={`flex flex-col items-center pt-4 pb-1`}>
+      <Emoji emoji={"1f915"} className={`w-16 h-16 m-6 mb-4`} />
+      <p className={`text-lg font-semibold !mb-1`}>
+        {t("oops-quota-exceeded")}
+      </p>
+      <p className={`text-sm text-secondary px-2.5 text-center`}>
+        {t("oops-quota-exceeded-tip")}
+      </p>
+      <div className="w-full h-fit border bg-muted/50 rounded-lg p-1.5 flex flex-col space-y-2.5 py-2.5">
+        <div
+          className={`flex flex-row w-full items-center justify-center px-4`}
         >
-          <CalendarPlus className={`h-4 w-4 mr-1`} />
-          {t("sub.dialog-title")}
+          <Package className={`h-4 w-4 mr-1`} />
+          {t("model")}
+          <div className={`grow`} />
+          <div className={`!mb-0 flex flex-row items-center space-x-1`}>
+            <ModelAvatar
+              size={24}
+              model={
+                modelInfo ?? {
+                  id: model,
+                  name: model,
+                }
+              }
+            />
+            <p className={`!mb-0`}>{modelInfo?.name ?? model}</p>
+          </div>
+        </div>
+        <div
+          className={`flex flex-row w-full items-center justify-center px-4`}
+        >
+          <Cloudy className={`h-4 w-4 mr-1`} />
+          {t("your-quota")}
+          <div className={`grow`} />
+          <p className={`flex flex-row items-center font-medium !mb-0`}>
+            {quota}
+            <Cloud className={`h-4 w-4 ml-1`} />
+          </p>
+        </div>
+        <div
+          className={`flex flex-row w-full items-center justify-center px-4`}
+        >
+          <CloudCog className={`h-4 w-4 mr-1`} />
+          {t("min-quota")}
+          <div className={`grow`} />
+          <p className={`flex flex-row items-center font-medium !mb-0`}>
+            {minimum}
+            <Cloud className={`h-4 w-4 ml-1`} />
+          </p>
+        </div>
+      </div>
+
+      <div
+        className={cn(
+          `mt-4 w-full h-fit grid grid-cols-1 gap-2`,
+          plan && "md:grid-cols-2",
+        )}
+      >
+        <Button
+          classNameWrapper={`w-full`}
+          className={`w-full`}
+          onClick={() => router.navigate("/wallet")}
+        >
+          <Plus className={`h-4 w-4 mr-1`} />
+          {t("buy.dialog-title")}
         </Button>
-      )}
+        {plan && (
+          <Button
+            variant={`outline`}
+            classNameWrapper={`w-full`}
+            className={`w-full`}
+            onClick={() => router.navigate("/wallet#plan")}
+          >
+            <CalendarPlus className={`h-4 w-4 mr-1`} />
+            {t("sub.dialog-title")}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

@@ -10,10 +10,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover.tsx";
-import { Button } from "@/components/ui/button.tsx";
+import { Button, type ButtonProps } from "@/components/ui/button.tsx";
 import { cn } from "@/components/ui/lib/utils.ts";
 
-type ActionProps = {
+type ActionProps = ButtonProps & {
   tooltip?: string;
   children: React.ReactNode;
   onClick?: () => any;
@@ -34,6 +34,8 @@ function OperationAction({
   onClick,
   variant,
   native,
+  className,
+  ...props
 }: ActionProps) {
   return (
     <TooltipProvider>
@@ -44,8 +46,9 @@ function OperationAction({
               <PopoverTrigger asChild>
                 <Button
                   size={`icon`}
-                  className={cn(!native && `w-8 h-8`)}
+                  className={cn(!native && `w-8 h-8`, className)}
                   variant={variant}
+                  {...props}
                 >
                   {children}
                 </Button>
@@ -64,9 +67,10 @@ function OperationAction({
           ) : (
             <Button
               size={`icon`}
-              className={cn(!native && `w-8 h-8`)}
+              className={cn(!native && `w-8 h-8`, className)}
               onClick={onClick}
               variant={variant}
+              {...props}
             >
               {children}
             </Button>

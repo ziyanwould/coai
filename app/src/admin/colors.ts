@@ -52,15 +52,15 @@ export const modelColorMapper: Record<string, string> = {
 
   // New Bing
   bing: "blue-700",
-  
+
   // ChatGLM
   zhipu: "lime-500",
   glm: "lime-500",
-  
+
   // Tongyi Qwen
   qwen: "indigo-600",
   tongyi: "indigo-600",
-  
+
   // Meta LLaMA
   llama: "sky-400",
 
@@ -76,7 +76,7 @@ export const modelColorMapper: Record<string, string> = {
   // ByteDance Skylark / Doubao / Coze
   skylark: "sky-300",
   doubao: "sky-300",
-  coze: "indigo-400",
+  coze: "sky-300",
 
   // Dify
   dify: "gray-300",

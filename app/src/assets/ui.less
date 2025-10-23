@@ -104,6 +104,20 @@
   &::-webkit-scrollbar {
     width: 6px;
   }
+
+  // update the scrollbar style
+  &::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--border-hover));
+  }
+
+  &::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
 }
 
 .horizontal-scrollbar {
@@ -152,11 +166,9 @@ input[type="number"] {
   display: flex;
   flex-direction: column;
   margin: 0.5rem 0;
-  padding: 1rem 1.5rem 0.25rem;
-  border-radius: var(--radius);
-  background: hsl(var(--background));
+  padding: 0.5rem;
+  border-bottom: 1px solid hsl(var(--border));
   color: hsl(var(--text));
-  border: 1px solid hsl(var(--border));
   transition: .25s;
   cursor: pointer;
 
@@ -208,7 +220,7 @@ input[type="number"] {
 
     &:before {
       content: '';
-      margin-right: 0.5rem;
+      margin-right: 0.75rem;
       height: 1.25rem;
       width: 2px;
       border-radius: 1px;
@@ -319,8 +331,6 @@ input[type="number"] {
 
 .avatar {
   display: flex;
-  width: 2.5rem;
-  height: 2.5rem;
   border-radius: var(--radius);
   text-align: center;
 
@@ -378,4 +388,10 @@ input[type="number"] {
 
 .error-border {
   border-color: hsl(var(--destructive)) !important;
+}
+
+.button-wrapper.is-loading {
+  .loading-hidden {
+    display: none;
+  }
 }

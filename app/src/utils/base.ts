@@ -84,6 +84,8 @@ export function generateListNumber(n: number): number {
 }
 
 export function isUrl(value: string): boolean {
+  if (!value) return false;
+
   value = value.trim();
   if (!value.length) return false;
   try {
@@ -141,9 +143,63 @@ export function isB64Image(value: string): boolean {
   return /data:image\/([^;]+);base64,([a-zA-Z0-9+/=]+)/g.test(value);
 }
 
+export function trimPrefix(value: string, prefix: string): string {
+  return value.startsWith(prefix) ? value.slice(prefix.length) : value;
+}
+
+export function trimSuffix(value: string, suffix: string): string {
+  return value.endsWith(suffix) ? value.slice(0, -suffix.length) : value;
+}
+
+export function addPrefix(value: string, prefix: string): string {
+  return value.startsWith(prefix) ? value : prefix + value;
+}
+
+export function addSuffix(value: string, suffix: string): string {
+  return value.endsWith(suffix) ? value : value + suffix;
+}
+
+export function trimPrefixes(value: string, prefixes: string[]): string {
+  for (const prefix of prefixes) {
+    if (value.startsWith(prefix)) return value.slice(prefix.length);
+  }
+  return value;
+}
+
 export function trimSuffixes(value: string, suffixes: string[]): string {
   for (const suffix of suffixes) {
     if (value.endsWith(suffix)) return value.slice(0, -suffix.length);
   }
   return value;
+}
+
+export function getFilenameFromURL(url: string | undefined): string {
+  // e.g. https://example.com/example.png => example.png
+  if (!url) return "";
+  return url.split("/").pop() || url;
+}
+
+export function formatDecimal(value: number): string {
+  if (value === 0) return "0.000";
+  
+  if (Number.isInteger(value)) {
+    return value.toFixed(3);
+  }
+  
+  const str = value.toString();
+  if (str.includes('e')) {
+    const [, exp] = str.split('e');
+    const expNum = parseInt(exp);
+    if (expNum < 0) {
+      return value.toFixed(Math.abs(expNum));
+    }
+  }
+  
+  const parts = str.split('.');
+  if (parts.length === 2) {
+    const decimalPlaces = Math.max(3, parts[1].length);
+    return value.toFixed(decimalPlaces).replace(/\.?0+$/, '');
+  }
+  
+  return value.toFixed(3);
 }

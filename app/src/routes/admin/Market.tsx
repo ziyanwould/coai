@@ -20,7 +20,6 @@ import {
   ChevronDown,
   ChevronUp,
   GripVertical,
-  HelpCircle,
   Import,
   Maximize,
   Minimize,
@@ -28,20 +27,18 @@ import {
   RotateCw,
   Save,
   Trash2,
+  UploadIcon,
 } from "lucide-react";
-import { generateRandomChar, isUrl } from "@/utils/base.ts";
-import Require from "@/components/Require.tsx";
+import { generateRandomChar } from "@/utils/base.ts";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import Tips from "@/components/Tips.tsx";
 import { Switch } from "@/components/ui/switch.tsx";
 import { Toggle } from "@/components/ui/toggle.tsx";
-import { marketEditableTags, modelImages } from "@/admin/market.ts";
-import { Checkbox } from "@/components/ui/checkbox.tsx";
-import { Button } from "@/components/ui/button.tsx";
+import { deprecatedModelImages, marketEditableTags } from "@/admin/market.ts";
+import { Button, UploadFileButton } from "@/components/ui/button.tsx";
 import { Combobox } from "@/components/ui/combo-box.tsx";
 import { cn } from "@/components/ui/lib/utils.ts";
 import PopupDialog, { popupTypes } from "@/components/PopupDialog.tsx";
-import { useToast } from "@/components/ui/use-toast.ts";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +58,9 @@ import {
   Droppable,
   DropResult,
 } from "react-beautiful-dnd";
+import { Label } from "@/components/ui/label.tsx";
+import { uploadResource } from "@/admin/api/system.ts";
+import { withNotify } from "@/api/common.ts";
 
 type Model = RawModel & {
   seed?: string;
@@ -99,7 +99,7 @@ function reducer(state: MarketForm, action: any): MarketForm {
           high_context: model.high_context || false,
           default: model.default || false,
           tag: model.tag || [],
-          avatar: model.avatar || modelImages[0],
+          avatar: model.avatar || "",
           seed: generateSeed(),
         })),
       ];
@@ -115,7 +115,7 @@ function reducer(state: MarketForm, action: any): MarketForm {
           high_context: false,
           default: false,
           tag: [],
-          avatar: modelImages[0],
+          avatar: "",
           seed: generateSeed(),
         },
       ];
@@ -130,7 +130,7 @@ function reducer(state: MarketForm, action: any): MarketForm {
           high_context: false,
           default: true,
           tag: [],
-          avatar: modelImages[0],
+          avatar: "",
           seed: generateSeed(),
         },
         ...state,
@@ -146,7 +146,7 @@ function reducer(state: MarketForm, action: any): MarketForm {
           high_context: false,
           default: true,
           tag: [],
-          avatar: modelImages[0],
+          avatar: "",
           seed: generateSeed(),
         })),
         ...state,
@@ -198,6 +198,51 @@ function reducer(state: MarketForm, action: any): MarketForm {
         ...state.map((model, idx) => {
           if (idx === action.payload.idx) {
             return { ...model, default: action.payload.default };
+          }
+          return model;
+        }),
+      ];
+    case "update-function-calling":
+      return [
+        ...state.map((model, idx) => {
+          if (idx === action.payload.idx) {
+            return { ...model, function_calling: action.payload.default };
+          }
+          return model;
+        }),
+      ];
+    case "update-vision-model":
+      return [
+        ...state.map((model, idx) => {
+          if (idx === action.payload.idx) {
+            return { ...model, vision_model: action.payload.default };
+          }
+          return model;
+        }),
+      ];
+    case "update-thinking-model":
+      return [
+        ...state.map((model, idx) => {
+          if (idx === action.payload.idx) {
+            return { ...model, thinking_model: action.payload.default };
+          }
+          return model;
+        }),
+      ];
+    case "update-ocr-model":
+      return [
+        ...state.map((model, idx) => {
+          if (idx === action.payload.idx) {
+            return { ...model, ocr_model: action.payload.default };
+          }
+          return model;
+        }),
+      ];
+    case "update-reverse-model":
+      return [
+        ...state.map((model, idx) => {
+          if (idx === action.payload.idx) {
+            return { ...model, reverse_model: action.payload.default };
           }
           return model;
         }),
@@ -264,7 +309,7 @@ function reducer(state: MarketForm, action: any): MarketForm {
           high_context: false,
           default: false,
           tag: [],
-          avatar: modelImages[0],
+          avatar: "",
           seed: generateSeed(),
         },
         ...state.slice(action.payload.idx + 1),
@@ -345,15 +390,11 @@ type MarketImageProps = {
   dispatch: Dispatch<any>;
 };
 
-function MarketImage({ image, idx, dispatch }: MarketImageProps) {
+function CustomMarketImage({ image, idx, dispatch }: MarketImageProps) {
   const { t } = useTranslation();
-
-  const [customized, setCustomized] = useState<boolean>(false);
-  const [customizedImage, setCustomizedImage] = useState<string>("");
-
-  const targetImages = useMemo((): string[] => {
-    return customized ? [...modelImages, image] : modelImages;
-  }, [customized, image]);
+  const [customizedImage, setCustomizedImage] = useState<boolean>(
+    image.trim().length > 0 && !deprecatedModelImages.includes(image),
+  );
 
   const setAvatar = (source: string) =>
     dispatch({
@@ -364,58 +405,50 @@ function MarketImage({ image, idx, dispatch }: MarketImageProps) {
       },
     });
 
+  useEffect(() => {
+    if (!customizedImage) {
+      setAvatar("");
+    }
+  }, [customizedImage]);
+
   return (
-    <div className={`market-image-wrapper`}>
-      <div className={`market-images`}>
-        {targetImages.map((source) => (
-          <Toggle
-            key={source}
-            variant={`outline`}
-            size={`sm`}
-            pressed={source === image}
-            className={cn("market-image", source === image ? "active" : "")}
-            onPressedChange={(state) => {
-              if (!state) return;
-              if (customized) {
-                setCustomized(false);
-              }
-              setAvatar(source);
-            }}
-          >
-            {source ? (
-              <img
-                src={isUrl(source) ? customizedImage : `/icons/${source}`}
-                alt={source}
-              />
-            ) : (
-              <HelpCircle className={`h-6 w-6`} />
-            )}
-          </Toggle>
-        ))}
-      </div>
-      <div className={`market-custom-image`}>
-        <div className={`market-checkbox`}>
-          <Checkbox
-            checked={customized}
-            onCheckedChange={(raw) => {
-              const state = !!raw;
-              setCustomized(state);
-              setAvatar(state ? customizedImage : modelImages[0]);
-            }}
-          />
-          {t("admin.market.custom-image")}
-        </div>
-        <Input
-          value={customizedImage}
-          placeholder={t("admin.market.custom-image-placeholder")}
-          onChange={(e) => {
-            setCustomizedImage(e.target.value);
-            setAvatar(e.target.value);
-          }}
-          disabled={!customized}
+    <>
+      <div className={`market-row flex flex-row items-center`}>
+        <Label>{t("admin.market.custom-image")}</Label>
+        <div className={`grow`} />
+        <Switch
+          checked={customizedImage}
+          onCheckedChange={setCustomizedImage}
         />
       </div>
-    </div>
+      {customizedImage && (
+        <div
+          className={`market-row flex flex-row !flex-nowrap items-center market-custom-image !gap-0`}
+        >
+          <UploadFileButton
+            onFileChange={async (file) => {
+              const resp = await uploadResource(file);
+              withNotify(t, resp, true);
+              if (resp.status) {
+                resp.url && setAvatar(resp.url);
+              }
+            }}
+            variant={`outline`}
+            size={`icon`}
+            className={`!mr-1 shrink-0`}
+          >
+            <UploadIcon className={`h-4 w-4`} />
+          </UploadFileButton>
+          <Input
+            value={image}
+            placeholder={t("admin.market.custom-image-placeholder")}
+            onChange={(e) => {
+              setAvatar(e.target.value);
+            }}
+          />
+        </div>
+      )}
+    </>
   );
 }
 
@@ -536,104 +569,184 @@ function MarketItem({
       ref={forwardRef}
     >
       <div className={`model-wrapper`}>
-        <div className={`market-row`}>
-          <span>
-            <Require />
-            {t("admin.market.model-name")}
-          </span>
-          <Input
-            value={model.name}
-            placeholder={t("admin.market.model-name-placeholder")}
-            onChange={(e) => {
-              dispatch({
-                type: "update-name",
-                payload: {
-                  idx: index,
-                  name: e.target.value,
-                },
-              });
-            }}
-          />
-        </div>
-        <div className={`market-row`}>
-          <span>
-            <Require />
-            {t("admin.market.model-id")}
-          </span>
-          <Combobox
-            value={model.id}
-            onChange={(id: string) => {
-              dispatch({
-                type: "update-id",
-                payload: { idx: index, id },
-              });
-            }}
-            className={`model-combobox`}
-            list={channelModels}
-            placeholder={t("admin.market.model-id-placeholder")}
-          />
-        </div>
-        <div className={`market-row`}>
-          <span>{t("admin.market.model-description")}</span>
-          <Textarea
-            value={model.description || ""}
-            placeholder={t("admin.market.model-description-placeholder")}
-            onChange={(e) => {
-              dispatch({
-                type: "update-description",
-                payload: {
-                  idx: index,
-                  description: e.target.value,
-                },
-              });
-            }}
-          />
-        </div>
-        <div className={`market-row`}>
-          <span>
-            {t("admin.market.model-context")}
-            <Tips content={t("admin.market.model-context-tip")} />
-          </span>
-          <Switch
-            className={`ml-auto`}
-            checked={model.high_context}
-            onCheckedChange={(state) => {
-              dispatch({
-                type: "update-context",
-                payload: {
-                  idx: index,
-                  context: state,
-                },
-              });
-            }}
-          />
-        </div>
-        <div className={`market-row`}>
-          <span>
-            {t("admin.market.model-is-default")}
-            <Tips content={t("admin.market.model-is-default-tip")} />
-          </span>
-          <Switch
-            className={`ml-auto`}
-            checked={model.default}
-            onCheckedChange={(state) => {
-              dispatch({
-                type: "update-default",
-                payload: {
-                  idx: index,
-                  default: state,
-                },
-              });
-            }}
+        <div
+          className={`flex flex-col md:grid md:grid-cols-2 gap-2 md:gap-x-4`}
+        >
+          <div className={`market-row md:!flex-nowrap`}>
+            <span>{t("admin.market.model-name")}</span>
+            <Input
+              value={model.name}
+              className={`max-w-[320px] ml-auto`}
+              placeholder={t("admin.market.model-name-placeholder")}
+              onChange={(e) => {
+                dispatch({
+                  type: "update-name",
+                  payload: {
+                    idx: index,
+                    name: e.target.value,
+                  },
+                });
+              }}
+            />
+          </div>
+          <div className={`market-row md:!flex-nowrap`}>
+            <span>{t("admin.market.model-id")}</span>
+            <Combobox
+              value={model.id}
+              onChange={(id: string) => {
+                dispatch({
+                  type: "update-id",
+                  payload: { idx: index, id },
+                });
+              }}
+              className={`model-combobox`}
+              list={channelModels}
+              placeholder={t("admin.market.model-id-placeholder")}
+            />
+          </div>
+          <div className={`market-row col-span-2`}>
+            <span>{t("admin.market.model-description")}</span>
+            <Textarea
+              value={model.description || ""}
+              placeholder={t("admin.market.model-description-placeholder")}
+              onChange={(e) => {
+                dispatch({
+                  type: "update-description",
+                  payload: {
+                    idx: index,
+                    description: e.target.value,
+                  },
+                });
+              }}
+            />
+          </div>
+          <div className={`market-row`}>
+            <span>
+              {t("admin.market.model-context")}
+              <Tips content={t("admin.market.model-context-tip")} />
+            </span>
+            <Switch
+              className={`ml-auto`}
+              checked={model.high_context}
+              onCheckedChange={(state) => {
+                dispatch({
+                  type: "update-context",
+                  payload: {
+                    idx: index,
+                    context: state,
+                  },
+                });
+              }}
+            />
+          </div>
+          {/*function-calling*/}
+          <div className={`market-row`}>
+            <span>
+              {t("admin.market.function-calling")}
+              <Tips content={t("admin.market.function-calling-tip")} />
+            </span>
+            <Switch
+              className={`ml-auto`}
+              checked={model.function_calling || false}
+              onCheckedChange={(state) => {
+                dispatch({
+                  type: "update-function-calling",
+                  payload: {
+                    idx: index,
+                    default: state,
+                  },
+                });
+              }}
+            />
+          </div>
+          <div className={`market-row`}>
+            <span>
+              {t("admin.market.vision-model")}
+              <Tips content={t("admin.market.vision-model-tip")} />
+            </span>
+            <Switch
+              className={`ml-auto`}
+              checked={model.vision_model || false}
+              onCheckedChange={(state) => {
+                dispatch({
+                  type: "update-vision-model",
+                  payload: {
+                    idx: index,
+                    default: state,
+                  },
+                });
+              }}
+            />
+          </div>
+          <div className={`market-row`}>
+            <span>
+              {t("admin.market.thinking-model")}
+              <Tips content={t("admin.market.thinking-model-tip")} />
+            </span>
+            <Switch
+              className={`ml-auto`}
+              checked={model.thinking_model || false}
+              onCheckedChange={(state) => {
+                dispatch({
+                  type: "update-thinking-model",
+                  payload: {
+                    idx: index,
+                    default: state,
+                  },
+                });
+              }}
+            />
+          </div>
+          <div className={`market-row`}>
+            <span>
+              {t("admin.market.reverse-model")}
+              <Tips
+                hideTimeout={20000}
+                content={t("admin.market.reverse-model-tip")}
+              />
+            </span>
+            <Switch
+              className={`ml-auto`}
+              checked={model.reverse_model || false}
+              onCheckedChange={(state) => {
+                dispatch({
+                  type: "update-reverse-model",
+                  payload: {
+                    idx: index,
+                    default: state,
+                  },
+                });
+              }}
+            />
+          </div>
+          <div className={`market-row`}>
+            <span>
+              {t("admin.market.ocr-model")}
+              <Tips content={t("admin.market.ocr-model-tip")} />
+            </span>
+            <Switch
+              className={`ml-auto`}
+              checked={model.ocr_model || false}
+              onCheckedChange={(state) => {
+                dispatch({
+                  type: "update-ocr-model",
+                  payload: {
+                    idx: index,
+                    default: state,
+                  },
+                });
+              }}
+            />
+          </div>
+          <CustomMarketImage
+            image={model.avatar}
+            idx={index}
+            dispatch={dispatch}
           />
         </div>
         <div className={`market-row`}>
           <span>{t("admin.market.model-tag")}</span>
           <MarketTags tag={model.tag} idx={index} dispatch={dispatch} />
-        </div>
-        <div className={`market-row`}>
-          <span>{t("admin.market.model-image")}</span>
-          <MarketImage image={model.avatar} idx={index} dispatch={dispatch} />
         </div>
         <Actions />
       </div>
@@ -670,6 +783,7 @@ type MarketGroupProps = {
   stacked: boolean;
   channelModels: string[];
 };
+
 function MarketGroup({
   form,
   dispatch,
@@ -717,7 +831,6 @@ function SyncDialog({
 }: SyncDialogProps) {
   const { t } = useTranslation();
   const [form, setForm] = useState<MarketForm>([]);
-  const { toast } = useToast();
 
   const siteModels = useMemo(
     (): string[] => form.map((model) => model.id),
@@ -763,6 +876,7 @@ function SyncDialog({
           </DialogHeader>
           <DialogFooter>
             <Button
+              unClickable
               variant={`outline`}
               loading={true}
               onClick={async () => {
@@ -779,6 +893,7 @@ function SyncDialog({
               {t("admin.market.sync-all", { length: newModels.length })}
             </Button>
             <Button
+              unClickable
               loading={true}
               onClick={async () => {
                 const target = form.filter((model) =>
@@ -810,8 +925,7 @@ function SyncDialog({
           const raw = getV1Path("/v1/market", { endpoint });
           const resp = await getApiMarket({ endpoint });
           if (resp.length === 0) {
-            toast({
-              title: t("admin.market.sync-failed"),
+            toast.info(t("admin.market.sync-failed"), {
               description: t("admin.market.sync-failed-prompt", {
                 endpoint: raw,
               }),

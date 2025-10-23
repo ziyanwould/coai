@@ -7,19 +7,23 @@ import {
   validateToken,
 } from "@/store/auth.ts";
 import { Button } from "@/components/ui/button.tsx";
-import { Menu } from "lucide-react";
+import { Menu, Settings2 } from "lucide-react";
 import { useEffect } from "react";
 import { tokenField } from "@/conf/bootstrap.ts";
 import { toggleMenu } from "@/store/menu.ts";
-import ProjectLink from "@/components/ProjectLink.tsx";
-import { ModeToggle } from "@/components/ThemeProvider.tsx";
 import router from "@/router.tsx";
 import MenuBar from "./MenuBar.tsx";
 import { getMemory } from "@/utils/memory.ts";
 import { goAuth } from "@/utils/app.ts";
 import Avatar from "@/components/Avatar.tsx";
 import { appLogo } from "@/conf/env.ts";
-import Announcement from "@/components/app/Announcement.tsx";
+import { refreshQuota } from "@/store/quota.ts";
+import { refreshSubscription } from "@/store/subscription.ts";
+import { useEffectAsync } from "@/utils/hook.ts";
+import { AppDispatch, clearCronJobs, createCronJob } from "@/store";
+import { openDialog } from "@/store/settings.ts";
+import ThemeToggle from "@/components/ThemeProvider.tsx";
+import ProjectLink from "@/components/ProjectLink.tsx";
 
 function NavMenu() {
   const username = useSelector(selectUsername);
@@ -27,8 +31,13 @@ function NavMenu() {
   return (
     <div className={`avatar`}>
       <MenuBar>
-        <Button variant={`ghost`} size={`icon`}>
-          <Avatar username={username} />
+        <Button
+          variant={`ghost`}
+          size={`icon-md`}
+          className={`rounded-full overflow-hidden`}
+          unClickable
+        >
+          <Avatar username={username} className={`w-9 h-9 rounded-full`} />
         </Button>
       </MenuBar>
     </div>
@@ -37,36 +46,57 @@ function NavMenu() {
 
 function NavBar() {
   const { t } = useTranslation();
-  const dispatch = useDispatch();
+  const dispatch: AppDispatch = useDispatch();
   useEffect(() => {
     validateToken(dispatch, getMemory(tokenField));
   }, []);
   const auth = useSelector(selectAuthenticated);
 
+  useEffectAsync(async () => {
+    if (!auth) return;
+
+    const quotaTask = createCronJob(dispatch, refreshQuota, 30, true);
+    const planTask = createCronJob(dispatch, refreshSubscription, 30, true);
+
+    console.log(
+      `[cron] register quota and plan fetching tasks: ${quotaTask}, ${planTask}`,
+    );
+
+    return () => clearCronJobs([quotaTask, planTask]);
+  }, [auth]);
+
   return (
     <nav className={`navbar`}>
-      <div className={`items`}>
+      <div className={`items space-x-2`}>
         <Button
-          size={`icon`}
+          size={`icon-md`}
           variant={`ghost`}
+          className={`sidebar-button`}
           onClick={() => dispatch(toggleMenu())}
         >
-          <Menu />
+          <Menu className={`w-5 h-5`} />
         </Button>
         <img
-          className={`logo`}
+          className={`logo w-9 h-9 scale-110`}
           src={appLogo}
           alt=""
           onClick={() => router.navigate("/")}
         />
         <div className={`grow`} />
         <ProjectLink />
-        <Announcement />
-        <ModeToggle />
+        <ThemeToggle size="icon-md" className={`rounded-full overflow-hidden`} />
+        <Button
+          size={`icon-md`}
+          variant={`outline`}
+          className={`rounded-full overflow-hidden`}
+          onClick={() => dispatch(openDialog())}
+        >
+          <Settings2 className={`w-4 h-4`} />
+        </Button>
         {auth ? (
           <NavMenu />
         ) : (
-          <Button size={`sm`} onClick={goAuth}>
+          <Button size={`thin`} className={`rounded-full`} onClick={goAuth}>
             {t("login")}
           </Button>
         )}

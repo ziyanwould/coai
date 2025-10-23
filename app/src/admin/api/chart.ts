@@ -14,13 +14,42 @@ import {
 import axios from "axios";
 import { getErrorMessage } from "@/utils/base.ts";
 
+export const initialAdminInfoState: InfoResponse = {
+  subscription_count: 0,
+  billing_today: 0,
+  billing_month: 0,
+  online_chats: 0,
+  billing_yesterday: 0,
+  billing_last_month: 0,
+};
+
+export type UserFilterProps = {
+  plan: string;
+  admin: string;
+  ban: string;
+  sort: string;
+};
+
+export const initialUserFilter: UserFilterProps = {
+  plan: "all", // all/no/yes
+  admin: "all", // all/no/yes
+  ban: "all", // all/no/yes
+  sort: "id-asc",
+  // id-asc/id-desc
+  // quota-asc/quota-desc
+  // used-quota-asc/used-quota-desc
+  // plan-desc/plan-asc
+};
+
 export async function getAdminInfo(): Promise<InfoResponse> {
   try {
     const response = await axios.get("/admin/analytics/info");
     return response.data as InfoResponse;
   } catch (e) {
     console.warn(e);
-    return { subscription_count: 0, billing_today: 0, billing_month: 0 };
+    return {
+      ...initialAdminInfoState,
+    };
   }
 }
 
@@ -165,11 +194,16 @@ export async function generateRedeem(
 export async function getUserList(
   page: number,
   search: string,
+  params: UserFilterProps,
 ): Promise<UserResponse> {
   try {
-    const response = await axios.get(
-      `/admin/user/list?page=${page}&search=${search}`,
-    );
+    const response = await axios.get(`/admin/user/list`, {
+      params: {
+        page,
+        search,
+        params,
+      },
+    });
     return response.data as UserResponse;
   } catch (e) {
     return {

@@ -82,6 +82,7 @@ export function validateToken(
   } else
     doState()
       .then((data) => {
+        console.log("[auth] user info:", data);
         dispatch(
           updateData({
             authenticated: data.status,

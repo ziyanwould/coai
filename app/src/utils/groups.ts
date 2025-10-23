@@ -19,12 +19,14 @@ export const allGroups: string[] = [
   AdminType,
 ];
 
-export function useGroup(): string {
+export function useGroup(countAdminLevel?: boolean): string {
   const auth = useSelector(selectAuthenticated);
   const level = useSelector(levelSelector);
+  const admin = useSelector(selectAdmin);
 
   return useMemo(() => {
     if (!auth) return AnonymousType;
+    if (countAdminLevel && admin) return AdminType;
     switch (level) {
       case 1:
         return BasicType;
@@ -35,7 +37,7 @@ export function useGroup(): string {
       default:
         return NormalType;
     }
-  }, [auth, level]);
+  }, [auth, level, admin]);
 }
 
 export function hitGroup(group: string[]): boolean {

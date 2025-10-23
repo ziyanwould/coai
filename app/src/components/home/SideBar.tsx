@@ -1,16 +1,14 @@
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import { selectAuthenticated, selectUsername } from "@/store/auth.ts";
+import { selectAuthenticated } from "@/store/auth.ts";
 import {
-  closeMarket,
   selectCurrent,
   selectHistory,
   selectMaskItem,
   useConversationActions,
 } from "@/store/chat.ts";
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { ConversationInstance } from "@/api/types.tsx";
-import { useToast } from "@/components/ui/use-toast.ts";
 import { extractMessage, filterMessage } from "@/utils/processor.ts";
 import { copyClipboard } from "@/utils/dom.ts";
 import { useEffectAsync, useAnimation } from "@/utils/hook.ts";
@@ -20,13 +18,13 @@ import { selectMenu, setMenu } from "@/store/menu.ts";
 import {
   Copy,
   Eraser,
-  LogIn,
-  MoreHorizontal,
   Paintbrush,
   Plus,
   RotateCw,
+  Search,
+  User,
 } from "lucide-react";
-import ConversationSegment from "./ConversationSegment.tsx";
+import ConversationItem from "./ConversationItem.tsx";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,12 +38,11 @@ import {
 } from "@/components/ui/alert-dialog.tsx";
 import { getSharedLink, shareConversation } from "@/api/sharing.ts";
 import { Input } from "@/components/ui/input.tsx";
-import MenuBar from "@/components/app/MenuBar.tsx";
-import { Separator } from "@/components/ui/separator.tsx";
 import { goAuth } from "@/utils/app.ts";
-import Avatar from "@/components/Avatar.tsx";
 import { cn } from "@/components/ui/lib/utils.ts";
 import { getNumberMemory } from "@/utils/memory.ts";
+import { toast } from "sonner";
+import { AnimatePresence, motion } from "framer-motion";
 
 type Operation = {
   target: ConversationInstance | null;
@@ -53,18 +50,25 @@ type Operation = {
 };
 
 type SidebarActionProps = {
+  search: string;
+  setSearch: (search: string) => void;
   setOperateConversation: (operation: Operation) => void;
 };
 
 type ConversationListProps = {
+  search: string;
   operateConversation: Operation;
   setOperateConversation: (operation: Operation) => void;
 };
 
-function SidebarAction({ setOperateConversation }: SidebarActionProps) {
+function SidebarAction({
+  search,
+  setSearch,
+  setOperateConversation,
+}: SidebarActionProps) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const { toast } = useToast();
+
   const {
     toggle,
     refresh: refreshAction,
@@ -81,12 +85,10 @@ function SidebarAction({ setOperateConversation }: SidebarActionProps) {
     e.stopPropagation();
 
     (await removeAllAction())
-      ? toast({
-          title: t("conversation.delete-success"),
+      ? toast.success(t("conversation.delete-success"), {
           description: t("conversation.delete-success-prompt"),
         })
-      : toast({
-          title: t("conversation.delete-failed"),
+      : toast.error(t("conversation.delete-failed"), {
           description: t("conversation.delete-failed-prompt"),
         });
 
@@ -96,90 +98,140 @@ function SidebarAction({ setOperateConversation }: SidebarActionProps) {
   }
 
   return (
-    <div className={`sidebar-action`}>
-      <Button
-        variant={`ghost`}
-        size={`icon`}
-        onClick={async () => {
-          await toggle(-1);
-          if (mobile) dispatch(setMenu(false));
-          dispatch(closeMarket());
-        }}
+    <motion.div
+      className={`sidebar-action-wrapper flex flex-col w-full h-fit px-1.5`}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div
+        className={`sidebar-action`}
+        initial={{ scale: 0.9 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.3 }}
       >
-        {current === -1 && mask ? (
-          <Paintbrush className={`h-4 w-4`} />
-        ) : (
-          <Plus className={`h-4 w-4`} />
-        )}
-      </Button>
-      <div className={`grow`} />
-      <AlertDialog open={removeAll} onOpenChange={setRemoveAll}>
-        <AlertDialogTrigger asChild>
-          <Button variant={`ghost`} size={`icon`}>
-            <Eraser className={`h-4 w-4`} />
+        <motion.div whileTap={{ scale: 0.9 }}>
+          <Button
+            variant={`ghost`}
+            size={`icon`}
+            onClick={async () => {
+              await toggle(-1);
+              if (mobile) dispatch(setMenu(false));
+            }}
+          >
+            {current === -1 && mask ? (
+              <Paintbrush className={`h-4 w-4`} />
+            ) : (
+              <Plus className={`h-4 w-4`} />
+            )}
           </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t("conversation.remove-all-title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t("conversation.remove-all-description")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("conversation.cancel")}</AlertDialogCancel>
-            <Button
-              variant={`destructive`}
-              loading={true}
-              onClick={handleDeleteAll}
-            >
-              {t("conversation.delete")}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <Button
-        className={`refresh-action`}
-        variant={`ghost`}
-        size={`icon`}
-        id={`refresh`}
-        ref={refreshRef}
-        onClick={() => {
-          const hook = useAnimation(refreshRef, "active", 500);
-          refreshAction().finally(hook);
-        }}
+        </motion.div>
+        <div className={`grow`} />
+        <AlertDialog open={removeAll} onOpenChange={setRemoveAll}>
+          <AlertDialogTrigger asChild>
+            <motion.div whileTap={{ scale: 0.9 }}>
+              <Button variant={`ghost`} size={`icon`}>
+                <Eraser className={`h-4 w-4`} />
+              </Button>
+            </motion.div>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {t("conversation.remove-all-title")}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {t("conversation.remove-all-description")}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{t("conversation.cancel")}</AlertDialogCancel>
+              <Button
+                variant={`destructive`}
+                loading={true}
+                onClick={handleDeleteAll}
+                unClickable
+              >
+                {t("conversation.delete")}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        <motion.div whileTap={{ scale: 0.9 }} className={`refresh-action`}>
+          <Button
+            variant={`ghost`}
+            size={`icon`}
+            id={`refresh`}
+            ref={refreshRef}
+            onClick={() => {
+              const hook = useAnimation(refreshRef, "active", 500);
+              refreshAction().finally(hook);
+            }}
+          >
+            <RotateCw className={`h-4 w-4`} />
+          </Button>
+        </motion.div>
+      </motion.div>
+      <motion.div
+        className={`relative w-full h-fit`}
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <RotateCw className={`h-4 w-4`} />
-      </Button>
-    </div>
+        <Search
+          className={`absolute h-3.5 w-3.5 top-1/2 left-3.5 transform -translate-y-1/2`}
+        />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t("conversation.search")}
+          className={`w-full pl-9`}
+        />
+      </motion.div>
+    </motion.div>
   );
 }
 
 function SidebarConversationList({
+  search,
   operateConversation,
   setOperateConversation,
 }: ConversationListProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const { remove } = useConversationActions();
+  const auth = useSelector(selectAuthenticated);
   const history: ConversationInstance[] = useSelector(selectHistory);
   const [shared, setShared] = useState<string>("");
   const current = useSelector(selectCurrent);
+
+  const filteredHistory = useMemo(() => {
+    if (search.trim().length === 0) return history;
+
+    const searchItems = search
+      .trim()
+      .toLowerCase()
+      .split(" ")
+      .filter((item) => item.length > 0);
+
+    return history.filter((conversation) => {
+      const name = conversation.name.toLowerCase();
+      const id = conversation.id.toString();
+      return searchItems.every(
+        (item) => name.includes(item) || id.includes(item),
+      );
+    });
+  }, [history, search]);
 
   async function handleDelete(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
     e.stopPropagation();
 
     if (await remove(operateConversation?.target?.id || -1))
-      toast({
-        title: t("conversation.delete-success"),
+      toast.success(t("conversation.delete-success"), {
         description: t("conversation.delete-success-prompt"),
       });
     else
-      toast({
-        title: t("conversation.delete-failed"),
+      toast.error(t("conversation.delete-failed"), {
         description: t("conversation.delete-failed-prompt"),
       });
     setOperateConversation({ target: null, type: "" });
@@ -192,8 +244,7 @@ function SidebarConversationList({
     const resp = await shareConversation(operateConversation?.target?.id || -1);
     if (resp.status) setShared(getSharedLink(resp.data));
     else
-      toast({
-        title: t("share.failed"),
+      toast.error(t("share.failed"), {
         description: resp.message,
       });
 
@@ -203,18 +254,36 @@ function SidebarConversationList({
   return (
     <>
       <div className={`conversation-list`}>
-        {history.length ? (
-          history.map((conversation, i) => (
-            <ConversationSegment
-              operate={setOperateConversation}
-              conversation={conversation}
-              current={current}
-              key={i}
-            />
-          ))
-        ) : (
-          <div className={`empty`}>{t("conversation.empty")}</div>
-        )}
+        <AnimatePresence>
+          {filteredHistory.length ? (
+            filteredHistory.map((conversation, i) => (
+              <motion.div
+                key={conversation.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, delay: i * 0.05 }}
+              >
+                <ConversationItem
+                  operate={setOperateConversation}
+                  conversation={conversation}
+                  current={current}
+                />
+              </motion.div>
+            ))
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className={`empty text-center px-6`}
+            >
+              {auth
+                ? t("conversation.empty")
+                : t("conversation.empty-anonymous")}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       <AlertDialog
         open={
@@ -298,8 +367,7 @@ function SidebarConversationList({
                   size={`icon`}
                   onClick={async () => {
                     await copyClipboard(shared);
-                    toast({
-                      title: t("share.copied"),
+                    toast.success(t("share.copied"), {
                       description: t("share.copied-description"),
                     });
                   }}
@@ -327,27 +395,13 @@ function SidebarConversationList({
   );
 }
 
-function SidebarMenu() {
-  const username = useSelector(selectUsername);
-  return (
-    <div className={`sidebar-menu`}>
-      <Separator orientation={`horizontal`} className={`mb-2`} />
-      <MenuBar className={`menu-bar`}>
-        <Button variant={`ghost`} className={`sidebar-wrapper`}>
-          <Avatar username={username} />
-          <span className={`username`}>{username}</span>
-          <MoreHorizontal className={`h-4 w-4`} />
-        </Button>
-      </MenuBar>
-    </div>
-  );
-}
 function SideBar() {
   const { t } = useTranslation();
   const { refresh, toggle } = useConversationActions();
   const current = useSelector(selectCurrent);
   const open = useSelector(selectMenu);
   const auth = useSelector(selectAuthenticated);
+  const [search, setSearch] = useState<string>("");
   const [operateConversation, setOperateConversation] = useState<Operation>({
     target: null,
     type: "",
@@ -364,20 +418,27 @@ function SideBar() {
 
   return (
     <div className={cn("sidebar", open && "open")}>
-      {auth ? (
-        <div className={`sidebar-content`}>
-          <SidebarAction setOperateConversation={setOperateConversation} />
-          <SidebarConversationList
-            operateConversation={operateConversation}
-            setOperateConversation={setOperateConversation}
-          />
-          <SidebarMenu />
-        </div>
-      ) : (
-        <Button className={`login-action`} variant={`default`} onClick={goAuth}>
-          <LogIn className={`h-3 w-3 mr-2`} /> {t("login")}
-        </Button>
-      )}
+      <div className={`sidebar-content`}>
+        <SidebarAction
+          search={search}
+          setSearch={setSearch}
+          setOperateConversation={setOperateConversation}
+        />
+        <SidebarConversationList
+          search={search}
+          operateConversation={operateConversation}
+          setOperateConversation={setOperateConversation}
+        />
+        {!auth && (
+          <Button
+            className={`login-action min-h-10 h-max`}
+            variant={`default`}
+            onClick={goAuth}
+          >
+            <User className={`h-4 w-4 mr-1.5 shrink-0`} /> {t("login-action")}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

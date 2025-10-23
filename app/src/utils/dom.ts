@@ -1,3 +1,26 @@
+import { useTranslation } from "react-i18next";
+import { getErrorMessage } from "@/utils/base.ts";
+import { extractMessage } from "@/utils/processor.ts";
+import { toast } from "sonner";
+
+async function _copyClipboard(text: string) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return await navigator.clipboard.writeText(text);
+  }
+
+  const el = document.createElement("textarea");
+  el.value = text;
+  // android may require editable
+  el.style.position = "absolute";
+  el.style.left = "-9999px";
+  document.body.appendChild(el);
+  el.focus();
+  el.select();
+  el.setSelectionRange(0, text.length);
+  document.execCommand("copy");
+  document.body.removeChild(el);
+}
+
 export async function copyClipboard(text: string) {
   /**
    * Copy text to clipboard
@@ -8,24 +31,40 @@ export async function copyClipboard(text: string) {
    */
 
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      return await navigator.clipboard.writeText(text);
-    }
-
-    const el = document.createElement("textarea");
-    el.value = text;
-    // android may require editable
-    el.style.position = "absolute";
-    el.style.left = "-9999px";
-    document.body.appendChild(el);
-    el.focus();
-    el.select();
-    el.setSelectionRange(0, text.length);
-    document.execCommand("copy");
-    document.body.removeChild(el);
+    await _copyClipboard(text);
   } catch (e) {
     console.warn(e);
   }
+}
+
+export function useClipboard() {
+  /**
+   * Use clipboard
+   * @example
+   * const copy = useClipboard();
+   * copy("Hello world!");
+   */
+
+  const { t } = useTranslation();
+
+  return async (text: string) => {
+    try {
+      await _copyClipboard(text);
+      toast.success(t("copied.success"), {
+        description: `${t("copied.success-description")}: ${extractMessage(
+          text,
+          32,
+        )}`,
+      });
+    } catch (e) {
+      console.warn(e);
+      toast.error(t("copied.failed"), {
+        description: t("copied.failed-description", {
+          reason: getErrorMessage(e),
+        }),
+      });
+    }
+  };
 }
 
 export function saveAsFile(filename: string, content: string) {
@@ -272,26 +311,26 @@ export function scrollUp(el: HTMLElement | null) {
     });
 }
 
-export function updateFavicon(url: string) {
+export function updateFavicon(url?: string) {
   /**
    * Update favicon in the link element from head
    * @param url Favicon url
    * @example
    * updateFavicon("https://example.com/favicon.ico");
    */
-
+  if (!url || url.trim() === "") return;
   const link = document.querySelector("link[rel*='icon']");
   return link && link.setAttribute("href", url);
 }
 
-export function updateDocumentTitle(title: string) {
+export function updateDocumentTitle(title?: string) {
   /**
    * Update document title
    * @param title Document title
    * @example
    * updateDocumentTitle("Hello world!");
    */
-
+  if (!title || title.trim() === "") return;
   document.title = title;
 }
 
@@ -327,4 +366,31 @@ export function isContainDom(
     return el.contains(target);
   }
   return el === target || el.contains(target);
+}
+
+export function convertImgToB64(img: HTMLImageElement): string {
+  /**
+   * Convert image to base64
+   * @param img Image element
+   * @example
+   * const img = document.getElementById("img") as HTMLImageElement;
+   * const b64 = convertImgToB64(img);
+   * console.log(b64);
+   */
+
+  if (!img || !img.src) return "";
+  if (img.src.startsWith("data:image")) return img.src;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  canvas.style.display = "none";
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+  ctx?.drawImage(img, 0, 0);
+
+  const content = canvas.toDataURL();
+  document.body.removeChild(canvas);
+
+  return content;
 }

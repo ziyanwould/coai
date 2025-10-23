@@ -20,6 +20,14 @@ type User struct {
 	Banned       bool       `json:"is_banned"`
 }
 
+type UserInfo struct {
+	ID             int64   `json:"id"`
+	RegisterDays   float64 `json:"register_days"`
+	UsedQuota      float64 `json:"used_quota"`
+	PlanTotalMonth int64   `json:"plan_total_month"`
+	Email          string  `json:"email"`
+}
+
 func GetUserById(db *sql.DB, id int64) *User {
 	var user User
 	if err := globals.QueryRowDb(db, "SELECT id, username FROM auth WHERE id = ?", id).Scan(&user.ID, &user.Username); err != nil {
@@ -105,6 +113,41 @@ func (u *User) GetEmail(db *sql.DB) string {
 
 	u.Email = email.String
 	return u.Email
+}
+
+func (u *User) GetUserInfo(db *sql.DB) (*UserInfo, error) {
+	var info UserInfo
+	var createdAt []uint8
+
+	var planMonth sql.NullInt64
+	var usedQuota sql.NullFloat64
+	if err := globals.QueryRowDb(db, `
+		SELECT
+			auth.id, quota.created_at, quota.used, subscription.total_month
+		FROM auth
+		LEFT JOIN quota ON quota.user_id = auth.id
+		LEFT JOIN subscription ON subscription.user_id = auth.id
+		WHERE auth.username = ?
+	`, u.Username).Scan(&info.ID, &createdAt, &usedQuota, &planMonth); err != nil {
+		return nil, err
+	}
+
+	t := utils.ConvertTime(createdAt)
+	if t != nil {
+		info.RegisterDays = time.Since(*t).Hours() / 24
+	}
+
+	if planMonth.Valid {
+		info.PlanTotalMonth = planMonth.Int64
+	}
+
+	if usedQuota.Valid {
+		info.UsedQuota = usedQuota.Float64
+	}
+
+	info.Email = u.GetEmail(db)
+
+	return &info, nil
 }
 
 func IsUserExist(db *sql.DB, username string) bool {

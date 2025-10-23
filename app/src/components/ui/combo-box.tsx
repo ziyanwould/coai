@@ -22,12 +22,14 @@ type ComboBoxProps = {
   onChange: (value: string) => void;
   list: string[];
   listTranslated?: string;
+  listFormatter?: (value: string) => any;
   placeholder?: string;
   defaultOpen?: boolean;
   className?: string;
   classNameContent?: string;
   align?: "start" | "end" | "center" | undefined;
   hideSearchBar?: boolean;
+  icon?: React.ReactNode;
 };
 
 export function Combobox({
@@ -35,12 +37,14 @@ export function Combobox({
   onChange,
   list,
   listTranslated,
+  listFormatter,
   placeholder,
   defaultOpen,
   className,
   classNameContent,
   align,
   hideSearchBar,
+  icon,
 }: ComboBoxProps) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(defaultOpen ?? false);
@@ -49,7 +53,16 @@ export function Combobox({
     const seq = [...list, value ?? ""].filter((v) => v);
     const set = new Set(seq);
     return [...set];
-  }, [list, value]);
+  }, [list]);
+
+  const formatter = React.useMemo(() => {
+    if (listFormatter) {
+      return listFormatter;
+    }
+
+    return (value: string) =>
+      listTranslated ? t(`${listTranslated}.${value}`) : value;
+  }, [listFormatter, listTranslated]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -58,13 +71,11 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          unClickable
           className={cn("w-[320px] max-w-[60vw] justify-between", className)}
         >
-          {value
-            ? listTranslated
-              ? t(`${listTranslated}.${value}`)
-              : value
-            : placeholder ?? ""}
+          {icon}
+          {(value ? formatter(value) : placeholder) ?? ""}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -93,7 +104,7 @@ export function Combobox({
                     key === value ? "opacity-100" : "opacity-0",
                   )}
                 />
-                {listTranslated ? t(`${listTranslated}.${key}`) : key}
+                {formatter(key)}
               </CommandItem>
             ))}
           </CommandList>

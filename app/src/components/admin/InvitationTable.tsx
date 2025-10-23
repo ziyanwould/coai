@@ -27,18 +27,17 @@ import {
   getInvitationList,
 } from "@/admin/api/chart.ts";
 import { Input } from "@/components/ui/input.tsx";
-import { useToast } from "@/components/ui/use-toast.ts";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { copyClipboard, saveAsFile } from "@/utils/dom.ts";
 import { PaginationAction } from "@/components/ui/pagination.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import OperationAction from "@/components/OperationAction.tsx";
-import { toastState } from "@/api/common.ts";
+import { withNotify } from "@/api/common.ts";
 import StateBadge from "@/components/admin/common/StateBadge.tsx";
+import { toast } from "sonner";
 
 function GenerateDialog({ update }: { update: () => void }) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [open, setOpen] = useState<boolean>(false);
   const [type, setType] = useState<string>("");
   const [quota, setQuota] = useState<string>("5");
@@ -55,8 +54,7 @@ function GenerateDialog({ update }: { update: () => void }) {
       setData(data.data.join("\n"));
       update();
     } else
-      toast({
-        title: t("admin.error"),
+      toast.error(t("admin.error"), {
         description: data.message,
       });
   }
@@ -128,10 +126,10 @@ function GenerateDialog({ update }: { update: () => void }) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant={`outline`} onClick={close}>
+            <Button unClickable variant={`outline`} onClick={close}>
               {t("close")}
             </Button>
-            <Button variant={`default`} onClick={downloadCode}>
+            <Button unClickable variant={`default`} onClick={downloadCode}>
               <Download className={`h-4 w-4 mr-2`} />
               {t("download")}
             </Button>
@@ -144,7 +142,6 @@ function GenerateDialog({ update }: { update: () => void }) {
 
 function InvitationTable() {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [data, setData] = useState<InvitationForm>({
     total: 0,
     data: [],
@@ -158,8 +155,7 @@ function InvitationTable() {
     setLoading(false);
     if (resp.status) setData(resp as InvitationResponse);
     else
-      toast({
-        title: t("admin.error"),
+      toast.error(t("admin.error"), {
         description: resp.message,
       });
   }
@@ -212,7 +208,7 @@ function InvitationTable() {
                       variant={`destructive`}
                       onClick={async () => {
                         const resp = await deleteInvitation(invitation.code);
-                        toastState(toast, t, resp, true);
+                        withNotify(t, resp, true);
 
                         resp.status && (await update());
                       }}

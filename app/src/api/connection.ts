@@ -14,6 +14,37 @@ export type StreamMessage = {
   message: string;
   end: boolean;
   plan?: boolean;
+  title?: string;
+  search_query?: {
+    type: string;
+    search_queries: string[];
+  };
+  search_result?: {
+    type: string;
+    search_results: Array<{
+      url: string;
+      title: string;
+      snippet: string;
+      published_at?: number;
+      site_name?: string;
+      site_icon?: string;
+    }>;
+  };
+  search_index?: {
+    type: string;
+    search_indexes: Array<{
+      url: string;
+      cite_index: number;
+    }>;
+  };
+  tool_call?: {
+    name: string;
+    arguments?: unknown;
+    result?: string;
+    error?: string;
+    status: "start" | "executing" | "success" | "error";
+  };
+  response_type?: string;
 };
 
 export type ChatProps = {
@@ -21,8 +52,15 @@ export type ChatProps = {
   message: string;
   model: string;
   web?: boolean;
+  web_search_mode?: "quick" | "detailed";
+  web_page_summary?: boolean;
+  think?: boolean;
   context?: number;
   ignore_context?: boolean;
+
+  // mcp related fields
+  enable_mcp?: boolean;
+  mcp_plugin_id?: number;
 
   max_tokens?: number;
   temperature?: number;

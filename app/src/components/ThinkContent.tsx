@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, Brain, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/lib/utils";
 import Markdown from "@/components/Markdown";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
 interface ThinkContentProps {
@@ -39,16 +40,22 @@ export function ThinkContent({ content, isComplete = true }: ThinkContentProps) 
         )}
       </Button>
       
-      <div
-        className={cn(
-          "overflow-auto transition-all duration-200",
-          isExpanded ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+      <AnimatePresence mode="wait">
+        {isExpanded && (
+          <motion.div
+            key="think-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-auto"
+          >
+            <div className={cn("p-3 pt-0 text-sm", !isComplete && "opacity-80")}>
+              <Markdown>{content}</Markdown>
+            </div>
+          </motion.div>
         )}
-      >
-        <div className={cn("p-3 pt-0 text-sm", !isComplete && "opacity-80")}>
-          <Markdown>{content}</Markdown>
-        </div>
-      </div>
+      </AnimatePresence>
     </div>
   );
 }

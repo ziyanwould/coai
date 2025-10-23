@@ -1,6 +1,6 @@
 {
-    "name": "Chat Nio",
-    "short_name": "Chat Nio",
+    "name": "CoAI",
+    "short_name": "CoAI",
     "icons": [
       {
         "src": "/service/android-chrome-192x192.png",
@@ -14,7 +14,7 @@
       }
     ],
     "start_url": "/",
-    "theme_color": "#000000",
-    "background_color": "#0000000",
+    "theme_color": "#000",
+    "background_color": "#000",
     "display": "standalone"
 }

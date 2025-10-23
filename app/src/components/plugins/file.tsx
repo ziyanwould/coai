@@ -1,4 +1,4 @@
-import { Download, Eye, File } from "lucide-react";
+import { Download, Eye, Paperclip } from "lucide-react";
 import { saveAsFile, saveBlobAsFile, saveImageAsFile } from "@/utils/dom.ts";
 import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button.tsx";
@@ -21,6 +21,11 @@ export function MarkdownFile({ children, acceptDownload }: MarkdownFileProps) {
   const data = children?.toString() || "";
   const filename = data.split("\n")[0].replace("[[", "").replace("]]", "");
   const content = data.replace(`[[${filename}]]\n`, "");
+
+  // const suffix = useMemo(() => {
+  //   // get file extension from filename (like: .png, .jpg, .jpeg, .gif)
+  //   return filename.split(".").pop() || "";
+  // }, [filename]);
 
   const image = useMemo(() => {
     // get image url from content (like: https://i.imgur.com/xxxxx.png)
@@ -47,9 +52,9 @@ export function MarkdownFile({ children, acceptDownload }: MarkdownFileProps) {
         saveAsFile(filename, content);
       }}
     >
-      <div className={`file-content`}>
-        <File className={`mr-1`} />
-        <span className={`name`}>{filename}</span>
+      <div className={`file-content px-1`}>
+        <Paperclip className={`mr-1 !bg-transparent`} />
+        <span className={`name mr-2`}>{filename}</span>
         <div className={`grow`} />
         {image || b64image ? (
           <Button
@@ -65,11 +70,13 @@ export function MarkdownFile({ children, acceptDownload }: MarkdownFileProps) {
               saveBlobAsFile(filename, await res.blob());
             }}
           >
-            <Download className={`cursor-pointer`} />
+            <Download className={`cursor-pointer !bg-transparent`} />
           </Button>
         ) : (
-          <FileViewer filename={filename} content={content}>
-            <Eye className={`cursor-pointer`} />
+          <FileViewer filename={filename} content={content} asChild>
+            <div className="w-fit h-fit cursor-pointer">
+              <Eye className={`!bg-transparent`} />
+            </div>
           </FileViewer>
         )}
       </div>

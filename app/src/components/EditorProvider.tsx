@@ -154,9 +154,22 @@ function RichEditor({
               ref={input}
             />
           )}
-          {openPreview && (
-            <Markdown className={`editor-preview`} children={formattedValue} />
-          )}
+          {openPreview &&
+            (formattedValue ? (
+              <Markdown
+                className={`editor-preview`}
+                children={formattedValue}
+              />
+            ) : (
+              <div
+                className={`editor-preview inline-flex text-secondary text-xs items-center justify-center whitespace-pre-wrap`}
+              >
+                <Image
+                  className={`h-3.5 w-3.5 mr-1 shrink-0 inline-flex translate-y-[1px]`}
+                />
+                {t("chat.empty-preview")}
+              </div>
+            ))}
         </div>
       </div>
       {submittable && (
@@ -192,13 +205,13 @@ function EditorProvider(props: RichEditorProps) {
         {!props.setOpen && (
           <DialogTrigger asChild>
             {props.children ?? (
-              <ChatAction text={t("editor")}>
+              <ChatAction text={t("editor")} className={`hidden md:flex`}>
                 <Maximize className={`h-4 w-4`} />
               </ChatAction>
             )}
           </DialogTrigger>
         )}
-        <DialogContent className={`editor-dialog flex-dialog`}>
+        <DialogContent className={`editor-dialog flex-dialog`} couldFullScreen>
           <DialogHeader>
             <DialogTitle>{props.title ?? t("edit")}</DialogTitle>
             <DialogDescription asChild>

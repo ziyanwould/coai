@@ -3,6 +3,7 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import { cn } from "./lib/utils";
 import { buttonVariants } from "./button";
+import Emoji from "../Emoji";
 
 const AlertDialog = AlertDialogPrimitive.Root;
 
@@ -78,6 +79,22 @@ const AlertDialogFooter = ({
 );
 AlertDialogFooter.displayName = "AlertDialogFooter";
 
+type AlertDialogEmojiProps = React.HTMLAttributes<HTMLDivElement> & {
+  emoji: string;
+};
+const AlertDialogEmoji = ({
+  emoji,
+  className,
+  ...props
+}: AlertDialogEmojiProps) => (
+  <Emoji
+    {...props}
+    emoji={emoji}
+    className={cn("w-12 h-12 mx-auto sm:mx-0 mb-2", className)}
+  />
+);
+AlertDialogEmoji.displayName = "AlertDialogEmoji";
+
 const AlertDialogTitle = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
@@ -141,4 +158,5 @@ export {
   AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogEmoji,
 };

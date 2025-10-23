@@ -1,64 +1,48 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getSubscription } from "@/api/addition.ts";
-import { AppDispatch } from "./index.ts";
 
 export const subscriptionSlice = createSlice({
   name: "subscription",
   initialState: {
-    dialog: false,
     is_subscribed: false,
     level: 0,
     enterprise: false,
     expired: 0,
-    usage: {
-      gpt4: 0,
-    },
+    expired_at: "",
+    usage: {},
   },
-  reducers: {
-    toggleDialog: (state) => {
-      if (!state.dialog) return;
-      state.dialog = !state.dialog;
-    },
-    setDialog: (state, action) => {
-      state.dialog = action.payload as boolean;
-    },
-    openDialog: (state) => {
-      state.dialog = true;
-    },
-    closeDialog: (state) => {
-      state.dialog = false;
-    },
-    updateSubscription: (state, action) => {
+  reducers: {},
+  extraReducers: (builder) => {
+    builder.addCase(refreshSubscription.fulfilled, (state, action) => {
+      console.log(
+        "[redux] receive task `refreshSubscription` event: ",
+        action.payload,
+      );
+      if (!action.payload.status) return;
       state.is_subscribed = action.payload.is_subscribed;
       state.expired = action.payload.expired;
-      state.usage = action.payload.usage;
-      state.enterprise = action.payload.enterprise;
+      state.usage = action.payload.usage || {};
+      state.enterprise = action.payload.enterprise || false;
       state.level = action.payload.level;
-    },
+      state.expired_at = action.payload.expired_at || "";
+    });
   },
 });
 
-export const {
-  toggleDialog,
-  setDialog,
-  openDialog,
-  closeDialog,
-  updateSubscription,
-} = subscriptionSlice.actions;
 export default subscriptionSlice.reducer;
 
-export const dialogSelector = (state: any): boolean =>
-  state.subscription.dialog;
 export const isSubscribedSelector = (state: any): boolean =>
   state.subscription.is_subscribed;
 export const levelSelector = (state: any): number => state.subscription.level;
 export const expiredSelector = (state: any): number =>
   state.subscription.expired;
+export const expiredAtSelector = (state: any): string =>
+  state.subscription.expired_at;
 export const usageSelector = (state: any): any => state.subscription.usage;
-export const enterpriseSelector = (state: any): boolean =>
-  state.subscription.enterprise;
 
-export const refreshSubscription = async (dispatch: AppDispatch) => {
-  const response = await getSubscription();
-  if (response.status) dispatch(updateSubscription(response));
-};
+export const refreshSubscription = createAsyncThunk(
+  "subscription/refreshSubscription",
+  async () => {
+    return await getSubscription();
+  },
+);

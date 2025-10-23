@@ -1,7 +1,5 @@
-import NavBar from "./NavBar.tsx";
 import { ThemeProvider } from "@/components/ThemeProvider.tsx";
 import DialogManager from "@/dialogs";
-import Broadcast from "@/components/Broadcast.tsx";
 import { useEffectAsync } from "@/utils/hook.ts";
 import { bindMarket, getApiPlans } from "@/api/v1.ts";
 import { useDispatch } from "react-redux";
@@ -38,8 +36,6 @@ function AppProvider() {
 
   return (
     <>
-      <Broadcast />
-      <NavBar />
       <ThemeProvider />
       <DialogManager />
     </>

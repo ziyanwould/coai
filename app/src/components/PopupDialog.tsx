@@ -26,6 +26,7 @@ import {
 import { Calendar } from "@/components/ui/calendar.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
 import { Combobox } from "@/components/ui/combo-box.tsx";
+import { MultiCombobox } from "./ui/multi-combobox";
 
 export enum popupTypes {
   Text = "text",
@@ -33,8 +34,10 @@ export enum popupTypes {
   Switch = "switch",
   Clock = "clock",
   List = "list",
+  MultiList = "multi-list",
   Empty = "empty",
 }
+
 type ParamProps = {
   dataList?: string[];
   dataListTranslated?: string;
@@ -92,6 +95,7 @@ function PopupField({
           {...componentProps}
         />
       );
+
     case popupTypes.Clock:
       return <CalendarComp value={value} onValueChange={(v) => setValue(v)} />;
 
@@ -104,6 +108,18 @@ function PopupField({
           listTranslated={params?.dataListTranslated || ""}
         />
       );
+
+    case popupTypes.MultiList:
+      return (
+        <MultiCombobox
+          value={(value || "").split(",")}
+          onChange={(v) => setValue(v.filter((i) => i.trim()).join(","))}
+          list={params?.dataList || []}
+          listTranslate={params?.dataListTranslated || ""}
+          placeholder={placeholder || value || ""}
+        />
+      );
+
     case popupTypes.Number:
       return (
         <NumberInput
@@ -133,6 +149,7 @@ function PopupField({
       return null;
   }
 }
+
 function fixedZero(val: number) {
   return val < 10 ? `0${val}` : val.toString();
 }
@@ -277,6 +294,7 @@ function CalendarComp(props: {
     </div>
   );
 }
+
 function PopupDialog(props: PopupDialogProps) {
   const {
     title,
@@ -319,10 +337,15 @@ function PopupDialog(props: PopupDialogProps) {
           </Alert>
         )}
         <DialogFooter>
-          <Button variant={`outline`} onClick={() => setOpen(false)}>
+          <Button
+            unClickable
+            variant={`outline`}
+            onClick={() => setOpen(false)}
+          >
             {cancelLabel || t("cancel")}
           </Button>
           <Button
+            unClickable
             disabled={disabled}
             variant={destructive ? `destructive` : `default`}
             loading={true}
@@ -382,6 +405,7 @@ export function PopupAlertDialog({
           <AlertDialogCancel>{cancelLabel || t("cancel")}</AlertDialogCancel>
           <Button
             disabled={disabled}
+            unClickable
             variant={destructive ? `destructive` : `default`}
             loading={true}
             onClick={async () => {

@@ -1,15 +1,6 @@
 import { EventCommitter } from "@/events/struct.ts";
+import { SiteInfo } from "@/admin/api/info.ts";
 
-export type InfoForm = {
-  mail: boolean;
-  contact: string;
-  footer: string;
-  auth_footer: boolean;
-  article: string[];
-  generation: string[];
-  relay_plan: boolean;
-};
-
-export const infoEvent = new EventCommitter<InfoForm>({
+export const infoEvent = new EventCommitter<SiteInfo>({
   name: "info",
 });

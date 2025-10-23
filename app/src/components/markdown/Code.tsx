@@ -15,6 +15,7 @@ const LanguageMap: Record<string, string> = {
   jsx: "javascript",
   tsx: "typescript",
   rs: "rust",
+  py: "python",
 };
 
 export type CodeProps = {

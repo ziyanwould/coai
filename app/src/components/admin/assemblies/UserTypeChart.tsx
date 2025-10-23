@@ -74,6 +74,7 @@ function UserTypeChart({ data }: UserTypeChartProps) {
           {data.total === 0 && (
             <Loader2 className={`h-4 w-4 ml-1 animate-spin`} />
           )}
+
           <div className={`grow`} />
           <MultiCombobox
             value={display}

@@ -19,7 +19,11 @@ export function Toaster() {
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && (
-                <ToastDescription>{description}</ToastDescription>
+                <ToastDescription
+                  className={`max-h-[90vh] no-scrollbar overflow-y-auto touch-pan-y w-full h-full`}
+                >
+                  {description}
+                </ToastDescription>
               )}
             </div>
             {action}

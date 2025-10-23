@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+
 export type CommonResponse = {
   status: boolean;
   error?: string;
@@ -6,18 +8,19 @@ export type CommonResponse = {
   data?: any;
 };
 
-export function toastState(
-  toast: any,
+export function withNotify(
   t: any,
   state: CommonResponse,
   toastSuccess?: boolean,
+  toastSuccessMessage?: string,
 ) {
   if (state.status)
     toastSuccess &&
-      toast({ title: t("success"), description: t("request-success") });
+      toast.success(t("success"), {
+        description: toastSuccessMessage || t("request-success"),
+      });
   else
-    toast({
-      title: t("error"),
+    toast.error(t("error"), {
       description:
         state.error ?? state.reason ?? state.message ?? "error occurred",
     });

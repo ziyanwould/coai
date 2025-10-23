@@ -1,33 +1,13 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
-import { Button } from "@/components/ui/button.tsx";
-import {
-  ChevronRight,
-  FolderKanban,
-  Newspaper,
-  Shield,
-  Users2,
-} from "lucide-react";
-import router from "@/router.tsx";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog.tsx";
-import { selectAdmin, selectAuthenticated } from "@/store/auth.ts";
-import { appLogo } from "@/conf/env.ts";
-import {
-  infoArticleSelector,
-  infoAuthFooterSelector,
-  infoContactSelector,
-  infoFooterSelector,
-  infoGenerationSelector,
-} from "@/store/info.ts";
+import { selectAuthenticated } from "@/store/auth.ts";
+import { infoAuthFooterSelector, infoFooterSelector } from "@/store/info.ts";
 import Markdown from "@/components/Markdown.tsx";
-import { hitGroup } from "@/utils/groups.ts";
+import { motion } from "framer-motion";
+import { useState } from "react";
+import { ArrowRight, Megaphone } from "lucide-react";
+import Clickable from "@/components/ui/clickable";
+import Announcement from "@/components/app/Announcement";
 
 function Footer() {
   const auth = useSelector(selectAuthenticated);
@@ -39,80 +19,74 @@ function Footer() {
     return null;
   }
 
-  return footer.length > 0 && <Markdown acceptHtml={true}>{footer}</Markdown>;
+  return (
+    footer.length > 0 && (
+      <Markdown
+        className={`whitespace-pre-wrap text-secondary text-xs md:text-sm rounded-md bg-background/10 backdrop-blur-sm`}
+        acceptHtml={true}
+      >
+        {footer}
+      </Markdown>
+    )
+  );
 }
 
 function ChatSpace() {
-  const [open, setOpen] = useState(false);
   const { t } = useTranslation();
-  const contact = useSelector(infoContactSelector);
-  const admin = useSelector(selectAdmin);
-
-  const generationGroup = useSelector(infoGenerationSelector);
-  const generation = hitGroup(generationGroup);
-
-  const articleGroup = useSelector(infoArticleSelector);
-  const article = hitGroup(articleGroup);
+  const [open, setOpen] = useState(false);
 
   return (
-    <div className={`chat-product`}>
-      <img
-        src={appLogo}
-        className={`chat-logo h-20 w-20 translate-y-[-2rem]`}
-        alt={``}
-      />
-
-      {admin && (
-        <Button variant={`outline`} onClick={() => router.navigate("/admin")}>
-          <Shield className={`h-4 w-4 mr-1.5`} />
-          {t("admin.users")}
-          <ChevronRight className={`h-4 w-4 ml-2`} />
-        </Button>
-      )}
-
-      {contact.length > 0 && (
-        <Button variant={`outline`} onClick={() => setOpen(true)}>
-          <Users2 className={`h-4 w-4 mr-1.5`} />
-          {t("contact.title")}
-          <ChevronRight className={`h-4 w-4 ml-2`} />
-        </Button>
-      )}
-
-      {article && (
-        <Button variant={`outline`} onClick={() => router.navigate("/article")}>
-          <Newspaper className={`h-4 w-4 mr-1.5`} />
-          {t("article.title")}
-          <ChevronRight className={`h-4 w-4 ml-2`} />
-        </Button>
-      )}
-
-      {generation && (
-        <Button
-          variant={`outline`}
-          onClick={() => router.navigate("/generate")}
+    <motion.div
+      className={`chat-product`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div
+        className="flex flex-col space-y-1 w-full md:max-w-2xl mb-4 md:mx-auto px-6 select-none"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <motion.div
+          className="flex flex-row items-center px-1 w-full"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <FolderKanban className={`h-4 w-4 mr-1.5`} />
-          {t("generate.title")}
-          <ChevronRight className={`h-4 w-4 ml-2`} />
-        </Button>
-      )}
+          <Megaphone className="w-3 h-3 text-secondary mr-1" />
+          <p className="text-xs font-medium text-secondary mr-auto">
+            {t("new-announcement")}
+          </p>
+          <Clickable
+            tapScale={0.9}
+            className="flex items-center"
+            onClick={() => setOpen(true)}
+          >
+            <motion.button
+              className="w-fit h-fit"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <ArrowRight className="w-3 h-3 text-secondary" />
+            </motion.button>
+            <p className="text-xs font-medium text-secondary ml-1">
+              {t("learn-more")}
+            </p>
+          </Clickable>
+        </motion.div>
+        <Announcement open={open} setOpen={setOpen} />
+      </motion.div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className={`flex-dialog`}>
-          <DialogHeader>
-            <DialogTitle>{t("contact.title")}</DialogTitle>
-            <DialogDescription asChild>
-              <Markdown className={`pt-4`} acceptHtml={true}>
-                {contact}
-              </Markdown>
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-      <div className={`space-footer`}>
+      <motion.div
+        className={`space-footer`}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.8 }}
+      >
         <Footer />
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 

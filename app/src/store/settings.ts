@@ -6,7 +6,7 @@ import {
   setNumberMemory,
 } from "@/utils/memory.ts";
 import { RootState } from "@/store/index.ts";
-import { isMobile } from "@/utils/device";
+import { isMobile } from "@/utils/device.ts";
 
 export const sendKeys = ["Ctrl + Enter", "Enter"];
 export const initialSettings = {
@@ -21,6 +21,9 @@ export const initialSettings = {
   presence_penalty: 0,
   frequency_penalty: 0,
   repetition_penalty: 1,
+  hide_model: false,
+  hide_toolbar: false,
+  hide_toolbar_text: true,
 };
 
 export const settingsSlice = createSlice({
@@ -38,6 +41,9 @@ export const settingsSlice = createSlice({
     presence_penalty: getNumberMemory("presence_penalty", 0), // presence_penalty
     frequency_penalty: getNumberMemory("frequency_penalty", 0), // frequency_penalty
     repetition_penalty: getNumberMemory("repetition_penalty", 1), // repetition_penalty
+    hide_model: getBooleanMemory("hide_model", false), // hide model
+    hide_toolbar: getBooleanMemory("hide_toolbar", false), // hide toolbar
+    hide_toolbar_text: getBooleanMemory("hide_toolbar_text", true), // hide toolbar text
   },
   reducers: {
     toggleDialog: (state) => {
@@ -96,6 +102,18 @@ export const settingsSlice = createSlice({
       state.repetition_penalty = action.payload as number;
       setNumberMemory("repetition_penalty", action.payload);
     },
+    setHideModel: (state, action) => {
+      state.hide_model = action.payload as boolean;
+      setBooleanMemory("hide_model", action.payload);
+    },
+    setHideToolbar: (state, action) => {
+      state.hide_toolbar = action.payload as boolean;
+      setBooleanMemory("hide_toolbar", action.payload);
+    },
+    setHideToolbarText: (state, action) => {
+      state.hide_toolbar_text = action.payload as boolean;
+      setBooleanMemory("hide_toolbar_text", action.payload);
+    },
     resetSettings: (state) => {
       state.context = initialSettings.context;
       state.align = initialSettings.align;
@@ -108,6 +126,9 @@ export const settingsSlice = createSlice({
       state.presence_penalty = initialSettings.presence_penalty;
       state.frequency_penalty = initialSettings.frequency_penalty;
       state.repetition_penalty = initialSettings.repetition_penalty;
+      state.hide_model = initialSettings.hide_model;
+      state.hide_toolbar = initialSettings.hide_toolbar;
+      state.hide_toolbar_text = initialSettings.hide_toolbar_text;
 
       setBooleanMemory("context", initialSettings.context);
       setBooleanMemory("align", initialSettings.align);
@@ -120,6 +141,9 @@ export const settingsSlice = createSlice({
       setNumberMemory("presence_penalty", initialSettings.presence_penalty);
       setNumberMemory("frequency_penalty", initialSettings.frequency_penalty);
       setNumberMemory("repetition_penalty", initialSettings.repetition_penalty);
+      setBooleanMemory("hide_model", initialSettings.hide_model);
+      setBooleanMemory("hide_toolbar", initialSettings.hide_toolbar);
+      setBooleanMemory("hide_toolbar_text", initialSettings.hide_toolbar_text);
     },
   },
 });
@@ -141,6 +165,9 @@ export const {
   setFrequencyPenalty,
   setRepetitionPenalty,
   resetSettings,
+  setHideModel,
+  setHideToolbar,
+  setHideToolbarText,
 } = settingsSlice.actions;
 export default settingsSlice.reducer;
 
@@ -166,3 +193,9 @@ export const frequencyPenaltySelector = (state: RootState): number =>
   state.settings.frequency_penalty;
 export const repetitionPenaltySelector = (state: RootState): number =>
   state.settings.repetition_penalty;
+export const hideModelSelector = (state: RootState): boolean =>
+  state.settings.hide_model;
+export const hideToolbarSelector = (state: RootState): boolean =>
+  state.settings.hide_toolbar;
+export const hideToolbarTextSelector = (state: RootState): boolean =>
+  state.settings.hide_toolbar_text;

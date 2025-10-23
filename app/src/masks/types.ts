@@ -9,6 +9,7 @@ export type Mask = {
   avatar: string;
   name: string;
   description?: string;
+  tags?: string[];
   lang?: string;
   builtin?: boolean;
   context: MaskMessage[];

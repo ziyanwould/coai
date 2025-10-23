@@ -7,6 +7,7 @@ import { senderSelector } from "@/store/settings.ts";
 import { blobEvent } from "@/events/blob.ts";
 import { cn } from "@/components/ui/lib/utils.ts";
 import { isEnter, withCtrl, withShift } from "@/utils/base.ts";
+import { useMobile } from "@/utils/device.ts";
 
 type ChatInputProps = {
   className?: string;
@@ -26,21 +27,25 @@ function ChatInput({
   const { t } = useTranslation();
   const sender = useSelector(senderSelector);
 
-  // sender: Ctrl + Enter if false, Enter if true
+  const mobile = useMobile();
+
+  const rows = mobile ? 3 : 5;
+  const maxRows = mobile ? 10 : 15;
 
   return (
     <FlexibleTextarea
       id={`input`}
-      className={cn("input-box no-scrollbar", className)}
+      className={cn("input-box thin-scrollbar min-h-[60px]", className)}
       ref={target}
       value={value}
-      rows={3}
-      maxRows={10}
+      rows={rows}
+      minRows={rows}
+      maxRows={maxRows}
       onChange={(e) => {
         onValueChange(e.target.value);
         setMemory("history", e.target.value);
       }}
-      placeholder={sender ? t("chat.placeholder-enter") : t("chat.placeholder")}
+      placeholder={t("chat.placeholder")}
       onKeyDown={async (e) => {
         if (isEnter(e)) {
           if (sender) {

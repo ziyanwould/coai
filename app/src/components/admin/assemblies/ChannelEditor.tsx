@@ -7,6 +7,7 @@ import {
   SelectGroup,
   SelectTrigger,
   SelectValue,
+  NativeSelectTrigger,
 } from "@/components/ui/select.tsx";
 import {
   Channel,
@@ -16,14 +17,22 @@ import {
   proxyType,
   ProxyTypes,
 } from "@/admin/channel.ts";
-import { CommonResponse, toastState } from "@/api/common.ts";
+import { CommonResponse, withNotify } from "@/api/common.ts";
 import { FlexibleTextarea, Textarea } from "@/components/ui/textarea.tsx";
 import { NumberInput } from "@/components/ui/number-input.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { useTranslation } from "react-i18next";
 import { useMemo, useState } from "react";
 import Required from "@/components/Require.tsx";
-import { Loader2, Plus, Search, X } from "lucide-react";
+import {
+  BookDashed,
+  Loader2,
+  Paintbrush,
+  Plus,
+  Search,
+  Kanban,
+  X,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +50,6 @@ import {
   getChannel,
   updateChannel,
 } from "@/admin/api/channel.ts";
-import { toast } from "@/components/ui/use-toast.ts";
 import { useEffectAsync } from "@/utils/hook.ts";
 import Paragraph, {
   ParagraphDescription,
@@ -51,6 +59,9 @@ import Paragraph, {
 import { MultiCombobox } from "@/components/ui/multi-combobox.tsx";
 import { useChannelModels } from "@/admin/hook.tsx";
 import { isEnter } from "@/utils/base.ts";
+import { TypeBadge } from "@/components/admin/assemblies/ChannelTable.tsx";
+import { useClipboard } from "@/utils/dom.ts";
+import { Switch } from "@/components/ui/switch.tsx";
 
 type CustomActionProps = {
   onPost: (model: string) => void;
@@ -137,6 +148,7 @@ type ChannelEditorProps = {
   setEnabled: (enabled: boolean) => void;
   edit: Channel;
   dispatch: (action: any) => void;
+  data: Channel[];
 };
 
 function ChannelEditor({
@@ -145,8 +157,10 @@ function ChannelEditor({
   edit,
   dispatch,
   setEnabled,
+  data,
 }: ChannelEditorProps) {
   const { t } = useTranslation();
+  const copy = useClipboard();
   const info = useMemo(() => getChannelInfo(edit.type), [edit.type]);
   const { channelModels } = useChannelModels();
   const unusedModels = useMemo(() => {
@@ -169,7 +183,7 @@ function ChannelEditor({
 
     const resp =
       id === -1 ? await createChannel(data) : await updateChannel(id, data);
-    toastState(toast, t, resp as CommonResponse, true);
+    withNotify(t, resp as CommonResponse, true);
 
     if (resp.status) {
       close(true);
@@ -182,7 +196,7 @@ function ChannelEditor({
       setLoading(true);
       const resp = await getChannel(id);
       setLoading(false);
-      toastState(toast, t, resp as CommonResponse);
+      withNotify(t, resp as CommonResponse);
       if (resp.data) dispatch({ type: "set", value: resp.data });
     }
   }, [id]);
@@ -190,9 +204,67 @@ function ChannelEditor({
   return (
     display && (
       <div className={`channel-editor`}>
-        {loading && (
-          <Loader2 className={`channel-loader h-4 w-4 animate-spin`} />
-        )}
+        <div className={`flex flex-row items-center mb-4`}>
+          {loading && (
+            <Button variant={`outline`} className={`mr-2`}>
+              <Loader2 className={`h-4 w-4 animate-spin mr-2 shrink-0`} />
+              {t("admin.channels.loading")}
+            </Button>
+          )}
+          <Button
+            variant={`outline`}
+            className={`mr-2 shrink-0`}
+            onClick={() => dispatch({ type: "clear" })}
+          >
+            <Paintbrush className={`h-4 w-4 mr-1.5`} />
+            {t("admin.channels.new")}
+          </Button>
+          <Select
+            value={``}
+            onValueChange={(value) => {
+              const chan = data.find(
+                (channel) => channel.id.toString() === value,
+              );
+              if (!chan) return;
+
+              dispatch({ type: "import", value: chan });
+              console.debug(`[channel] import channel template: `, chan);
+            }}
+          >
+            <NativeSelectTrigger asChild>
+              <Button variant={`outline`} className={`mr-2 shrink-0`}>
+                <Kanban className={`h-4 w-4 mr-1.5`} />
+                {t("admin.channels.import")}
+              </Button>
+            </NativeSelectTrigger>
+            <SelectContent>
+              {(data || []).map((channel, idx) => (
+                <SelectItem key={idx} value={channel.id.toString()}>
+                  <div className={`flex flex-row items-center w-full`}>
+                    <BookDashed className={`h-4 w-4 mr-1`} />
+                    {channel.name}
+
+                    <span className={`text-secondary ml-1`}>#{channel.id}</span>
+                    <TypeBadge
+                      type={channel.type}
+                      className={`ml-1`}
+                      variant={`outline`}
+                    />
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className={`grow`} />
+          <Button
+            variant={`outline`}
+            size={`icon`}
+            className={`shrink-0`}
+            onClick={() => close()}
+          >
+            <X className={`h-4 w-4`} />
+          </Button>
+        </div>
         <div className={`channel-wrapper w-full h-max`}>
           <div className={`channel-row`}>
             <div className={`channel-content`}>
@@ -243,13 +315,18 @@ function ChannelEditor({
             </div>
             <div className={`channel-model-wrapper`}>
               {edit.models.map((model: string, idx: number) => (
-                <div className={`channel-model-item`} key={idx}>
+                <div
+                  className={`channel-model-item cursor-pointer`}
+                  key={idx}
+                  onClick={() => copy(model)}
+                >
                   {model}
                   <X
                     className={`remove-action`}
-                    onClick={() =>
-                      dispatch({ type: "remove-model", value: model })
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dispatch({ type: "remove-model", value: model });
+                    }}
                   />
                 </div>
               ))}
@@ -385,6 +462,46 @@ function ChannelEditor({
           <Paragraph title={t("admin.channels.advanced")} isCollapsed={true}>
             <ParagraphItem>
               <div className={`channel-row column-layout`}>
+                <div className={`channel-content flex flex-row items-center justify-between w-full`}>
+                  <div className={`flex flex-row items-center gap-1`}>
+                    {t("admin.channels.first-message-as-user")}
+                    <Tips content={t("admin.channels.first-message-as-user-tip")} />
+                  </div>
+                  <Switch
+                    checked={edit.first_message_as_user || false}
+                    onCheckedChange={(value) =>
+                      dispatch({ type: "set-first-message-as-user", value })
+                    }
+                  />
+                </div>
+              </div>
+            </ParagraphItem>
+            <ParagraphDescription>
+              {t("admin.channels.first-message-as-user-desc")}
+            </ParagraphDescription>
+            <ParagraphSpace />
+            <ParagraphItem>
+              <div className={`channel-row column-layout`}>
+                <div className={`channel-content flex flex-row items-center justify-between w-full`}>
+                  <div className={`flex flex-row items-center gap-1`}>
+                    {t("admin.channels.merge-consecutive-user-messages")}
+                    <Tips content={t("admin.channels.merge-consecutive-user-messages-tip")} />
+                  </div>
+                  <Switch
+                    checked={edit.merge_consecutive_user_messages || false}
+                    onCheckedChange={(value) =>
+                      dispatch({ type: "set-merge-consecutive-user-messages", value })
+                    }
+                  />
+                </div>
+              </div>
+            </ParagraphItem>
+            <ParagraphDescription>
+              {t("admin.channels.merge-consecutive-user-messages-desc")}
+            </ParagraphDescription>
+            <ParagraphSpace />
+            <ParagraphItem>
+              <div className={`channel-row column-layout`}>
                 <div className={`channel-content`}>
                   {t("admin.channels.group")}
                   <Tips content={t("admin.channels.group-tip")} />
@@ -397,7 +514,7 @@ function ChannelEditor({
                     dispatch({ type: "set-group", value })
                   }
                   list={channelGroups}
-                  listTranslate={`admin.channels.groups`}
+                  listTranslate={"admin.channels.groups"}
                   placeholder={t("admin.channels.group-placeholder", {
                     length: (edit.group || []).length,
                   })}

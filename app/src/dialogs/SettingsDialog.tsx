@@ -23,7 +23,6 @@ import {
 } from "@/components/ui/select.tsx";
 import { langsProps, setLanguage } from "@/i18n.ts";
 import { cn } from "@/components/ui/lib/utils.ts";
-import Github from "@/components/ui/icons/Github.tsx";
 import { Slider } from "@/components/ui/slider.tsx";
 import Tips from "@/components/Tips.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -38,17 +37,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog.tsx";
-import { isTauri } from "@/utils/desktop.ts";
 import { Badge } from "@/components/ui/badge.tsx";
+import Github from "@/components/ui/icons/Github.tsx";
+import { isTauri } from "@/utils/desktop.ts";
+import { useDeeptrain } from "@/conf/env.ts";
+import ThemeToggle from "@/components/ThemeProvider.tsx";
 
 function SettingsDialog() {
   const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
-  const desktop = isTauri();
 
   const open = useSelector(settings.dialogSelector);
 
   const align = useSelector(settings.alignSelector);
+  const hideToolbar = useSelector(settings.hideToolbarSelector);
+  const hideToolbarText = useSelector(settings.hideToolbarTextSelector);
   const context = useSelector(settings.contextSelector);
   const sender = useSelector(settings.senderSelector);
   const history = useSelector(settings.historySelector);
@@ -63,6 +66,8 @@ function SettingsDialog() {
 
   const [memorySize, setMemorySize] = useState(getMemoryPerformance());
 
+  const desktop = isTauri();
+
   useEffect(() => {
     const interval = setInterval(() => {
       setMemorySize(getMemoryPerformance());
@@ -76,7 +81,7 @@ function SettingsDialog() {
       open={open}
       onOpenChange={(open) => dispatch(settings.setDialog(open))}
     >
-      <DialogContent className={`flex-dialog settings-dialog`}>
+      <DialogContent className={`flex-dialog settings-dialog`} couldFullScreen>
         <DialogHeader>
           <DialogTitle>{t("settings.title")}</DialogTitle>
           <DialogDescription asChild>
@@ -86,7 +91,17 @@ function SettingsDialog() {
                   <div className={`item`}>
                     <div className={`name`}>{t("settings.version")}</div>
                     <div className={`grow`} />
-                    <div className={`value`}>v{version}</div>
+                    <div className={`value`}>
+                      v{version}
+                      <Badge className={`ml-1`}>Community</Badge>
+                    </div>
+                  </div>
+                  <div className={`item`}>
+                    <div className={`name`}>{t("settings.theme")}</div>
+                    <div className={`grow`} />
+                    <div className={`value`}>
+                      <ThemeToggle />
+                    </div>
                   </div>
                   <div className={`item`}>
                     <div className={`name`}>{t("settings.language")}</div>
@@ -155,6 +170,32 @@ function SettingsDialog() {
                     />
                   </div>
                   <div className={`item`}>
+                    <div className={`name`}>{t("settings.hide-toolbar")}</div>
+                    <div className={`grow`} />
+                    <Checkbox
+                      className={`value`}
+                      checked={hideToolbar}
+                      onCheckedChange={(state: boolean) => {
+                        dispatch(settings.setHideToolbar(state));
+                      }}
+                    />
+                  </div>
+                  <div className={`item`}>
+                    <div className={`name`}>
+                      {t("settings.hide-toolbar-text")}
+                    </div>
+                    <div className={`grow`} />
+                    <Checkbox
+                      className={`value`}
+                      checked={hideToolbarText}
+                      onCheckedChange={(state: boolean) => {
+                        dispatch(settings.setHideToolbarText(state));
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className={`settings-segment`}>
+                  <div className={`item`}>
                     <div className={`name`}>{t("settings.context")}</div>
                     <div className={`grow`} />
                     <Checkbox
@@ -201,8 +242,6 @@ function SettingsDialog() {
                       }}
                     />
                   </div>
-                </div>
-                <div className={`settings-segment`}>
                   <div className={`item`}>
                     <div className={`name`}>
                       {t("settings.temperature")}
@@ -372,13 +411,14 @@ function SettingsDialog() {
                     : t("unknown")}
                 </p>
                 <a
-                  className={`flex flex-row items-center`}
-                  href={`https://github.com/Deeptrain-Community/chatnio`}
+                  className={cn(
+                    "flex flex-row items-center",
+                    !useDeeptrain && "hidden",
+                  )}
+                  href={`https://github.com/coaidev/coai`}
                 >
-                  <Github
-                    className={`inline-block h-4 w-4 mr-1 translate-y-[1px]`}
-                  />
-                  chatnio v{version}
+                  <Github className={`inline-block h-4 w-4 mr-1.5`} />
+                  CoAI v{version}
                   {desktop && <Badge className={`ml-1`}>App</Badge>}
                 </a>
               </div>

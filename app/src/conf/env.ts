@@ -1,11 +1,8 @@
 import { updateDocumentTitle, updateFavicon } from "@/utils/dom.ts";
-import { getMemory, setMemory } from "@/utils/memory.ts";
-import { announcementEvent } from "@/events/announcement.ts";
+import { setMemory } from "@/utils/memory.ts";
 
 export let appName =
-  localStorage.getItem("app_name") ||
-  import.meta.env.VITE_APP_NAME ||
-  "Chat Nio";
+  localStorage.getItem("app_name") || import.meta.env.VITE_APP_NAME || "CoAI";
 export let appLogo =
   localStorage.getItem("app_logo") ||
   import.meta.env.VITE_APP_LOGO ||
@@ -13,11 +10,11 @@ export let appLogo =
 export let blobEndpoint =
   localStorage.getItem("blob_endpoint") ||
   import.meta.env.VITE_BLOB_ENDPOINT ||
-  "https://blob.chatnio.net";
+  "https://blob.coai.dev";
 export let docsEndpoint =
   localStorage.getItem("docs_url") ||
   import.meta.env.VITE_DOCS_ENDPOINT ||
-  "https://docs.chatnio.net";
+  "https://coai.dev";
 export let buyLink =
   localStorage.getItem("buy_link") || import.meta.env.VITE_BUY_LINK || "";
 
@@ -25,12 +22,12 @@ export const useDeeptrain = !!import.meta.env.VITE_USE_DEEPTRAIN;
 export const backendEndpoint = import.meta.env.VITE_BACKEND_ENDPOINT || "/api";
 export const deeptrainEndpoint =
   import.meta.env.VITE_DEEPTRAIN_ENDPOINT || "https://deeptrain.net";
-export const deeptrainAppName = import.meta.env.VITE_DEEPTRAIN_APP || "chatnio";
+export const deeptrainAppName = import.meta.env.VITE_DEEPTRAIN_APP || "coai";
 export const deeptrainApiEndpoint =
   import.meta.env.VITE_DEEPTRAIN_API_ENDPOINT || "https://api.deeptrain.net";
 
-updateDocumentTitle(appName);
-updateFavicon(appLogo);
+updateDocumentTitle(import.meta.env.VITE_APP_NAME);
+updateFavicon(import.meta.env.VITE_APP_LOGO);
 
 export function getDev(): boolean {
   /**
@@ -74,7 +71,7 @@ export function setAppName(name: string): void {
   /**
    * set the app name in localStorage
    */
-  name = name.trim() || "Chat Nio";
+  name = name.trim() || "CoAI";
   setMemory("app_name", name);
   appName = name;
 
@@ -96,7 +93,7 @@ export function setDocsUrl(url: string): void {
   /**
    * set the docs url in localStorage
    */
-  url = url.trim() || "https://docs.chatnio.net";
+  url = url.trim() || "https://coai.dev";
   setMemory("docs_url", url);
   docsEndpoint = url;
 }
@@ -105,25 +102,9 @@ export function setBlobEndpoint(endpoint: string): void {
   /**
    * set the blob endpoint in localStorage
    */
-  endpoint = endpoint.trim() || "https://blob.chatnio.net";
+  endpoint = endpoint.trim() || "https://blob.coai.dev";
   setMemory("blob_endpoint", endpoint);
   blobEndpoint = endpoint;
-}
-
-export function setAnnouncement(announcement: string): void {
-  /**
-   * set the announcement in localStorage
-   */
-  if (!announcement || announcement.trim() === "") return;
-
-  const firstReceived =
-    getMemory("announcement").trim() !== announcement.trim();
-  setMemory("announcement", announcement);
-
-  announcementEvent.emit({
-    message: announcement,
-    firstReceived,
-  });
 }
 
 export function setBuyLink(link: string): void {
@@ -134,3 +115,4 @@ export function setBuyLink(link: string): void {
   setMemory("buy_link", link);
   buyLink = link;
 }
+

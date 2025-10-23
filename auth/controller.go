@@ -275,6 +275,26 @@ func StateAPI(c *gin.Context) {
 	})
 }
 
+func UserInfoAPI(c *gin.Context) {
+	user := GetUserByCtx(c)
+	if user == nil {
+		return
+	}
+
+	db := utils.GetDBFromContext(c)
+	if info, err := user.GetUserInfo(db); err == nil {
+		c.JSON(200, gin.H{
+			"status": true,
+			"data":   info,
+		})
+	} else {
+		c.JSON(200, gin.H{
+			"status": false,
+			"error":  err.Error(),
+		})
+	}
+}
+
 func IndexAPI(c *gin.Context) {
 	username := utils.GetUserFromContext(c)
 

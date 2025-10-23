@@ -5,7 +5,10 @@ var pagination int64 = 10
 type InfoForm struct {
 	BillingToday      float32 `json:"billing_today"`
 	BillingMonth      float32 `json:"billing_month"`
+	BillingYesterday  float32 `json:"billing_yesterday"`
+	BillingLastMonth  float32 `json:"billing_last_month"`
 	SubscriptionCount int64   `json:"subscription_count"`
+	OnlineChats       int64   `json:"online_chats"`
 }
 
 type ModelData struct {

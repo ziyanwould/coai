@@ -39,8 +39,7 @@ import {
   updateRootPassword,
 } from "@/admin/api/system.ts";
 import { useEffectAsync } from "@/utils/hook.ts";
-import { toastState } from "@/api/common.ts";
-import { toast, useToast } from "@/components/ui/use-toast.ts";
+import { withNotify } from "@/api/common.ts";
 import { doVerify } from "@/api/auth.ts";
 import {
   Dialog,
@@ -74,14 +73,13 @@ type CompProps<T> = {
 
 function RootDialog() {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [open, setOpen] = useState<boolean>(false);
   const [password, setPassword] = useState<string>("");
   const [repeat, setRepeat] = useState<string>("");
 
   const onPost = async () => {
     const res = await updateRootPassword(password);
-    toastState(toast, t, res, true);
+    withNotify(t, res, true);
     if (res.status) {
       setPassword("");
       setRepeat("");
@@ -299,7 +297,7 @@ function Mail({ data, dispatch, onChange }: CompProps<MailState>) {
     if (!email.trim()) return;
     await onChange(false);
     const res = await doVerify(email);
-    toastState(toast, t, res, true);
+    withNotify(t, res, true);
 
     if (res.status) setMailDialog(false);
   };
@@ -1020,7 +1018,7 @@ function Search({ data, dispatch, onChange }: CompProps<SearchState>) {
                   const res = await testWebSearching(search);
                   if (res.status) setSearchResult(res.result);
 
-                  toastState(toast, t, res, true);
+                  withNotify(t, res, true);
                   setSearchLoading(false);
                 }}
               >
@@ -1043,7 +1041,6 @@ function Search({ data, dispatch, onChange }: CompProps<SearchState>) {
 
 function System() {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [data, setData] = useReducer(
     formReducer<SystemProps>(),
     initialSystemState,
@@ -1054,14 +1051,14 @@ function System() {
   const doSaving = async (doToast?: boolean) => {
     const res = await setConfig(data);
 
-    if (doToast !== false) toastState(toast, t, res, true);
+    if (doToast !== false) withNotify(t, res, true);
   };
 
   const doRefresh = async () => {
     setLoading(true);
     const res = await getConfig();
     setLoading(false);
-    toastState(toast, t, res);
+    withNotify(t, res);
     if (res.status) {
       setData({ type: "set", value: res.data });
     }

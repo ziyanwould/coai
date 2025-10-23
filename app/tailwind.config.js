@@ -34,6 +34,8 @@ module.exports = {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         "background-container": "hsl(var(--background-container))",
+        "background-hover": "hsl(var(--background-hover))",
+        "background-active": "hsl(var(--background-active))",
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -43,9 +45,16 @@ module.exports = {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
         },
+        unread: {
+          DEFAULT: "hsl(var(--text-unread))",
+        },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          foreground: "hsl(var(--gold-foreground))",
         },
         success: {
           DEFAULT: "hsl(var(--success))",
@@ -70,6 +79,30 @@ module.exports = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        alipay: {
+          DEFAULT: "#1668dc",
+          foreground: "#FFFFFF",
+        },
+        wxpay: {
+          DEFAULT: "#008094",
+          foreground: "#FFFFFF",
+        },
+        qqpay: {
+          DEFAULT: "#cb0000",
+          foreground: "#FFFFFF",
+        },
+        afdian: {
+          DEFAULT: "#925cff",
+          foreground: "#FFFFFF",
+        },
+        paypal: {
+          DEFAULT: "#003087",
+          foreground: "#FFFFFF",
+        },
+        stripe: {
+          DEFAULT: "#6772e5",
+          foreground: "#FFFFFF",
         },
         tremor: {
           brand: {
@@ -171,6 +204,8 @@ module.exports = {
         'tremor-default': ['0.875rem', { lineHeight: '1.25rem' }],
         'tremor-title': ['1.125rem', { lineHeight: '1.75rem' }],
         'tremor-metric': ['1.875rem', { lineHeight: '2.25rem' }],
+        '2xs': '.625rem',
+        '3xs': '.5rem',
       },
     },
   },

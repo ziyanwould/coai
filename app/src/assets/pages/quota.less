@@ -6,22 +6,11 @@
   flex-shrink: 0;
   width: 100%;
   height: max-content;
-  padding: 16px 0;
-  gap: 36px;
-
-  .interface-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    width: 100%;
-    max-width: calc(90vw - 3rem);
-    margin: 0.5rem;
-  }
 }
 
 .buy-action {
   width: 100%;
-  margin: 24px 0;
+  margin-top: 1.5rem;
 
   .buy-button {
     width: 100%;
@@ -100,15 +89,14 @@
 }
 
 .amount-wrapper {
-  display: grid;
-  margin-top: 24px;
+  display: inline-grid;
   gap: 12px;
   justify-content: center;
   width: 100%;
 
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
 
-  @media (max-width: 560px) {
+  @media (max-width: 760px) {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -119,23 +107,21 @@
   .amount {
     position: relative;
     display: flex;
-    padding: 0.75rem 0.75rem;
+    padding: 1rem 0.5rem;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     border: 1px solid hsl(var(--border));
-    background: hsla(var(--background-container));
     border-radius: var(--radius);
     user-select: none;
     cursor: pointer;
-    gap: 6px;
-    min-width: 7.5rem;
+    gap: 4px;
+    min-width: 6rem;
     width: 100%;
     transition: .1s linear;
     text-align: center;
 
     &.active {
-      background: hsl(var(--input));
       border-color: hsl(var(--text-secondary));
 
       .amount-desc,
@@ -147,35 +133,31 @@
     .amount-title {
       display: flex;
       flex-direction: row;
-      gap: 4px;
+      gap: 2px;
       color: hsl(var(--text));
       font-size: 16px;
       align-items: center;
 
       svg {
         transform: translateY(1px);
+        width: 14px;
+        height: 14px;
       }
     }
 
     .amount-desc {
+      color: hsl(var(--text-secondary));
+      transition: .1s linear;
+    }
+
+    .other {
       font-size: 12px;
       color: hsl(var(--text-secondary));
       transition: .1s linear;
 
       &:after {
-        content: '￥';
-        font-size: 10px;
-      }
-    }
-
-    .other {
-      font-size: 14px;
-      color: hsl(var(--text-secondary));
-      transition: .1s linear;
-
-      &:after {
         content: '...';
-        font-size: 12px;
+        font-size: 10px;
       }
     }
   }
@@ -223,14 +205,10 @@
   }
 }
 
-.tip {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.quota-tip {
   color: hsl(var(--text));
   text-align: center;
   align-items: center;
-  margin-top: 24px;
 
   a {
     display: flex;

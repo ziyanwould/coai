@@ -14,27 +14,27 @@ import {
 } from "@/store/chat.ts";
 import { formatMessage } from "@/utils/processor.ts";
 import ChatInterface from "@/components/home/ChatInterface.tsx";
-import EditorAction from "@/components/EditorProvider.tsx";
-import ModelFinder from "./ModelFinder.tsx";
 import { clearHistoryState, getQueryParam } from "@/utils/path.ts";
 import { forgetMemory, popMemory } from "@/utils/memory.ts";
-import { useToast } from "@/components/ui/use-toast.ts";
-import { ToastAction } from "@/components/ui/toast.tsx";
 import { alignSelector } from "@/store/settings.ts";
 import { FileArray } from "@/api/file.ts";
 import {
-  MarketAction,
-  MaskAction,
-  SettingsAction,
+  NewConversationAction,
   WebAction,
 } from "@/components/home/assemblies/ChatAction.tsx";
 import ChatSpace from "@/components/home/ChatSpace.tsx";
-import ActionButton from "@/components/home/assemblies/ActionButton.tsx";
+import ActionButton, {
+  ActionCommand,
+} from "@/components/home/assemblies/ActionButton.tsx";
 import ChatInput from "@/components/home/assemblies/ChatInput.tsx";
 import ScrollAction from "@/components/home/assemblies/ScrollAction.tsx";
 import { cn } from "@/components/ui/lib/utils.ts";
 import { goAuth } from "@/utils/app.ts";
 import { getModelFromId } from "@/conf/model.ts";
+import { ModelArea } from "@/components/home/ModelArea.tsx";
+import { toast } from "sonner";
+import { VoiceAction } from "@/components/VoiceProvider.tsx";
+import { AnimatePresence, motion } from "framer-motion";
 
 type InterfaceProps = {
   scrollable: boolean;
@@ -61,7 +61,6 @@ function fileReducer(state: FileArray, action: Record<string, any>): FileArray {
 
 function ChatWrapper() {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const { send: sendAction } = useMessageActions();
   const process = listenMessageEvent();
   const [files, fileDispatch] = useReducer(fileReducer, []);
@@ -93,13 +92,12 @@ function ChatWrapper() {
     passAuth?: boolean,
   ): Promise<boolean> {
     if (requireAuth && !auth && !passAuth) {
-      toast({
-        title: t("login-require"),
-        action: (
-          <ToastAction altText={t("login")} onClick={goAuth}>
-            {t("login")}
-          </ToastAction>
-        ),
+      toast(t("login-require"), {
+        description: t("login-require-prompt"),
+        action: {
+          label: t("login"),
+          onClick: goAuth,
+        },
       });
       return false;
     }
@@ -146,58 +144,112 @@ function ChatWrapper() {
     const history: string = popMemory("history");
     if (history.length) {
       setInput(history);
-      toast({
-        title: t("chat.recall"),
+      toast(t("chat.recall"), {
         description: t("chat.recall-desc"),
-        action: (
-          <ToastAction
-            altText={t("chat.recall-cancel")}
-            onClick={() => {
-              setInput("");
-            }}
-          >
-            {t("chat.recall-cancel")}
-          </ToastAction>
-        ),
+        action: {
+          label: t("chat.recall-cancel"),
+          onClick: () => {
+            setInput("");
+          },
+        },
       });
     }
   }, []);
 
   return (
-    <div className={`chat-container`}>
+    <div className={`chat-container bg-muted/25 dark:bg-muted/10`}>
       <div className={`chat-wrapper`}>
         <Interface setTarget={setInstance} scrollable={!visible} />
-        <div className={`chat-input`}>
-          <div className={`input-action`}>
-            <ScrollAction
-              visible={visible}
-              setVisibility={setVisibility}
-              target={instance}
+        <div className={`chat-input border-t bg-muted/25`}>
+          <motion.div
+            className={`flex flex-row items-center p-1.5 pb-0.5`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          >
+            <AnimatePresence key="model">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ModelArea />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
+                <WebAction />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+              >
+                <FileAction files={files} dispatch={fileDispatch} />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3, delay: 0.3 }}
+              >
+                <VoiceAction />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3, delay: 0.5 }}
+              >
+                <ScrollAction
+                  visible={visible}
+                  setVisibility={setVisibility}
+                  target={instance}
+                />
+              </motion.div>
+            </AnimatePresence>
+            <motion.div
+              className={`grow`}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             />
-            <WebAction visible={!visible} />
-            <FileAction files={files} dispatch={fileDispatch} />
-            <EditorAction value={input} onChange={setInput} />
-            <MaskAction />
-            <MarketAction />
-            <SettingsAction />
-          </div>
-          <div className={`input-wrapper`}>
-            <div className={`chat-box no-scrollbar`}>
+            <AnimatePresence key="new">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.3, delay: 0.6 }}
+              >
+                <NewConversationAction />
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+          <div className={`flex flex-col gap-2 px-3 pb-2`}>
+            <div className={`relative w-full`}>
               <ChatInput
-                className={cn(align && "align")}
+                className={cn(
+                  "rounded-none border-0 bg-transparent w-full",
+                  align && "align",
+                )}
                 target={target}
                 value={input}
                 onValueChange={setInput}
                 onEnterPressed={handleSend}
               />
             </div>
-            <ActionButton
-              working={working}
-              onClick={() => (working ? handleCancel() : handleSend())}
-            />
-          </div>
-          <div className={`input-options`}>
-            <ModelFinder side={`bottom`} />
+            <div className="flex items-center justify-end gap-2">
+              <ActionCommand input={input} />
+              <ActionButton
+                working={working}
+                onClick={() => (working ? handleCancel() : handleSend())}
+              />
+            </div>
           </div>
         </div>
       </div>

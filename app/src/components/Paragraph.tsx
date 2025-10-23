@@ -8,8 +8,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion.tsx";
+import { Badge } from "@/components/ui/badge.tsx";
 
 export type ParagraphProps = {
+  isPro?: boolean;
   title?: string;
   children: React.ReactNode;
   className?: string;
@@ -23,6 +25,7 @@ function Paragraph({
   className,
   configParagraph,
   isCollapsed,
+  isPro,
 }: ParagraphProps) {
   return (
     <Accordion type={`single`} collapsible={isCollapsed} defaultValue={"item"}>
@@ -35,7 +38,14 @@ function Paragraph({
         )}
       >
         <AccordionTrigger className={`paragraph-header`}>
-          <div className={`paragraph-title`}>{title ?? ""}</div>
+          <div className={`paragraph-title flex flex-row items-center`}>
+            {title ?? ""}
+            {isPro && (
+              <Badge className={`ml-2`} variant={`gold`}>
+                Pro
+              </Badge>
+            )}
+          </div>
         </AccordionTrigger>
         <AccordionContent className={`paragraph-content mt-2`}>
           {children}
@@ -64,21 +74,31 @@ function ParagraphItem({
 type ParagraphDescriptionProps = {
   children: string;
   border?: boolean;
+  hideIcon?: boolean;
+  className?: string;
+  classNameMarkdown?: string;
 };
 
 export function ParagraphDescription({
   children,
   border,
+  hideIcon,
+  className,
+  classNameMarkdown,
 }: ParagraphDescriptionProps) {
   return (
     <div
       className={cn(
         "paragraph-description",
-        border && `px-4 py-4 border rounded-lg`,
+        border && `px-3 py-2 border rounded-lg`,
+        className,
       )}
     >
-      <Info size={16} />
-      <Markdown children={children} />
+      {!hideIcon && <Info size={16} />}
+      <Markdown
+        children={children}
+        className={cn("leading-6", classNameMarkdown)}
+      />
     </div>
   );
 }

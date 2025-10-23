@@ -2,7 +2,6 @@ import axios from "axios";
 import { Model, Plan } from "@/api/types.tsx";
 import { ChargeProps, nonBilling } from "@/admin/charge.ts";
 import { getErrorMessage } from "@/utils/base.ts";
-import { modelImages } from "@/admin/market.ts";
 
 type v1Options = {
   endpoint?: string;
@@ -26,6 +25,36 @@ type v1Resp<T> = {
   data: T;
   status: boolean;
   error?: string;
+};
+
+export type v1ApiKey = {
+  id: number;
+  user_id?: number;
+  name: string;
+  expired_at: string;
+  quota: number;
+  used_quota: number;
+  infinite_quota: boolean;
+  ip_whitelist: string;
+  model_whitelist: string;
+  token_group?: string;
+  group_id?: string;
+  api_key?: string;
+  disabled: boolean;
+  created_at?: string;
+};
+
+export const initialApiKey: v1ApiKey = {
+  id: -1,
+  name: "",
+  expired_at: "1970-01-01 00:00:00",
+  quota: 100.0,
+  used_quota: 0,
+  infinite_quota: false,
+  ip_whitelist: "",
+  model_whitelist: "",
+  token_group: "default",
+  disabled: false,
 };
 
 export function getModelName(id: string): string {
@@ -125,7 +154,7 @@ export async function getFilledApiMarket(
     default: true,
     name: getModelName(id),
     tag: [],
-    avatar: modelImages[0],
+    avatar: "",
     description: id,
     free: false,
     auth: true,
@@ -167,5 +196,73 @@ export async function getApiCharge(
   } catch (e) {
     console.warn(e);
     return [];
+  }
+}
+
+export async function listApiKey(
+  options?: v1Options,
+): Promise<v1Resp<v1ApiKey[]>> {
+  try {
+    const res = await axios.get(getV1Path("/v1/list_keys", options));
+    return res.data as v1Resp<v1ApiKey[]>;
+  } catch (e) {
+    console.warn(e);
+    return { status: false, data: [], error: getErrorMessage(e) };
+  }
+}
+
+export async function updateApiKey(
+  data: v1ApiKey,
+  options?: v1Options,
+): Promise<v1Resp<v1ApiKey>> {
+  try {
+    const res = await axios.post(getV1Path("/v1/update_key", options), data);
+    return res.data as v1Resp<v1ApiKey>;
+  } catch (e) {
+    console.warn(e);
+    return { status: false, data: initialApiKey, error: getErrorMessage(e) };
+  }
+}
+
+export async function deleteApiKey(
+  id: number,
+  options?: v1Options,
+): Promise<v1Resp<v1ApiKey>> {
+  try {
+    const res = await axios.post(getV1Path(`/v1/delete_key?id=${id}`, options));
+    return res.data as v1Resp<v1ApiKey>;
+  } catch (e) {
+    console.warn(e);
+    return { status: false, data: initialApiKey, error: getErrorMessage(e) };
+  }
+}
+
+type ManifestJson = {
+  data?: Record<
+    string,
+    {
+      file: string;
+      src: string;
+    }
+  >;
+  status: boolean;
+  error?: string;
+};
+
+export async function getManifestJson(): Promise<ManifestJson> {
+  try {
+    const res = await axios.get("/manifest.json", {
+      baseURL: "/",
+    });
+    return {
+      status: true,
+      data: res.data,
+    };
+  } catch (e) {
+    console.warn(e);
+    return {
+      status: false,
+      error: getErrorMessage(e),
+    };
   }
 }

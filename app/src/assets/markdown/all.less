@@ -7,9 +7,7 @@
   flex-direction: column;
   margin: 2px 0 !important;
   margin-bottom: 4px !important;
-  padding: 6px 12px !important;
-  border: 1px solid hsl(var(--border-hover));
-  background: hsla(var(--background-container)) !important;
+  padding: 0.5rem !important;
   border-radius: var(--radius);
 
   .file-content {
@@ -26,6 +24,11 @@
     object-fit: cover;
     border-radius: var(--radius);
     margin: 0.25rem 0;
+
+    @media (max-width: 768px) {
+      max-width: 100%;
+      max-height: 100%;
+    }
   }
 
   .download-action {
@@ -40,8 +43,8 @@
   }
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 0.85rem;
+    height: 0.85rem;
     color: hsl(var(--text));
     flex-shrink: 0;
   }
@@ -51,12 +54,17 @@
     display: block;
     color: hsl(var(--text));
     margin-right: 6px;
+    font-family: var(--font-family) !important;
   }
 }
 
 .markdown-body {
   pre code {
     color: #c9d1d9;
+  }
+
+  pre.file-block div {
+    background: none !important;
   }
 
   pre.file-block,
@@ -69,6 +77,10 @@
     &:before {
       content: none !important;
     }
+  }
+
+  pre.file-block > div.file-instance {
+    background: hsla(var(--background-container)) !important;
   }
 
   .markdown-syntax {
@@ -125,22 +137,20 @@
 }
 
 p:has(.virtual-action) {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  justify-content: end;
   margin-top: 1.25rem !important;
 
+  br {
+    display: none;
+  }
 
-  @media (min-width: 668px) {
-    .virtual-action {
-      margin-right: auto;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr 1fr;
+  }
 
-      &:last-child {
-        margin-right: 0;
-      }
-    }
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
   }
 }

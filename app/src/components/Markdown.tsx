@@ -10,6 +10,7 @@ import { cn } from "@/components/ui/lib/utils.ts";
 import Label from "@/components/markdown/Label.tsx";
 import Link from "@/components/markdown/Link.tsx";
 import Code, { CodeProps } from "@/components/markdown/Code.tsx";
+import Image from "@/components/markdown/Image.tsx";
 
 type MarkdownProps = {
   children: string;
@@ -43,6 +44,7 @@ function MarkdownContent({
     return {
       p: Label,
       a: Link,
+      img: Image,
       code: (props: CodeProps) => (
         <Code {...props} loading={loading} codeStyle={codeStyle} />
       ),
@@ -68,40 +70,33 @@ function Markdown({
   className,
   loading,
 }: MarkdownProps) {
-  const processedContent = useMemo(() => {
-    let content = children;
-    
-    // Inline math: replace \(...\) with $ ... $
-    content = content.replace(/\\\((.*?)\\\)/g, (_, equation) => `$ ${equation.trim()} $`);
-    
-    // Block math: replace \[...\] with $$...$$ on separate lines
-    content = content.replace(
-      /\s*\\\[\s*([\s\S]*?)\s*\\\]\s*/g,
-      (_, equation) => `\n$$\n${equation.trim()}\n$$\n`
-    );
-    
-    return content;
-  }, [children]);
-
+  // memoize the component
   return useMemo(
     () => (
       <MarkdownContent
-        children={processedContent}
+        children={children}
         acceptHtml={acceptHtml}
         codeStyle={codeStyle}
         className={className}
         loading={loading}
       />
     ),
-    [processedContent, acceptHtml, codeStyle, className, loading],
+    [children, acceptHtml, codeStyle, className, loading],
   );
 }
+
 type CodeMarkdownProps = MarkdownProps & {
   filename: string;
+  language?: string;
 };
 
-export function CodeMarkdown({ filename, ...props }: CodeMarkdownProps) {
-  const suffix = filename.includes(".") ? filename.split(".").pop() : "";
+export function CodeMarkdown({
+  filename,
+  language,
+  ...props
+}: CodeMarkdownProps) {
+  const suffix =
+    language ?? (filename.includes(".") ? filename.split(".").pop() : "");
   const children = useMemo(() => {
     const content = props.children.toString();
 

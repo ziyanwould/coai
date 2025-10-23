@@ -9,22 +9,9 @@ import {
 export const sharingSlice = createSlice({
   name: "sharing",
   initialState: {
-    dialog: false,
     data: [] as SharingPreviewForm[],
   },
   reducers: {
-    toggleDialog: (state) => {
-      state.dialog = !state.dialog;
-    },
-    setDialog: (state, action) => {
-      state.dialog = action.payload as boolean;
-    },
-    openDialog: (state) => {
-      state.dialog = true;
-    },
-    closeDialog: (state) => {
-      state.dialog = false;
-    },
     setData: (state, action) => {
       state.data = action.payload as SharingPreviewForm[];
     },
@@ -35,18 +22,9 @@ export const sharingSlice = createSlice({
   },
 });
 
-export const {
-  toggleDialog,
-  setDialog,
-  openDialog,
-  closeDialog,
-  setData,
-  removeData,
-} = sharingSlice.actions;
+export const { setData, removeData } = sharingSlice.actions;
 export default sharingSlice.reducer;
 
-export const dialogSelector = (state: RootState): boolean =>
-  state.sharing.dialog;
 export const dataSelector = (state: RootState): SharingPreviewForm[] =>
   state.sharing.data;
 

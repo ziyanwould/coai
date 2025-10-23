@@ -1,237 +1,172 @@
 import {
-  openMarket,
-  openMask,
-  selectModel,
-  selectSupportModels,
   selectWeb,
   toggleWeb,
   useConversationActions,
+  useMessages,
 } from "@/store/chat.ts";
-import {
-  Blocks,
-  Globe,
-  LandPlot,
-  Play,
-  Search,
-  Settings,
-  Wand2,
-} from "lucide-react";
+import { Globe, Info, MessageSquarePlus, Wifi, WifiOff } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import React, { useEffect, useMemo, useRef } from "react";
-import { openDialog } from "@/store/settings.ts";
+import React from "react";
 import { cn } from "@/components/ui/lib/utils.ts";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog.tsx";
-import { ScrollArea } from "@/components/ui/scroll-area.tsx";
-import { getModelAvatar } from "@/components/home/ModelMarket.tsx";
+import { toast } from "sonner";
+import Icon from "@/components/utils/Icon.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import Tips from "@/components/Tips.tsx";
-import { Model } from "@/api/types.tsx";
-import { Input } from "@/components/ui/input.tsx";
-import { splitList } from "@/utils/base.ts";
+import Clickable from "@/components/ui/clickable.tsx";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip.tsx";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover.tsx";
+import { Switch } from "@/components/ui/switch.tsx";
+import { Label } from "@/components/ui/label.tsx";
 
 type ChatActionProps = {
+  style?: React.CSSProperties;
   className?: string;
   text?: string;
-  children?: React.ReactNode;
+  active?: boolean | number;
+  show?: boolean;
+  children?: React.ReactElement;
   onClick?: () => void;
 };
-export const ChatAction = React.forwardRef<HTMLDivElement, ChatActionProps>(
-  (props, ref) => {
-    const { className, text, children, onClick } = props;
-    const label = useRef(null);
-    const [labelWidth, setLabelWidth] = React.useState(0);
 
-    useEffect(() => {
-      if (!label.current) return;
-
-      const target = label.current as HTMLDivElement;
-      const width = target.clientWidth || target.offsetWidth;
-      setLabelWidth(width);
-    }, [text, label]);
-
-    return (
-      <div
-        className={cn("action chat-action", className)}
-        onClick={onClick}
-        ref={ref}
-        style={{ "--width": `${labelWidth}px` } as React.CSSProperties}
-      >
-        {children}
-        <div className="text" ref={label}>
-          {text}
-        </div>
-      </div>
-    );
-  },
-);
-
-type WebActionProps = {
-  visible: boolean;
+export const ChatAction = ({
+  className,
+  text,
+  children,
+  active,
+  show = true,
+  onClick,
+  ...props
+}: ChatActionProps) => {
+  return (
+    <div className={cn(
+      "transition-all duration-300",
+      !show && "opacity-0 pointer-events-none invisible"
+    )}>
+      <TooltipProvider>
+        <Tooltip delayDuration={250}>
+          <TooltipTrigger>
+            <Clickable tapScale={0.9}>
+              <Button
+                size={`icon-sm`}
+                variant={`ghost`}
+                className={cn(
+                  "group hover:bg-muted-foreground/5 mr-1",
+                  active && `bg-muted-foreground/10 hover:bg-muted-foreground/20`,
+                  className,
+                )}
+                onClick={onClick}
+                {...props}
+              >
+                <Icon
+                  icon={children}
+                  className={cn(
+                    `h-[1.125rem] w-[1.125rem] text-unread transition shrink-0 stroke-[2]`,
+                    active && "text-primary",
+                  )}
+                />
+              </Button>
+            </Clickable>
+          </TooltipTrigger>
+          <TooltipContent>{text}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
+  );
 };
 
-export function WebAction({ visible }: WebActionProps) {
+export function WebAction() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const web = useSelector(selectWeb);
 
   return (
-    visible && (
-      <ChatAction
-        className={cn(web && "active")}
-        text={t("chat.web")}
-        onClick={() => dispatch(toggleWeb())}
+    <Popover>
+      <PopoverTrigger asChild>
+        <div>
+          <ChatAction
+            active={web}
+            text={t("chat.web")}
+          >
+            <Globe className={cn("h-4 w-4 web", web && "enable")} />
+          </ChatAction>
+        </div>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-64 p-3"
+        side="top"
+        align="start"
       >
-        <Globe className={cn("h-4 w-4 web", web && "enable")} />
-      </ChatAction>
-    )
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="web-search-toggle" className="text-sm">{t("chat.web-search")}</Label>
+            <Switch
+              id="web-search-toggle"
+              checked={web}
+              onCheckedChange={() => {
+                toast(t("chat.web-search"), {
+                  description: (
+                    <div className={`flex flex-col`}>
+                      <div className={`flex flex-row items-center flex-wrap`}>
+                        <Icon
+                          icon={!web ? <Wifi /> : <WifiOff />}
+                          className={`h-4 w-4 mr-1 shrink-0`}
+                        />
+                        {!web
+                          ? t("chat.web-enable-toast")
+                          : t("chat.web-disable-toast")}
+                      </div>
+                      <div
+                        className={`mt-1.5 flex flex-row items-center rounded-md border scale-80 py-1 px-2`}
+                      >
+                        <Icon icon={<Info />} className={`h-3 w-3 mr-1 shrink-0`} />
+                        {t("chat.web-enable-tip")}
+                      </div>
+                    </div>
+                  ),
+                });
+
+                dispatch(toggleWeb());
+              }}
+            />
+          </div>
+
+          {web && (
+            <></>
+          )}
+          
+          <div className="rounded-md bg-muted p-2 text-xs">
+            <div className="flex items-center">
+              <Icon icon={<Info />} className="h-3 w-3 mr-1 shrink-0" />
+              {t("chat.web-enable-tip")}
+            </div>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
-export function SettingsAction() {
+export function NewConversationAction() {
   const { t } = useTranslation();
-  const dispatch = useDispatch();
+  const messages = useMessages();
+  const { toggle } = useConversationActions();
 
   return (
     <ChatAction
-      text={t("settings.description")}
-      onClick={() => dispatch(openDialog())}
+      text={t("new-chat")}
+      onClick={async () => messages.length > 0 && (await toggle(-1))}
     >
-      <Settings className={`h-4 w-4`} />
-    </ChatAction>
-  );
-}
-
-export function MarketAction() {
-  const { t } = useTranslation();
-  const dispatch = useDispatch();
-
-  const current = useSelector(selectModel);
-  const supportModels = useSelector(selectSupportModels);
-
-  const [search, setSearch] = React.useState("");
-  const [open, setOpen] = React.useState(false);
-
-  const { selected } = useConversationActions();
-
-  const models = useMemo(() => {
-    const content = search.trim();
-    if (content === "") return supportModels;
-
-    const raw = splitList(search.toLowerCase(), [" ", ",", ";", "-"]);
-    return supportModels.filter((model) => {
-      return raw.every((item) => {
-        return model.name.toLowerCase().includes(item);
-      });
-    });
-  }, [supportModels, search]);
-
-  const event = (model: Model) => {
-    selected(model.id);
-    setOpen(false);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <ChatAction text={t("market.title")}>
-          <Blocks className={`h-4 w-4`} />
-        </ChatAction>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("market.list")}</DialogTitle>
-          <DialogDescription asChild>
-            <div>
-              <Button
-                size={`default-sm`}
-                className={`mt-2 w-full`}
-                onClick={() => dispatch(openMarket())}
-              >
-                <LandPlot className={`h-4 w-4 mr-2`} />
-                {t("market.go")}
-              </Button>
-              <div className={`flex flex-row mt-4 mb-2`}>
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t("market.search")}
-                />
-                <Button
-                  className={`ml-2 shrink-0`}
-                  variant={`outline`}
-                  size={`icon`}
-                >
-                  <Search className={`h-4 w-4`} />
-                </Button>
-              </div>
-              <ScrollArea
-                className={`flex flex-col mt-2.5 border rounded-md max-h-[60vh]`}
-              >
-                {models.length > 0 ? (
-                  models.map((model, index) => (
-                    <div
-                      key={index}
-                      onClick={() => event(model)}
-                      className={cn(
-                        "flex sm:flex-row flex-col items-center px-4 py-4 sm:py-2 border-b last:border-none select-none cursor-pointer transition-all hover:bg-background-container",
-                        model.id === current && "bg-background-container",
-                      )}
-                    >
-                      <img
-                        className={`w-6 h-6 border rounded-md`}
-                        src={getModelAvatar(model.avatar)}
-                        alt={""}
-                      />
-                      <div className={`text-common sm:ml-2 mt-2 sm:mt-0`}>
-                        {model.name}
-                      </div>
-                      <Tips className={`hidden sm:inline-block`}>
-                        {model.id}
-                      </Tips>
-                      <Button
-                        className={cn(
-                          "ml-auto",
-                          model.id === current && "text-common",
-                        )}
-                        size={`icon-sm`}
-                        variant={`ghost`}
-                        onClick={() => event(model)}
-                      >
-                        <Play className={`h-3.5 w-3.5`} />
-                      </Button>
-                    </div>
-                  ))
-                ) : (
-                  <div
-                    className={`flex justify-center items-center py-8 select-none`}
-                  >
-                    {t("empty")}
-                  </div>
-                )}
-              </ScrollArea>
-            </div>
-          </DialogDescription>
-        </DialogHeader>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function MaskAction() {
-  const { t } = useTranslation();
-  const dispatch = useDispatch();
-
-  return (
-    <ChatAction text={t("mask.title")} onClick={() => dispatch(openMask())}>
-      <Wand2 className={`h-4 w-4`} />
+      <MessageSquarePlus className={`h-4 w-4`} />
     </ChatAction>
   );
 }

@@ -5,7 +5,6 @@ import { Check, ChevronLeft, Cloud, Files, Globe, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { useTranslation } from "react-i18next";
 import { useDispatch, useSelector } from "react-redux";
-import { useToast } from "@/components/ui/use-toast.ts";
 import {
   Card,
   CardContent,
@@ -13,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card.tsx";
 import { useState } from "react";
-import ModelFinder from "@/components/home/ModelFinder.tsx";
+import ModelArea from "@/components/home/ModelArea.tsx";
 import { Toggle } from "@/components/ui/toggle.tsx";
 import { selectModel, selectWeb, setWeb } from "@/store/chat.ts";
 import { Label } from "@/components/ui/label.tsx";
@@ -25,6 +24,7 @@ import {
 import { getMemory } from "@/utils/memory.ts";
 import { Progress } from "@/components/ui/progress.tsx";
 import { cn } from "@/components/ui/lib/utils.ts";
+import { toast } from "sonner";
 
 type ProgressProps = {
   current: number;
@@ -73,7 +73,6 @@ function GenerateProgress({
 function ArticleContent() {
   const { t } = useTranslation();
   const dispatch = useDispatch();
-  const { toast } = useToast();
   const web = useSelector(selectWeb);
   const model = useSelector(selectModel);
 
@@ -116,8 +115,7 @@ function ArticleContent() {
       data.data && data.data.quota && setQuota(quota + data.data.quota);
       if (!data.hash) setState(data.data as ProgressProps);
       else {
-        toast({
-          title: t("article.generate-success"),
+        toast.success(t("article.generate-success"), {
           description: t("article.generate-success-prompt"),
         });
         setHash(data.hash);
@@ -126,8 +124,7 @@ function ArticleContent() {
 
     connection.onerror = (e: Event) => {
       console.debug(`[article] error during generation: ${e}`);
-      toast({
-        title: t("article.generate-failed"),
+      toast.error(t("article.generate-failed"), {
         description: `${t("article.generate-failed-prompt")} (${e.toString()})`,
       });
       setProgress(false);
@@ -198,7 +195,7 @@ function ArticleContent() {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
-      <ModelFinder side={`bottom`} />
+      <ModelArea side={`bottom`} />
       <Button
         variant={`default`}
         className={`mt-5 w-full mx-auto`}

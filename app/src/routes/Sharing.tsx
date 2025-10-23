@@ -5,29 +5,32 @@ import { saveImageAsFile } from "@/utils/dom.ts";
 import { useEffectAsync } from "@/utils/hook.ts";
 import { useRef, useState } from "react";
 import {
+  ArrowUp,
   Clock,
-  HelpCircle,
   Image,
   Loader2,
   Maximize,
   MessagesSquare,
   Minimize,
   Newspaper,
+  RssIcon,
+  Undo2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import MessageSegment from "@/components/Message.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import router from "@/router.tsx";
-import { useToast } from "@/components/ui/use-toast.ts";
 import { Message } from "@/api/types.tsx";
 import Avatar from "@/components/Avatar.tsx";
 import { toJpeg } from "html-to-image";
-import { appLogo } from "@/conf/env.ts";
+import { appLogo, appName } from "@/conf/env.ts";
 import { extractMessage } from "@/utils/processor.ts";
 import { cn } from "@/components/ui/lib/utils.ts";
 import { isMobile, useMobile } from "@/utils/device.ts";
 import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { useConversationActions } from "@/store/chat.ts";
+import { toast } from "sonner";
+import Emoji from "@/components/Emoji";
 
 type SharingFormProps = {
   refer?: string;
@@ -38,7 +41,6 @@ function SharingForm({ data }: SharingFormProps) {
   if (data === null) return null;
 
   const { t } = useTranslation();
-  const { toast } = useToast();
   const mobile = useMobile();
   const { mask: setMask, selected: setModel } = useConversationActions();
   const [maximized, setMaximized] = useState(isMobile());
@@ -47,9 +49,9 @@ function SharingForm({ data }: SharingFormProps) {
   const time = `${
     date.getMonth() + 1
   }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}`;
+
   const saveImage = async () => {
-    toast({
-      title: t("message.saving-image-prompt"),
+    toast.info(t("message.saving-image-prompt"), {
       description: t("message.saving-image-prompt-desc"),
     });
 
@@ -58,14 +60,12 @@ function SharingForm({ data }: SharingFormProps) {
       toJpeg(container.current)
         .then((blob) => {
           saveImageAsFile(`${extractMessage(data.name, 12)}.png`, blob);
-          toast({
-            title: t("message.saving-image-success"),
+          toast.success(t("message.saving-image-success"), {
             description: t("message.saving-image-success-prompt"),
           });
         })
         .catch((reason) => {
-          toast({
-            title: t("message.saving-image-failed"),
+          toast.error(t("message.saving-image-failed"), {
             description: t("message.saving-image-failed-prompt", { reason }),
           });
         });
@@ -73,44 +73,50 @@ function SharingForm({ data }: SharingFormProps) {
   };
 
   return (
-    <div className={cn("sharing-container", maximized && "maximized")}>
-      <div className={`sharing-screenshot`}>
-        <div className={`shot-body`} ref={container}>
-          <div className={`shot-wrapper`}>
-            <div className={`shot-header`}>
-              <div className={`shot-column`}>
-                <div className={`shot-row`}>
-                  <Newspaper className={`shot-icon`} />
-                  <p className={`shot-label`}>{t("message.sharing.title")}</p>
-                  <div className={`grow`} />
-                  <p className={`shot-value`}>
+    <div
+      className={cn(
+        "relative flex flex-col w-full h-full overflow-hidden transition-all duration-300 sm:p-4 md:p-6 mx-auto ease-out",
+        maximized ? "max-w-full" : "max-w-4xl",
+      )}
+    >
+      <div className="absolute opacity-0 pointer-events-none z-[-999] h-max w-full">
+        <div className="bg-background p-6" ref={container}>
+          <div className="border border-border rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Newspaper className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground mr-2">
+                    {t("message.sharing.title")}:
+                  </span>
+                  <span className="text-sm font-semibold">
                     {mobile ? extractMessage(data.name, 10) : data.name}
-                  </p>
+                  </span>
                 </div>
-                <div className={`shot-row`}>
-                  <Clock className={`shot-icon`} />
-                  <p className={`shot-label`}>{t("message.sharing.time")}</p>
-                  <div className={`grow`} />
-                  <p className={`shot-value`}>{time}</p>
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground mr-2">
+                    {t("message.sharing.time")}:
+                  </span>
+                  <span className="text-sm">{time}</span>
                 </div>
-                <div className={`shot-row`}>
-                  <MessagesSquare className={`shot-icon`} />
-                  <p className={`shot-label`}>{t("message.sharing.message")}</p>
-                  <div className={`grow`} />
-                  <p className={`shot-value`}>{data.messages.length}</p>
+                <div className="flex items-center">
+                  <MessagesSquare className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground mr-2">
+                    {t("message.sharing.message")}:
+                  </span>
+                  <span className="text-sm">{data.messages.length}</span>
                 </div>
               </div>
-              <div className={`grow`} />
-              <div className={`shot-column`}>
-                <img className={`w-12 h-12 m-4`} src={appLogo} alt={""} />
-                <div className={`grow`} />
-                <div className={`shot-row shot-user`}>
-                  <Avatar username={data.username} className={`shot-avatar`} />
-                  <p className={`shot-value shot-username`}>{data.username}</p>
+              <div className="flex flex-col items-end">
+                <img className="w-12 h-12 mb-2" src={appLogo} alt="" />
+                <div className="flex items-center">
+                  <Avatar username={data.username} className="w-8 h-8 mr-2" />
+                  <span className="text-sm font-semibold">{data.username}</span>
                 </div>
               </div>
             </div>
-            <div className={`shot-content`}>
+            <div className="p-4 space-y-4">
               {data.messages.map((message, i) => (
                 <MessageSegment
                   message={message}
@@ -123,62 +129,93 @@ function SharingForm({ data }: SharingFormProps) {
           </div>
         </div>
       </div>
-      <div className={`header`}>
-        <div className={`user`}>
-          <Avatar username={data.username} />
-          <span className={`sharing-username`}>{data.username}</span>
-        </div>
-        <div className={`name`}>{data.name}</div>
-        <div className={`time`}>{time}</div>
-      </div>
-      <ScrollArea className={`body`}>
-        <div className={`chat-messages-wrapper`}>
-          {data.messages.map((message, i) => (
-            <MessageSegment
-              message={message}
-              key={i}
-              index={i}
-              username={data.username}
-            />
-          ))}
-        </div>
-      </ScrollArea>
-      <div className={`action`}>
-        <Button
-          variant={`outline`}
-          size={`icon`}
-          onClick={() => setMaximized(!maximized)}
-        >
-          {maximized ? (
-            <Minimize className={`h-4 w-4`} />
-          ) : (
-            <Maximize className={`h-4 w-4`} />
-          )}
-        </Button>
-        <Button variant={`outline`} onClick={saveImage}>
-          <Image className={`h-4 w-4 mr-2`} />
-          {t("message.save-image")}
-        </Button>
-        <Button
-          variant={`outline`}
-          onClick={async () => {
-            const message: Message[] = data?.messages || [];
-            setMask({
-              avatar: "",
-              name: data.name,
-              context: message,
-            });
-            setModel(data?.model);
+      <div className="relative z-5 flex flex-col w-full h-full bg-background border sm:rounded-md md:rounded-lg">
+        <header className="flex items-center flex-col p-4 pb-2 border-b bg-muted/25">
+          <div className="flex items-center flex-row w-full h-fit">
+            <img src={appLogo} alt="" className="w-8 h-8 shrink-0 mr-2" />
+            <span className="font-semibold text-lg">{appName}</span>
+            <div className="flex-grow" />
+            <Button
+              className="flex flex-row items-center"
+              variant="outline"
+              onClick={() => router.navigate("/")}
+            >
+              <ArrowUp className="w-4 h-4 mr-1.5" />
+              {t("home")}
+            </Button>
+          </div>
 
-            console.debug(
-              `[sharing] switch to conversation (name: ${data.name}, model: ${data.model})`,
-            );
-            await router.navigate("/");
-          }}
-        >
-          <MessagesSquare className={`h-4 w-4 mr-2`} />
-          {t("message.use")}
-        </Button>
+          <div className="flex flex-row items-center w-full mt-3 px-1">
+            <span className="text-sm font-semibold select-none mr-1.5 shrink-0">
+              @{data.username}
+            </span>
+            <span className="text-sm text-secondary truncate flex-grow items-center">
+              {data.name}
+            </span>
+            <span className="text-sm text-muted-foreground flex flex-row items-center shrink-0">
+              <RssIcon className="w-4 h-4 mr-0.5" /> {time}
+            </span>
+          </div>
+        </header>
+        <ScrollArea className="flex-grow">
+          <div className="p-4 md:p-6 space-y-4">
+            {data.messages.map((message, i) => (
+              <MessageSegment
+                message={message}
+                key={i}
+                index={i}
+                username={data.username}
+              />
+            ))}
+          </div>
+        </ScrollArea>
+        <footer className="flex items-center justify-between p-4 border-t border-border bg-muted/25">
+          <div className="flex space-x-2 ml-auto md:ml-0">
+            <Button variant="outline" onClick={saveImage}>
+              <Image className="h-4 w-4 mr-2" />
+              {t("message.save-image")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const message: Message[] = data?.messages || [];
+                await Promise.all([
+                  new Promise<void>((resolve) => {
+                    setMask({
+                      avatar: "",
+                      name: data.name,
+                      context: message,
+                    });
+                    resolve();
+                  }),
+                  new Promise<void>((resolve) => {
+                    setModel(data?.model);
+                    resolve();
+                  })
+                ]);
+                console.debug(
+                  `[sharing] switch to conversation (name: ${data.name}, model: ${data.model})`,
+                );
+                router.navigate("/", { replace: true });
+              }}
+            >
+              <MessagesSquare className="h-4 w-4 mr-2" />
+              {t("message.use")}
+            </Button>
+          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setMaximized(!maximized)}
+            className="ml-2 hidden md:flex"
+          >
+            {maximized ? (
+              <Minimize className="h-4 w-4" />
+            ) : (
+              <Maximize className="h-4 w-4" />
+            )}
+          </Button>
+        </footer>
       </div>
     </div>
   );
@@ -205,7 +242,7 @@ function Sharing() {
   return (
     <div
       className={cn(
-        `sharing-page`,
+        "w-full h-full bg-gradient-to-br from-background to-muted/50 overflow-hidden",
         loading && "flex flex-row items-center justify-center",
       )}
     >
@@ -216,13 +253,26 @@ function Sharing() {
       ) : data.status ? (
         <SharingForm refer={hash} data={data.data} />
       ) : (
-        <div className={`error-container`}>
-          <HelpCircle className={`w-12 h-12 mb-2.5`} />
-          <p className={`title`}>{t("share.not-found")}</p>
-          <p className={`description`}>{t("share.not-found-description")}</p>
-          <Button className={`mt-4`} onClick={() => router.navigate("/")}>
-            {t("home")}
-          </Button>
+        <div className="w-full h-full flex flex-col items-center justify-center text-center select-none">
+          <div className="flex flex-col items-center px-2">
+            <Emoji
+              emoji="1f47b"
+              className="w-16 h-16 md:w-20 md:h-20 mb-2.5 md:mb-4 p-2 shadow bg-muted/10 rounded-md"
+            />
+            <p className="text-2xl font-bold mb-3 text-foreground">
+              {t("share.not-found")}
+            </p>
+            <p className="text-base text-muted-foreground">
+              {t("share.not-found-description")}
+            </p>
+            <Button
+              className="mt-4 flex flex-row items-center"
+              onClick={() => router.navigate("/")}
+            >
+              <Undo2 className="w-4 h-4 mr-2" />
+              {t("home")}
+            </Button>
+          </div>
         </div>
       )}
     </div>

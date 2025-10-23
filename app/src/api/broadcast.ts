@@ -15,7 +15,7 @@ export type BroadcastListResponse = {
   data: BroadcastInfo[];
 };
 
-export type CreateBroadcastResponse = {
+export type CommonBroadcastResponse = {
   status: boolean;
   error: string;
 };
@@ -34,18 +34,33 @@ export async function getRawBroadcast(): Promise<Broadcast> {
   };
 }
 
-export async function getBroadcast(): Promise<string> {
+export type BroadcastEvent = {
+  message: string;
+  firstReceived: boolean;
+};
+
+export async function getBroadcast(): Promise<BroadcastEvent> {
   const data = await getRawBroadcast();
   const content = data.content.trim();
-  const index = data.index.toString();
 
-  if (content.length === 0) return "";
+  if (content.length === 0)
+    return {
+      message: "",
+      firstReceived: false,
+    };
 
   const memory = getMemory("broadcast");
-  if (memory === index) return "";
+  if (memory === content)
+    return {
+      message: content,
+      firstReceived: false,
+    };
 
-  setMemory("broadcast", index);
-  return content;
+  setMemory("broadcast", content);
+  return {
+    message: content,
+    firstReceived: true,
+  };
 }
 
 export async function getBroadcastList(): Promise<BroadcastInfo[]> {
@@ -61,10 +76,45 @@ export async function getBroadcastList(): Promise<BroadcastInfo[]> {
 
 export async function createBroadcast(
   content: string,
-): Promise<CreateBroadcastResponse> {
+  notify_all?: boolean,
+): Promise<CommonBroadcastResponse> {
   try {
-    const resp = await axios.post("/broadcast/create", { content });
-    return resp.data as CreateBroadcastResponse;
+    const resp = await axios.post("/broadcast/create", {
+      content,
+      notify_all,
+    });
+    return resp.data as CommonBroadcastResponse;
+  } catch (e) {
+    console.warn(e);
+    return {
+      status: false,
+      error: (e as Error).message,
+    };
+  }
+}
+
+export async function removeBroadcast(
+  index: number,
+): Promise<CommonBroadcastResponse> {
+  try {
+    const resp = await axios.post(`/broadcast/remove/${index}`);
+    return resp.data as CommonBroadcastResponse;
+  } catch (e) {
+    console.warn(e);
+    return {
+      status: false,
+      error: (e as Error).message,
+    };
+  }
+}
+
+export async function updateBroadcast(
+  id: number,
+  content: string,
+): Promise<CommonBroadcastResponse> {
+  try {
+    const resp = await axios.post("/broadcast/update", { id, content });
+    return resp.data as CommonBroadcastResponse;
   } catch (e) {
     console.warn(e);
     return {

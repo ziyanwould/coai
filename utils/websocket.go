@@ -3,13 +3,49 @@ package utils
 import (
 	"chat/globals"
 	"database/sql"
+	"io"
+	"net/http"
+	"sync"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
-	"io"
-	"net/http"
-	"time"
 )
+
+var websocketConns int64
+var websocketConnMutex *sync.Mutex
+
+func init() {
+	websocketConns = 0
+	websocketConnMutex = &sync.Mutex{}
+}
+
+func increaseConns() {
+	go func() {
+		websocketConnMutex.Lock()
+		websocketConns++
+		if globals.DebugMode {
+			globals.Logger.Infof("[monitor] alive ws connections: %d [+increase]", websocketConns)
+		}
+		websocketConnMutex.Unlock()
+	}()
+}
+
+func decreaseConns() {
+	go func() {
+		websocketConnMutex.Lock()
+		websocketConns--
+		if globals.DebugMode {
+			globals.Logger.Infof("[monitor] alive ws connections: %d [-decrease]", websocketConns)
+		}
+		websocketConnMutex.Unlock()
+	}()
+}
+
+func GetConns() int64 {
+	return websocketConns
+}
 
 type WebSocket struct {
 	Ctx        *gin.Context
@@ -67,6 +103,7 @@ func NewWebsocketClient(url string) *WebSocket {
 }
 
 func (w *WebSocket) Init() {
+	increaseConns()
 	w.Closed = false
 
 	w.Conn.SetCloseHandler(func(code int, text string) error {
@@ -103,6 +140,7 @@ func (w *WebSocket) Close() error {
 }
 
 func (w *WebSocket) DeferClose() {
+	decreaseConns()
 	if err := w.Close(); err != nil {
 		return
 	}

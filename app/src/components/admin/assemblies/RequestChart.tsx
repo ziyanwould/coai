@@ -18,6 +18,11 @@ function RequestChart({ labels, datasets }: RequestChartProps) {
     }));
   }, [labels, datasets, t("admin.requests")]);
 
+  const rpm = useMemo(() => {
+    // request per month, sum of datasets
+    return datasets.reduce((acc, curr) => acc + curr, 0);
+  }, [datasets]);
+
   return (
     <div className={`chart`}>
       <div className={`chart-title mb-2`}>
@@ -25,6 +30,11 @@ function RequestChart({ labels, datasets }: RequestChartProps) {
         {labels.length === 0 && (
           <Loader2 className={`h-4 w-4 inline-block animate-spin`} />
         )}
+        <div
+          className={`ml-auto bg-blue-500/20 text-blue-500 px-1 rounded-sm text-xs py-0.5`}
+        >
+          RPM {getReadableNumber(rpm)}
+        </div>
       </div>
       <AreaChart
         className={`common-chart`}

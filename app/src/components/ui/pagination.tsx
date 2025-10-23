@@ -4,13 +4,8 @@ import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { cn } from "@/components/ui/lib/utils";
 import { ButtonProps, buttonVariants } from "@/components/ui/button";
 
-const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
-  <nav
-    role="navigation"
-    aria-label="pagination"
-    className={cn("mx-auto flex w-full justify-center", className)}
-    {...props}
-  />
+const Pagination = ({ ...props }: React.ComponentProps<"nav">) => (
+  <nav role="navigation" aria-label="pagination" {...props} />
 );
 Pagination.displayName = "Pagination";
 
@@ -112,6 +107,7 @@ type PaginationActionProps = React.ComponentProps<"div"> & {
   total: number;
   offset?: boolean;
   onPageChange: (page: number) => void;
+  notCentered?: boolean;
 };
 
 const PaginationAction = ({
@@ -121,6 +117,7 @@ const PaginationAction = ({
   className,
   onPageChange,
   children,
+  notCentered,
   ...props
 }: PaginationActionProps) => {
   const real = current + (offset ? 1 : 0);
@@ -136,7 +133,14 @@ const PaginationAction = ({
   const showLeftEllipsis = real > 2 && !showRightEllipsis;
 
   return (
-    <Pagination className={cn("py-4", className)} {...props}>
+    <Pagination
+      className={cn(
+        "py-4",
+        !notCentered && "mx-auto flex w-full justify-center",
+        className,
+      )}
+      {...props}
+    >
       <PaginationContent>
         <PaginationItem onClick={() => hasPrev && onPageChange(current - 1)}>
           <PaginationPrevious />

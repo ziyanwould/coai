@@ -25,6 +25,10 @@ access/*.json
 db
 redis
 config
+presets
 
-# for opencommit
+key/*
+!key/.gitkeep
+
+# for https://github.com/di-sukharev/opencommit
 .env

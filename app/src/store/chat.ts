@@ -65,7 +65,6 @@ type initialStateType = {
   current: number;
   model_list: string[];
   market: boolean;
-  mask: boolean;
   mask_item: Mask | null;
   custom_masks: CustomMask[];
   support_models: Model[];
@@ -94,12 +93,9 @@ export function getModelList(
   select: string,
 ): string[] {
   const list = models.filter((item) => inModel(supportModels, item));
-  const target = list.length
-    ? list
-    : supportModels.filter((item) => item.default).map((item) => item.id);
   const selection = getModel(supportModels, select);
-  if (!target.includes(selection)) target.push(selection);
-  return target;
+  if (!list.includes(selection)) list.push(selection);
+  return list;
 }
 
 export const stack = new ConnectionStack();
@@ -117,11 +113,10 @@ const chatSlice = createSlice({
     model: getModel(offline, getMemory("model")),
     model_list: getModelList(
       offline,
-      getArrayMemory("model_list"),
+      getArrayMemory("model_mark_list"),
       getMemory("model"),
     ),
     market: false,
-    mask: false,
     mask_item: null,
     custom_masks: [],
     support_models: offline,
@@ -270,11 +265,11 @@ const chatSlice = createSlice({
       if (!inModel(state.support_models, model)) return;
 
       // if model is not in model list, add it
-      if (!state.model_list.includes(model)) {
-        console.log("[model] auto add model to list:", model);
-        state.model_list.push(model);
-        setArrayMemory("model_list", state.model_list);
-      }
+      // if (!state.model_list.includes(model)) {
+      //   console.log("[model] auto add model to list:", model);
+      //   state.model_list.push(model);
+      //   setArrayMemory("model_mark_list", state.model_list);
+      // }
 
       setMemory("model", model as string);
       state.model = action.payload as string;
@@ -306,7 +301,7 @@ const chatSlice = createSlice({
       state.model_list = models.filter((item) =>
         inModel(state.support_models, item),
       );
-      setArrayMemory("model_list", models);
+      setArrayMemory("model_mark_list", models);
     },
     addModelList: (state, action) => {
       const model = action.payload as string;
@@ -315,7 +310,7 @@ const chatSlice = createSlice({
         !state.model_list.includes(model)
       ) {
         state.model_list.push(model);
-        setArrayMemory("model_list", state.model_list);
+        setArrayMemory("model_mark_list", state.model_list);
       }
     },
     removeModelList: (state, action) => {
@@ -325,26 +320,8 @@ const chatSlice = createSlice({
         state.model_list.includes(model)
       ) {
         state.model_list = state.model_list.filter((item) => item !== model);
-        setArrayMemory("model_list", state.model_list);
+        setArrayMemory("model_mark_list", state.model_list);
       }
-    },
-    setMarket: (state, action) => {
-      state.market = action.payload as boolean;
-    },
-    openMarket: (state) => {
-      state.market = true;
-    },
-    closeMarket: (state) => {
-      state.market = false;
-    },
-    setMask: (state, action) => {
-      state.mask = action.payload as boolean;
-    },
-    openMask: (state) => {
-      state.mask = true;
-    },
-    closeMask: (state) => {
-      state.mask = false;
     },
     setMaskItem: (state, action) => {
       state.mask_item = action.payload as Mask;
@@ -362,12 +339,13 @@ const chatSlice = createSlice({
       state.model = getModel(models, getMemory("model"));
       state.model_list = getModelList(
         models,
-        getArrayMemory("model_list"),
+        getArrayMemory("model_mark_list"),
         getMemory("model"),
       );
 
       setOfflineModels(models);
     },
+
   },
 });
 
@@ -381,12 +359,6 @@ export const {
   setModelList,
   addModelList,
   removeModelList,
-  setMarket,
-  openMarket,
-  closeMarket,
-  setMask,
-  openMask,
-  closeMask,
   setCustomMasks,
   setSupportModels,
   setMaskItem,
@@ -414,8 +386,6 @@ export const selectWeb = (state: RootState): boolean => state.chat.web;
 export const selectCurrent = (state: RootState): number => state.chat.current;
 export const selectModelList = (state: RootState): string[] =>
   state.chat.model_list;
-export const selectMarket = (state: RootState): boolean => state.chat.market;
-export const selectMask = (state: RootState): boolean => state.chat.mask;
 export const selectCustomMasks = (state: RootState): CustomMask[] =>
   state.chat.custom_masks;
 export const selectSupportModels = (state: RootState): Model[] =>

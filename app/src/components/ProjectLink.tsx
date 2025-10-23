@@ -6,13 +6,13 @@ import { openWindow } from "@/utils/device.ts";
 
 function ProjectLink() {
   const messages = useMessages();
-
   const { toggle } = useConversationActions();
 
   return messages.length > 0 ? (
     <Button
       variant="outline"
-      size="icon"
+      size="icon-md"
+      className="rounded-full overflow-hidden"
       onClick={async () => await toggle(-1)}
     >
       <MessageSquarePlus className={`h-4 w-4`} />
@@ -20,10 +20,9 @@ function ProjectLink() {
   ) : (
     <Button
       variant="outline"
-      size="icon"
-      onClick={() =>
-        openWindow("https://github.com/Deeptrain-Community/chatnio")
-      }
+      size="icon-md"
+      className="rounded-full overflow-hidden"
+      onClick={() => openWindow("https://github.com/coaidev/coai")}
     >
       <Github className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100" />
     </Button>

@@ -29,15 +29,15 @@ type LinkProps = {
 export default function ({ href, children }: LinkProps) {
   const url: string = href?.toString() || "";
 
-  if (url.startsWith("https://chatnio.virtual")) {
-    const message = url.slice(23);
-    const prefix = message.split("-")[0];
+  if (url.startsWith("https://coai.virtual/reference::")) {
+    const referenceUrl = url.slice("https://coai.virtual/reference::".length);
+    return <VirtualMessage message={`reference::${referenceUrl}`}>{children}</VirtualMessage>;
+  }
 
-    return (
-      <VirtualMessage message={message} prefix={prefix}>
-        {children}
-      </VirtualMessage>
-    );
+  if (url.startsWith("https://coai.virtual")) {
+    const message = url.slice(20);
+
+    return <VirtualMessage message={message}>{children}</VirtualMessage>;
   }
 
   return (

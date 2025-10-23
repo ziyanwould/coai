@@ -21,10 +21,10 @@ const resources = {
 
 export const langsProps: Record<string, string> = {
   cn: "简体中文",
+  tw: "正體中文",
   en: "English",
   ru: "Русский",
   ja: "日本語",
-  tw: "正體中文",
 };
 
 export const supportedLanguages = Object.keys(resources);

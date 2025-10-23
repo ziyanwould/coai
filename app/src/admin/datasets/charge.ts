@@ -69,7 +69,7 @@ export const pricing: PricingDataset = [
     output: 0.03,
   },
   {
-    models: ["gpt-4o", "gpt-4o-2024-05-13", "chatgpt-4o-latest"],
+    models: ["gpt-4o", "gpt-4o-2024-05-13"],
     input: 0.005,
     output: 0.015,
   },
@@ -83,7 +83,6 @@ export const pricing: PricingDataset = [
     input: 0.00015,
     output: 0.0006,
   },
-
   {
     models: ["gpt-4-32k", "gpt-4-32k-0314", "gpt-4-32k-0613"],
     input: 0.06,
@@ -155,27 +154,15 @@ export const pricing: PricingDataset = [
     billing_type: timesBilling,
   },
   {
-    models: ["spark-desk-lite"], // free
-    input: 0.001,
-    output: 0.001,
+    models: ["spark-desk-v1.5"],
+    input: 0.015,
+    output: 0.015,
     currency: Currency.CNY,
   },
   {
-    models: ["spark-desk-pro", "spark-desk-pro-128k","spark-desk-max"],
+    models: ["spark-desk-v2", "spark-desk-v3", "spark-desk-v3.5"],
     input: 0.03,
     output: 0.03,
-    currency: Currency.CNY,
-  },
-  {
-    models: ["spark-desk-max-32k"],
-    input: 0.032,
-    output: 0.032,
-    currency: Currency.CNY,
-  },
-  {
-    models: ["spark-desk-4.0-ultra"],
-    input: 0.1,
-    output: 0.1,
     currency: Currency.CNY,
   },
   {

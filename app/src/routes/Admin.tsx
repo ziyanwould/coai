@@ -16,11 +16,13 @@ function Admin() {
   }, [init]);
 
   return (
-    <div className={`admin-page`}>
-      <MenuBar />
-      <ScrollArea className={`admin-content`}>
-        <Outlet />
-      </ScrollArea>
+    <div className={`home-page flex flex-row flex-1`}>
+      <div className={`admin-page`}>
+        <MenuBar />
+        <ScrollArea className={`admin-content`}>
+          <Outlet />
+        </ScrollArea>
+      </div>
     </div>
   );
 }

@@ -13,7 +13,6 @@ type ScrollActionProps = {
 };
 
 function ScrollAction(
-  this: any,
   { target, visible, setVisibility }: ScrollActionProps,
 ) {
   const { t } = useTranslation();
@@ -46,11 +45,13 @@ function ScrollAction(
   }, [messages]);
 
   return (
-    visible && (
-      <ChatAction text={t("scroll-down")} onClick={() => scrollDown(target)}>
-        <ChevronsDown className={`h-4 w-4`} />
-      </ChatAction>
-    )
+    <ChatAction
+      text={t("scroll-down")}
+      onClick={() => scrollDown(target)}
+      show={visible}
+    >
+      <ChevronsDown className={`h-4 w-4`} />
+    </ChatAction>
   );
 }
 

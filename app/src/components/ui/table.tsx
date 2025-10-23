@@ -2,14 +2,25 @@ import * as React from "react";
 
 import { cn } from "./lib/utils.ts";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area.tsx";
+import { useMemo } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Check, Filter } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type TableProps = React.HTMLAttributes<HTMLTableElement> & {
   classNameWrapper?: string;
+  classNameArea?: string;
 };
 
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
-  ({ className, classNameWrapper, ...props }, ref) => (
-    <ScrollArea type="always">
+  ({ className, classNameWrapper, classNameArea, ...props }, ref) => (
+    <ScrollArea type="always" className={classNameArea}>
       <div className={cn("relative w-full mb-2", classNameWrapper)}>
         <table
           ref={ref}
@@ -91,7 +102,10 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
+    className={cn(
+      "p-4 py-1.5 md:py-2 align-middle [&:has([role=checkbox])]:pr-0",
+      className,
+    )}
     {...props}
   />
 ));
@@ -108,6 +122,90 @@ const TableCaption = React.forwardRef<
   />
 ));
 TableCaption.displayName = "TableCaption";
+
+export type Visibility = {
+  [key: string]: boolean;
+};
+
+export type VisibilityOptions = {
+  translatePrefix?: string;
+};
+
+export type Column = { key: string; name: string; value: boolean };
+
+export const useColumnsVisibility = (
+  initial: Visibility,
+  options?: VisibilityOptions,
+) => {
+  const [visibility, setVisibility] = React.useState(initial);
+  const bar = useMemo(
+    (): Column[] =>
+      Object.entries(visibility).map(([name, value]) => ({
+        key: name,
+        name: options?.translatePrefix
+          ? `${options.translatePrefix}.${name}`
+          : name,
+        value,
+      })),
+    [visibility, options],
+  );
+
+  const toggle = (key: string) => {
+    setVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const show = (key: string) => {
+    setVisibility((prev) => ({ ...prev, [key]: true }));
+  };
+
+  const hide = (key: string) => {
+    setVisibility((prev) => ({ ...prev, [key]: false }));
+  };
+
+  const merge = (key: string, ...args: string[]) => {
+    return cn(...args, !visibility[key] && "hidden");
+  };
+
+  return { visibility, bar, options, toggle, show, hide, merge };
+};
+
+type ColumnsVisibilityBarProps = {
+  bar: Column[];
+  toggle: (key: string) => void;
+};
+
+export const ColumnsVisibilityBar = ({
+  bar,
+  toggle,
+}: ColumnsVisibilityBarProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button className={`ml-2 shrink-0`} variant={`outline`} size={`icon`}>
+          <Filter className={`h-4 w-4`} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align={`end`}>
+        {bar.map(({ key, name, value }) => (
+          <DropdownMenuItem
+            key={key}
+            onClick={(e) => {
+              e.preventDefault();
+              toggle(key);
+            }}
+          >
+            <Check
+              className={cn("h-4 w-4 mr-1 opacity-0", value && "opacity-100")}
+            />
+            {t(name)}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 export {
   Table,

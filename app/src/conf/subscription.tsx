@@ -1,50 +1,10 @@
-import {
-  BookText,
-  Compass,
-  Image,
-  ImagePlus,
-  Video,
-  AudioLines,
-  Container,
-  Archive,
-  Flame,
-} from "lucide-react";
-import React, { useMemo } from "react";
 import { Plan, Plans } from "@/api/types.tsx";
-import Icon from "@/components/utils/Icon.tsx";
-
-export const subscriptionIcons: Record<string, React.ReactElement> = {
-  compass: <Compass />,
-  image: <Image />,
-  imageplus: <ImagePlus />,
-  booktext: <BookText />,
-  video: <Video />,
-  audio: <AudioLines />,
-  flame: <Flame />,
-  archive: <Archive />,
-  container: <Container />,
-};
-
-export const subscriptionIconsList: string[] = Object.keys(subscriptionIcons);
 
 export const subscriptionType: Record<number, string> = {
   1: "basic",
   2: "standard",
   3: "pro",
 };
-
-type SubscriptionIconProps = {
-  type: string;
-  className?: string;
-};
-
-export function SubscriptionIcon({ type, className }: SubscriptionIconProps) {
-  const icon = useMemo(() => {
-    return subscriptionIcons[type.toLowerCase()] || subscriptionIcons.compass;
-  }, [type]);
-
-  return <Icon icon={icon} className={className} />;
-}
 
 export function getPlan(data: Plans, level: number): Plan {
   const raw = data.filter((item) => item.level === level);

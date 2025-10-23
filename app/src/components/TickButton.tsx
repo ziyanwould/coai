@@ -50,4 +50,38 @@ function TickButton({
   );
 }
 
+export function useTicker(
+  interval?: number,
+  onTickerEnd?: () => any,
+): {
+  tick: number;
+  triggerTicker: () => void;
+} {
+  const stamp = useRef(0);
+  const [tick, setTick] = useState(0);
+  const step = interval || 60;
+
+  const triggerTicker = () => (stamp.current = Number(Date.now()));
+
+  useEffect(() => {
+    setInterval(() => {
+      const offset = Math.floor((Number(Date.now()) - stamp.current) / 1000);
+      setTick(step - offset);
+    }, 250);
+  }, []);
+
+  useEffect(() => {
+    if (stamp.current === 0) return;
+    if (tick === 0) {
+      onTickerEnd && onTickerEnd();
+      stamp.current = 0;
+    }
+  }, [tick]);
+
+  return {
+    tick: tick < 0 ? 0 : tick > step ? step : tick, // fix negative value
+    triggerTicker,
+  };
+}
+
 export default TickButton;

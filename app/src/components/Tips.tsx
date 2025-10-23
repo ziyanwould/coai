@@ -12,10 +12,12 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
+import Clickable from "@/components/ui/clickable.tsx";
 
 type TipsProps = {
   content?: string;
   align?: "start" | "end" | "center" | undefined;
+  side?: "top" | "bottom" | "left" | "right" | undefined;
   trigger?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
@@ -26,11 +28,14 @@ type TipsProps = {
 
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onClicked?: () => void;
+  asChild?: boolean;
 };
 
 function Tips({
   content,
   align,
+  side,
   trigger,
   children,
   className,
@@ -40,6 +45,8 @@ function Tips({
   notHide,
   open,
   onOpenChange,
+  onClicked,
+  asChild,
 }: TipsProps) {
   const timeout = hideTimeout ?? 2500;
   const comp = useMemo(
@@ -74,17 +81,29 @@ function Tips({
   }, [drop, tooltip]);
 
   return (
-    <DropdownMenu open={drop} onOpenChange={setDrop}>
+    <DropdownMenu
+      open={drop}
+      onOpenChange={(open) => {
+        setDrop(open);
+        open && onClicked && onClicked();
+      }}
+    >
       <DropdownMenuTrigger
+        asChild={asChild}
         className={cn(
           `tips-trigger select-none outline-none`,
           classNameTrigger,
         )}
+        onClick={onClicked}
       >
         <TooltipProvider>
           <Tooltip open={tooltip} onOpenChange={setTooltip}>
             <TooltipTrigger asChild>
-              {trigger ?? <HelpCircle className={cn("tips-icon", className)} />}
+              <Clickable>
+                {trigger ?? (
+                  <HelpCircle className={cn("tips-icon", className)} />
+                )}
+              </Clickable>
             </TooltipTrigger>
             <TooltipContent className="hidden" />
           </Tooltip>
@@ -95,7 +114,7 @@ function Tips({
           "px-3 py-1.5 cursor-pointer text-sm min-w-0 max-w-[90vw]",
           classNamePopup,
         )}
-        side={`top`}
+        side={side ?? "top"}
         align={align}
       >
         {comp}
