@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { Moon, Sun, Monitor } from "lucide-react";
 
 import { Button } from "./ui/button";
 import { getMemory, setMemory } from "@/utils/memory.ts";
@@ -10,6 +10,7 @@ const defaultTheme: Theme = "dark";
 export type Theme = "dark" | "light" | "system";
 
 type ThemeProviderProps = {
+  children?: ReactNode;
   defaultTheme?: Theme;
 };
 
@@ -23,18 +24,25 @@ export function activeTheme(theme: Theme) {
   const root = window.document.documentElement;
 
   root.classList.remove("light", "dark");
-  if (theme === "system")
-    theme = window.matchMedia("(prefers-color-scheme: dark)").matches
+  let actualTheme = theme;
+  if (theme === "system") {
+    actualTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
       ? "dark"
       : "light";
+  }
 
-  root.classList.add(theme);
+  root.classList.add(actualTheme);
   setMemory("theme", theme);
-  themeEvent.emit(theme);
+  themeEvent.emit(actualTheme);
 }
 
 export function getTheme() {
   return (getMemory("theme") as Theme) || defaultTheme;
+}
+
+// system -> dark -> light -> system
+function getNextTheme(current: Theme): Theme {
+  return current === "system" ? "dark" : current === "dark" ? "light" : "system";
 }
 
 const initialState: ThemeProviderState = {
@@ -44,9 +52,9 @@ const initialState: ThemeProviderState = {
   },
   toggleTheme: () => {
     const key = getMemory("theme");
-    const theme = (key.length > 0 ? key : defaultTheme) as Theme;
-
-    activeTheme(theme === "dark" ? "light" : "dark");
+    const current = (key.length > 0 ? (key as Theme) : defaultTheme) as Theme;
+    const next = getNextTheme(current);
+    activeTheme(next);
   },
 };
 
@@ -80,9 +88,14 @@ export function ThemeProvider({
 
   const value = {
     theme,
-    setTheme: (theme: Theme) => {
-      setMemory("theme", theme);
-      setTheme(theme);
+    setTheme: (newTheme: Theme) => {
+      activeTheme(newTheme);
+      setTheme(newTheme);
+    },
+    toggleTheme: () => {
+      const nextTheme: Theme = getNextTheme(theme);
+      activeTheme(nextTheme);
+      setTheme(nextTheme);
     },
   };
 
@@ -99,7 +112,7 @@ export const useTheme = () => {
 };
 
 export function ThemeToggle({ className, size = "icon" }: { className?: string; size?: "icon" | "icon-md" }) {
-  const { toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <Button
@@ -109,10 +122,13 @@ export function ThemeToggle({ className, size = "icon" }: { className?: string; 
       className={`!m-0 ${className || ''}`}
     >
       <Sun
-        className={`relative dark:absolute h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0`}
+        className={`h-4 w-4 transition-all ${theme === "light" ? "relative rotate-0 scale-100" : "absolute -rotate-90 scale-0"}`}
       />
       <Moon
-        className={`absolute dark:relative h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100`}
+        className={`h-4 w-4 transition-all ${theme === "dark" ? "relative rotate-0 scale-100" : "absolute rotate-90 scale-0"}`}
+      />
+      <Monitor
+        className={`h-4 w-4 transition-all ${theme === "system" ? "relative rotate-0 scale-100" : "absolute rotate-90 scale-0"}`}
       />
     </Button>
   );

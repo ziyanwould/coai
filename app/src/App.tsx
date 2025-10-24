@@ -9,11 +9,12 @@ import ReloadPrompt from "@/components/ReloadService.tsx";
 function App() {
   return (
     <Provider store={store}>
-      <Toaster />
-      <Spinner />
-      <AppProvider />
-      <ReloadPrompt />
-      <AppRouter />
+      <AppProvider>
+        <Toaster />
+        <Spinner />
+        <ReloadPrompt />
+        <AppRouter />
+      </AppProvider>
     </Provider>
   );
 }
