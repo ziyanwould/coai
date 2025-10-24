@@ -2,11 +2,10 @@ package utils
 
 import (
 	"bytes"
-	"crypto/tls"
 	"fmt"
-	"gopkg.in/gomail.v2"
-	"strings"
 	"text/template"
+
+	"gopkg.in/mail.v2"
 )
 
 type SmtpPoster struct {
@@ -38,63 +37,19 @@ func (s *SmtpPoster) SendMail(to string, subject string, body string) error {
 		return fmt.Errorf("smtp not configured properly")
 	}
 
-	// Create gomail message object
-	message := gomail.NewMessage()
+	dialer := mail.NewDialer(s.Host, s.Port, s.Username, s.Password)
+	from := s.From
 
-	// Determine sender address based on whether the username contains "@"
-	var from string
-	if strings.Contains(s.Username, "@") {
-		// If the username contains "@", use From as the sender
-		from = s.From
-	} else {
-		// Otherwise, combine the username and From to form the sender's email address
-		from = fmt.Sprintf("%s <%s>", s.Username, s.From)
-	}
+	message := mail.NewMessage()
 	message.SetHeader("From", from)
 	message.SetHeader("To", to)
 	message.SetHeader("Subject", subject)
 	message.SetBody("text/html", body)
 
-	dialer := gomail.NewDialer(s.Host, s.Port, s.Username, s.Password)
-
-	// If TLS protocol is enabled
 	if s.Protocol {
-		dialer.TLSConfig = &tls.Config{
-			InsecureSkipVerify: false,  // Disable insecure certificate verification
-			ServerName:         s.Host, // Set ServerName to the SMTP host
-		}
+		dialer.StartTLSPolicy = mail.MandatoryStartTLS
 	} else {
-		// When SSL is enabled, no need for STARTTLS, directly establish an encrypted connection
-		dialer.SSL = true
-	}
-
-	// Specific handling for different providers
-	switch {
-	case strings.Contains(s.Host, "outlook"):
-		dialer.TLSConfig = &tls.Config{
-			InsecureSkipVerify: false,
-			ServerName:         s.Host,
-		}
-	case strings.Contains(s.Host, "qq"):
-		dialer.TLSConfig = &tls.Config{
-			InsecureSkipVerify: true,
-			ServerName:         s.Host,
-		}
-	case strings.Contains(s.Host, "office365"):
-		dialer.TLSConfig = &tls.Config{
-			InsecureSkipVerify: false,
-			ServerName:         s.Host,
-		}
-	case strings.Contains(s.Host, "resend"):
-		dialer.TLSConfig = &tls.Config{
-			InsecureSkipVerify: true,
-			ServerName:         s.Host,
-		}
-	case strings.Contains(s.Host, "tencent"):
-		dialer.TLSConfig = &tls.Config{
-			InsecureSkipVerify: true,
-			ServerName:         s.Host,
-		}
+		dialer.StartTLSPolicy = mail.NoStartTLS
 	}
 
 	if err := dialer.DialAndSend(message); err != nil {
