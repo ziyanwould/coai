@@ -30,6 +30,7 @@ import {
   isSubscribedSelector,
   levelSelector,
   usageSelector,
+  refreshSelector,
 } from "@/store/subscription.ts";
 import { subscriptionDataSelector } from "@/store/globals.ts";
 import { motion, AnimatePresence } from "framer-motion";
@@ -256,6 +257,7 @@ function WalletPlanBox() {
   const subscription = useSelector(isSubscribedSelector);
   const level = useSelector(levelSelector);
   const expired = useSelector(expiredSelector);
+  const refresh = useSelector(refreshSelector);
   const usage = useSelector(usageSelector);
   const [isYearly, setIsYearly] = useState(true);
   const subscriptionData = useSelector(subscriptionDataSelector);
@@ -378,6 +380,11 @@ function WalletPlanBox() {
                     <h3 className="text-sm mb-0.5">{t("sub.quota-manage")}</h3>
                     <p className="text-xs text-secondary">
                       {t("sub.expired-days", { days: expired })}
+                    </p>
+                    <p className="text-xs text-secondary">
+                      {refresh > 0
+                        ? t("sub.refresh-days", { refresh_days: refresh })
+                        : t("sub.get-refresh-days")}
                     </p>
                   </div>
                 </AccordionTrigger>

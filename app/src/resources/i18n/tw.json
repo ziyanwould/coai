@@ -375,7 +375,9 @@
     "upgrade-price-notice": "僅供參考",
     "upgrade-price-notice-tip": "升級費用僅供參考，實際價格以伺服器精準計算為準",
     "quota-manage": "訂閱配額",
-    "expired-days": "您的訂閱將於 {{days}} 天後到期"
+    "expired-days": "您的訂閱將於 {{days}} 天後到期",
+    "refresh-days": "您的配額將於{{refresh_days}} 天後刷新",
+    "get-refresh-days": "開始使用配額以取得刷新日期"
   },
   "cancel": "取消",
   "confirm": "確認",

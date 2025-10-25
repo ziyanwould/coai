@@ -303,7 +303,9 @@
     "total-price": "合計価格",
     "upgrade-price-label": "アップグレード料金",
     "upgrade-price-notice": "参考用",
-    "upgrade-price-notice-tip": "アップグレード料金は参考用であり、実際の価格はサーバーの正確な計算に基づいています。"
+    "upgrade-price-notice-tip": "アップグレード料金は参考用であり、実際の価格はサーバーの正確な計算に基づいています。",
+    "refresh-days": "クォータは{{refresh_days}}日後に更新されます",
+    "get-refresh-days": "クォータを使用して日付を更新する"
   },
   "cancel": "キャンセル",
   "confirm": "確認",

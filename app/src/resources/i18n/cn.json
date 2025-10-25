@@ -507,6 +507,8 @@
     "expired": "订阅剩余天数",
     "quota-manage": "订阅配额",
     "expired-days": "您的订阅将于 {{days}} 天后到期",
+    "refresh-days": "您的配额将于 {{refresh_days}} 天后刷新",
+    "get-refresh-days": "开始使用配额以获取刷新日期",
     "time": {
       "1": "1个月",
       "3": "3个月",

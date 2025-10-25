@@ -9,6 +9,8 @@ export const subscriptionSlice = createSlice({
     enterprise: false,
     expired: 0,
     expired_at: "",
+    refresh: 0,
+    refresh_at: "",
     usage: {},
   },
   reducers: {},
@@ -25,6 +27,8 @@ export const subscriptionSlice = createSlice({
       state.enterprise = action.payload.enterprise || false;
       state.level = action.payload.level;
       state.expired_at = action.payload.expired_at || "";
+      state.refresh = action.payload.refresh || 0;
+      state.refresh_at = action.payload.refresh_at || "";
     });
   },
 });
@@ -38,6 +42,10 @@ export const expiredSelector = (state: any): number =>
   state.subscription.expired;
 export const expiredAtSelector = (state: any): string =>
   state.subscription.expired_at;
+export const refreshSelector = (state: any): number =>
+  state.subscription.refresh;
+export const refreshAtSelector = (state: any): string =>
+  state.subscription.refresh_at;
 export const usageSelector = (state: any): any => state.subscription.usage;
 
 export const refreshSubscription = createAsyncThunk(

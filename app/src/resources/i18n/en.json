@@ -303,7 +303,9 @@
     "total-price": "Total Price",
     "upgrade-price-label": "Upgrading Cost",
     "upgrade-price-notice": "For  information only",
-    "upgrade-price-notice-tip": "The upgrade fee is for reference only, and the actual price is based on the exact calculation of the server."
+    "upgrade-price-notice-tip": "The upgrade fee is for reference only, and the actual price is based on the exact calculation of the server.",
+    "refresh-days": "Your quota will refresh in {{refresh_days}} days",
+    "get-refresh-days": "Get started with quotas to get refresh dates"
   },
   "cancel": "Cancel",
   "confirm": "Confirm",
