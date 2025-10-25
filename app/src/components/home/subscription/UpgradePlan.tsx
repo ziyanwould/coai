@@ -323,6 +323,7 @@ export function Upgrade({ level, current, isYearly }: UpgradeProps) {
           </DialogClose>
           <Button
             unClickable
+            loading
             className={`mb-1.5`}
             onClick={async () => {
               const res = await callMigrateAction(t, level);
