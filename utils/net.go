@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"runtime/debug"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/goccy/go-json"
 	"golang.org/x/net/proxy"
@@ -83,12 +84,87 @@ func fillHeaders(req *http.Request, headers map[string]string) {
 	}
 }
 
-func Http(uri string, method string, ptr interface{}, headers map[string]string, body io.Reader, config []globals.ProxyConfig) (err error) {
-	if globals.DebugMode {
-		globals.Debug(fmt.Sprintf("[http] %s %s\nheaders: \n%s\nbody: \n%s", method, uri, Marshal(headers), Marshal(body)))
+func formatBodyForLog(data []byte, contentType string) string {
+	if len(data) == 0 {
+		return ""
 	}
 
-	req, err := http.NewRequest(method, uri, body)
+	isBinary := false
+	if contentType != "" {
+		contentType = strings.ToLower(contentType)
+		binaryTypes := []string{
+			"video/", "image/", "audio/",
+			"application/octet-stream",
+			"application/pdf",
+			"application/zip",
+			"application/x-",
+		}
+		for _, bt := range binaryTypes {
+			if strings.HasPrefix(contentType, bt) {
+				isBinary = true
+				break
+			}
+		}
+	}
+
+	if !isBinary {
+		if !utf8.Valid(data) {
+			isBinary = true
+		} else {
+			nonPrintableCount := 0
+			for _, b := range data {
+				if b < 32 && b != 9 && b != 10 && b != 13 {
+					nonPrintableCount++
+				}
+			}
+			if len(data) > 0 && float64(nonPrintableCount)/float64(len(data)) > 0.05 {
+				isBinary = true
+			}
+		}
+	}
+
+	if isBinary {
+		detectedType := contentType
+		if detectedType == "" {
+			detectedType = http.DetectContentType(data)
+		}
+		size := len(data)
+		sizeStr := formatSize(size)
+		return fmt.Sprintf("[Binary Content] Type: %s, Size: %s (%d bytes)", detectedType, sizeStr, size)
+	}
+
+	return string(data)
+}
+
+func formatSize(bytes int) string {
+	const unit = 1024
+	if bytes < unit {
+		return fmt.Sprintf("%d B", bytes)
+	}
+	div, exp := int64(unit), 0
+	for n := bytes / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
+}
+
+func Http(uri string, method string, ptr interface{}, headers map[string]string, body io.Reader, config []globals.ProxyConfig) (err error) {
+	var requestBody io.Reader = body
+	formattedRequestBody := ""
+	if globals.DebugMode {
+		if body != nil {
+			if data, readErr := io.ReadAll(body); readErr == nil {
+				formattedRequestBody = formatBodyForLog(data, "")
+				requestBody = bytes.NewReader(data)
+			} else {
+				formattedRequestBody = fmt.Sprintf("[Body Read Error] %s", readErr)
+			}
+		}
+		globals.Debug(fmt.Sprintf("[http] %s %s\nheaders: \n%s\nbody: \n%s", method, uri, Marshal(headers), formattedRequestBody))
+	}
+
+	req, err := http.NewRequest(method, uri, requestBody)
 	if err != nil {
 		if globals.DebugMode {
 			globals.Debug(fmt.Sprintf("[http] failed to create request: %s", err))
@@ -110,23 +186,47 @@ func Http(uri string, method string, ptr interface{}, headers map[string]string,
 
 	defer resp.Body.Close()
 
-	if err = json.NewDecoder(resp.Body).Decode(ptr); err != nil {
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
 		if globals.DebugMode {
-			globals.Debug(fmt.Sprintf("[http] failed to decode response: %s\nresponse: %s", err, resp.Body))
+			contentType := resp.Header.Get("Content-Type")
+			formattedBody := formatBodyForLog(respData, contentType)
+			globals.Debug(fmt.Sprintf("[http] failed to read response: %s\nresponse: %s", err, formattedBody))
+		}
+		return err
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+
+	if globals.DebugMode {
+		formattedBody := formatBodyForLog(respData, contentType)
+		globals.Debug(fmt.Sprintf("[http] response: %s", formattedBody))
+	}
+
+	if err = json.Unmarshal(respData, ptr); err != nil {
+		if globals.DebugMode {
+			formattedBody := formatBodyForLog(respData, contentType)
+			globals.Debug(fmt.Sprintf("[http] failed to decode response: %s\nresponse: %s", err, formattedBody))
 		}
 
 		return err
 	}
 
-	if globals.DebugMode {
-		globals.Debug(fmt.Sprintf("[http] response: %s", Marshal(ptr)))
-	}
 	return nil
 }
 
 func HttpRaw(uri string, method string, headers map[string]string, body io.Reader, config []globals.ProxyConfig) (data []byte, err error) {
 	if globals.DebugMode {
-		globals.Debug(fmt.Sprintf("[http] %s %s\nheaders: \n%s\nbody: \n%s", method, uri, Marshal(headers), Marshal(body)))
+		formattedBody := ""
+		if body != nil {
+			if content, readErr := io.ReadAll(body); readErr == nil {
+				formattedBody = formatBodyForLog(content, "")
+				body = bytes.NewReader(content)
+			} else {
+				formattedBody = fmt.Sprintf("[Body Read Error] %s", readErr)
+			}
+		}
+		globals.Debug(fmt.Sprintf("[http] %s %s\nheaders: \n%s\nbody: \n%s", method, uri, Marshal(headers), formattedBody))
 	}
 
 	req, err := http.NewRequest(method, uri, body)
@@ -153,14 +253,18 @@ func HttpRaw(uri string, method string, headers map[string]string, body io.Reade
 
 	if data, err = io.ReadAll(resp.Body); err != nil {
 		if globals.DebugMode {
-			globals.Debug(fmt.Sprintf("[http] failed to read response: %s", err))
+			contentType := resp.Header.Get("Content-Type")
+			formattedBody := formatBodyForLog(data, contentType)
+			globals.Debug(fmt.Sprintf("[http] failed to read response: %s\nresponse: %s", err, formattedBody))
 		}
 
 		return nil, err
 	}
 
 	if globals.DebugMode {
-		globals.Debug(fmt.Sprintf("[http] response: %s", string(data)))
+		contentType := resp.Header.Get("Content-Type")
+		formattedBody := formatBodyForLog(data, contentType)
+		globals.Debug(fmt.Sprintf("[http] response: %s", formattedBody))
 	}
 	return data, nil
 }

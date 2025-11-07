@@ -57,11 +57,28 @@ func doMigration(db *sql.DB) error {
 		return err
 	}
 
+	// add new field `task_id` in `conversation` table to store task id (e.g., video job id)
+	if err := execSql(db, `
+		ALTER TABLE conversation
+		ADD COLUMN task_id VARCHAR(255) NULL;
+	`); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func doSqliteMigration(db *sql.DB) error {
 	// v3.10 added sqlite support, no migration needed before this version
+
+	// v4 migration
+	// add new field `task_id` in `conversation` table to store task id (e.g., video job id)
+	if err := execSql(db, `
+		ALTER TABLE conversation
+		ADD COLUMN task_id VARCHAR(255) NULL;
+	`); err != nil {
+		return err
+	}
 
 	return nil
 }

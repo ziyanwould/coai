@@ -108,15 +108,45 @@ func createChatTask(
 			})
 			props.User = auth.GetUsernameString(db, user)
 
+			var finalJobJson string
 			hit, err := channel.NewVideoRequestWithCache(
 				cache, buffer,
 				auth.GetGroup(db, user),
 				props,
 				func(data *globals.Chunk) error {
+					if data != nil && data.Content != "" {
+						if strings.HasPrefix(data.Content, "{") && strings.Contains(data.Content, "\"id\"") {
+							finalJobJson = data.Content
+						}
+					}
 					chunkChan <- partialChunk{Chunk: data, End: false, Hit: false, Error: nil}
 					return nil
 				},
 			)
+
+			if instance != nil && finalJobJson != "" {
+				job, err := utils.UnmarshalString[RelayVideoJob](finalJobJson)
+				if err != nil {
+					globals.Warn(fmt.Sprintf("[video] failed to parse job JSON: %s, finalJobJson: %s", err.Error(), finalJobJson))
+				} else if job.Id == "" {
+					globals.Warn(fmt.Sprintf("[video] job.Id is empty after parsing, finalJobJson: %s", finalJobJson))
+				} else {
+					globals.Debug(fmt.Sprintf("[video] saving task_id %s to conversation %d", job.Id, instance.GetId()))
+					instance.SetTaskID(job.Id)
+					instance.AddMessageFromAssistant(finalJobJson)
+					if !instance.SaveConversation(db) {
+						globals.Warn(fmt.Sprintf("[video] failed to save conversation with task_id %s", job.Id))
+					} else {
+						globals.Debug(fmt.Sprintf("[video] successfully saved task_id %s to conversation %d", job.Id, instance.GetId()))
+					}
+				}
+			} else {
+				if instance == nil {
+					globals.Warn("[video] instance is nil, cannot save task_id")
+				} else if finalJobJson == "" {
+					globals.Warn("[video] finalJobJson is empty, cannot save task_id")
+				}
+			}
 
 			chunkChan <- partialChunk{Chunk: nil, End: true, Hit: hit, Error: err}
 			return

@@ -19,6 +19,7 @@ type Conversation struct {
 	Name      string            `json:"name"`
 	Message   []globals.Message `json:"message"`
 	Model     string            `json:"model"`
+	TaskID    string            `json:"task_id,omitempty"`
 	EnableWeb bool              `json:"enable_web"`
 	Shared    bool              `json:"shared"`
 	Context   int               `json:"context"`
@@ -426,4 +427,12 @@ func (c *Conversation) DeleteMessage(index int) {
 		return
 	}
 	c.Message = append(c.Message[:index], c.Message[index+1:]...)
+}
+
+func (c *Conversation) GetTaskID() string {
+	return c.TaskID
+}
+
+func (c *Conversation) SetTaskID(taskID string) {
+	c.TaskID = taskID
 }
