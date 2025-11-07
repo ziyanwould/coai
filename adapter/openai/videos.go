@@ -74,11 +74,24 @@ func (c *ChatInstance) CreateVideoRequest(props *adaptercommon.VideoProps, hook 
 
 	deadline := time.After(maxTimeout)
 
+	var begin bool
+	var lastProgress int = -1
+
 	for {
 		if job.Status == "completed" {
+			if begin {
+				if err := hook(&globals.Chunk{Content: "```\n"}); err != nil {
+					return err
+				}
+			}
 			return hook(&globals.Chunk{Content: utils.Marshal(job)})
 		}
 		if job.Status == "failed" {
+			if begin {
+				if err := hook(&globals.Chunk{Content: "```\n"}); err != nil {
+					return err
+				}
+			}
 			if job.Error != nil && job.Error.Message != "" {
 				return fmt.Errorf("openai video job failed: %s", job.Error.Message)
 			}
@@ -97,7 +110,31 @@ func (c *ChatInstance) CreateVideoRequest(props *adaptercommon.VideoProps, hook 
 			if j := utils.MapToStruct[VideoJob](data); j != nil {
 				job = j
 			}
+
+			progress := 0
+			if job.Progress != nil {
+				progress = *job.Progress
+			}
+
+			if !begin {
+				begin = true
+				if err := hook(&globals.Chunk{Content: "```progress\n"}); err != nil {
+					return err
+				}
+			}
+
+			if progress != lastProgress {
+				if err := hook(&globals.Chunk{Content: fmt.Sprintf("%d\n", progress)}); err != nil {
+					return err
+				}
+				lastProgress = progress
+			}
 		case <-deadline:
+			if begin {
+				if err := hook(&globals.Chunk{Content: "```\n"}); err != nil {
+					return err
+				}
+			}
 			return fmt.Errorf("openai video job timeout")
 		}
 	}
