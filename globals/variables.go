@@ -89,6 +89,7 @@ const (
 	GPT4O                        = "gpt-4o"
 	GPT4O20240513                = "gpt-4o-2024-05-13"
 	GPTImage1                    = "gpt-image-1"
+	Sora2                        = "sora-2"
 	Dalle                        = "dalle"
 	Dalle2                       = "dall-e-2"
 	Dalle3                       = "dall-e-3"
@@ -166,6 +167,10 @@ var VisionSkipModels = []string{
 	GPT4TurboPreview,
 }
 
+var VideoModels = []string{
+	Sora2,
+}
+
 func in(value string, slice []string) bool {
 	for _, item := range slice {
 		if item == value || strings.Contains(value, item) {
@@ -187,4 +192,8 @@ func IsGoogleImagenModel(model string) bool {
 
 func IsVisionModel(model string) bool {
 	return in(model, VisionModels) && !in(model, VisionSkipModels)
+}
+
+func IsVideoModel(model string) bool {
+	return in(model, VideoModels)
 }

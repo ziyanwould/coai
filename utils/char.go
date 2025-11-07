@@ -396,17 +396,22 @@ func SafeSplit(data string, sep string, seglen int) (res []string) {
 	}
 }
 
-func ToSecret(raw string) string {
+func HideSecret(raw string, _flowLength ...int) string {
 	// like `axVbeixvN` => `axVb*****`
+
+	flowLength := 4
+	if len(_flowLength) > 0 {
+		flowLength = _flowLength[0]
+	}
 
 	data := []rune(raw)
 	length := len(data)
 
-	if length < 4 {
+	if length < flowLength {
 		return "****"
 	} else {
-		suffix := len(data) - 4
-		return string(data[:4]) + strings.Repeat("*", suffix)
+		suffix := len(data) - flowLength
+		return string(data[:flowLength]) + strings.Repeat("*", suffix)
 	}
 }
 

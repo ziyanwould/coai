@@ -72,6 +72,14 @@ func (c *Channel) GetRandomSecret() string {
 	return secret
 }
 
+func (c *Channel) GetCurrentSecretValue() string {
+	if c.CurrentSecret == nil {
+		return ""
+	}
+
+	return *c.CurrentSecret
+}
+
 func (c *Channel) SplitRandomSecret(num int) []string {
 	secret := c.GetRandomSecret()
 	arr := strings.Split(secret, "|")
@@ -213,7 +221,7 @@ func (c *Channel) ProcessError(err error) error {
 
 	secret := c.GetCurrentSecret()
 	if secret != nil {
-		content = strings.Replace(content, *secret, utils.ToSecret(*secret), -1)
+		content = strings.Replace(content, *secret, utils.HideSecret(*secret), -1)
 	}
 
 	return errors.New(content)

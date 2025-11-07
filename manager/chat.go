@@ -101,6 +101,27 @@ func createChatTask(
 			}
 		}()
 
+		if globals.IsVideoModel(model) {
+			props := adaptercommon.CreateVideoProps(&adaptercommon.VideoProps{
+				Model:  model,
+				Prompt: segment[len(segment)-1].Content,
+			})
+			props.User = auth.GetUsernameString(db, user)
+
+			hit, err := channel.NewVideoRequestWithCache(
+				cache, buffer,
+				auth.GetGroup(db, user),
+				props,
+				func(data *globals.Chunk) error {
+					chunkChan <- partialChunk{Chunk: data, End: false, Hit: false, Error: nil}
+					return nil
+				},
+			)
+
+			chunkChan <- partialChunk{Chunk: nil, End: true, Hit: hit, Error: err}
+			return
+		}
+
 		hit, err := channel.NewChatRequestWithCache(
 			cache, buffer,
 			auth.GetGroup(db, user),
