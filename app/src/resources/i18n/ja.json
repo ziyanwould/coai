@@ -1337,7 +1337,9 @@
     "viewImage": "画像を表示",
     "imageLoadFailed": "画像{{src}}の読み込みに失敗しました",
     "base64Image": "Base 64イメージを展開する",
-    "base64ImageCollapse": "画像ベース64を折りたたむ"
+    "base64ImageCollapse": "画像ベース64を折りたたむ",
+    "viewVideo": "ビデオを見る",
+    "videoLoadFailed": "ビデオ{{src}}の読み込みに失敗しました"
   },
   "login-action": "サインインしてその他の機能をご利用ください",
   "anonymous": "ログインしていません",

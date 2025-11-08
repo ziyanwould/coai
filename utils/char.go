@@ -251,6 +251,15 @@ func ExtractImagesFromMarkdown(data string) (images []string) {
 	return images
 }
 
+func GetVideoMarkdown(url string, _desc ...string) string {
+	desc := "video"
+	if len(_desc) > 0 && _desc[0] != "" {
+		desc = _desc[0]
+	}
+
+	return fmt.Sprintf("![%s](%s)", desc, url)
+}
+
 func ExtractBase64FromMarkdown(data string) (images []string) {
 	// extract base64 images like `![image](data:image/png;base64,xxxxxx)`
 	re := regexp.MustCompile(`!\[.*?\]\((data:image/\w+;base64,[\w+/=]+)\)`)

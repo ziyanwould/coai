@@ -1486,7 +1486,9 @@
     "viewImage": "看圖片",
     "imageLoadFailed": "圖片{{src}} 載入失敗",
     "base64Image": "展開圖片Base64",
-    "base64ImageCollapse": "收起圖片Base64"
+    "base64ImageCollapse": "收起圖片Base64",
+    "viewVideo": "查看影片",
+    "videoLoadFailed": "影片{{src}} 載入失敗"
   },
   "bar": {
     "chat": "對話",

@@ -173,7 +173,7 @@ func VideosContentRelayAPI(c *gin.Context) {
 	}
 
 	agent := utils.GetAgentFromContext(c)
-	if agent != "api" {
+	if agent != "api" && agent != "token" {
 		abortWithErrorResponse(c, fmt.Errorf("access denied for invalid agent"), "authentication_error")
 		return
 	}

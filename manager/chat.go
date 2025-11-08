@@ -115,10 +115,21 @@ func createChatTask(
 				props,
 				func(data *globals.Chunk) error {
 					if data != nil && data.Content != "" {
-						if strings.HasPrefix(data.Content, "{") && strings.Contains(data.Content, "\"id\"") {
+						if strings.HasPrefix(data.Content, "{") && strings.Contains(data.Content, "\"id\"") && strings.Contains(data.Content, "\"status\"") {
 							finalJobJson = data.Content
+
+							job, err := utils.UnmarshalString[RelayVideoJob](data.Content)
+							if err == nil && job.Id != "" && job.Status == "completed" {
+								backendUrl := channel.SystemInstance.GetBackend()
+								videoUrl := fmt.Sprintf("%s/v1/videos/%s/content", backendUrl, job.Id)
+								videoMarkdown := utils.GetVideoMarkdown(videoUrl, "video")
+
+								chunkChan <- partialChunk{Chunk: &globals.Chunk{Content: videoMarkdown}, End: false, Hit: false, Error: nil}
+								return nil
+							}
 						}
 					}
+					// Send original content for progress updates and other messages
 					chunkChan <- partialChunk{Chunk: data, End: false, Hit: false, Error: nil}
 					return nil
 				},
@@ -133,7 +144,6 @@ func createChatTask(
 				} else {
 					globals.Debug(fmt.Sprintf("[video] saving task_id %s to conversation %d", job.Id, instance.GetId()))
 					instance.SetTaskID(job.Id)
-					instance.AddMessageFromAssistant(finalJobJson)
 					if !instance.SaveConversation(db) {
 						globals.Warn(fmt.Sprintf("[video] failed to save conversation with task_id %s", job.Id))
 					} else {
