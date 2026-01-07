@@ -1,22 +1,21 @@
 package auth
 
 import (
-	"chat/channel"
-	"chat/globals"
-	"chat/utils"
-	"context"
-	"database/sql"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io"
-	"net/http"
-	"strings"
-	"time"
+"chat/globals"
+"chat/utils"
+"context"
+"database/sql"
+"encoding/json"
+"errors"
+"fmt"
+"io"
+"net/http"
+"strings"
+"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
-	"golang.org/x/oauth2"
+"github.com/gin-gonic/gin"
+"github.com/go-redis/redis/v8"
+"golang.org/x/oauth2"
 )
 
 // LinuxDoUserInfo Linux.do 用户信息结构
@@ -30,18 +29,11 @@ type LinuxDoUserInfo struct {
 
 // getLinuxDoOAuthConfig 获取 Linux.do OAuth 配置
 func getLinuxDoOAuthConfig() *oauth2.Config {
-	var clientID, clientSecret, redirectURL string
-	if channel.SystemInstance != nil {
-		state := channel.SystemInstance.OAuth.LinuxDo
-		clientID = state.ClientID
-		clientSecret = state.ClientSecret
-		redirectURL = state.RedirectURL
-	}
-
+	cfg := utils.GetLinuxDoOAuth()
 	return &oauth2.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
-		RedirectURL:  redirectURL,
+		ClientID:     cfg.ClientID,
+		ClientSecret: cfg.ClientSecret,
+		RedirectURL:  cfg.RedirectURL,
 		Scopes:       []string{"openid", "profile", "email"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://connect.linux.do/oauth2/authorize",
@@ -52,13 +44,7 @@ func getLinuxDoOAuthConfig() *oauth2.Config {
 
 // isLinuxDoOAuthEnabled 检查 Linux.do OAuth 是否启用
 func isLinuxDoOAuthEnabled() bool {
-	if channel.SystemInstance == nil {
-		return false
-	}
-
-	state := channel.SystemInstance.OAuth.LinuxDo
-
-	return state.Enabled && len(state.ClientID) > 0 && len(state.ClientSecret) > 0
+	return utils.IsLinuxDoOAuthEnabled()
 }
 
 // generateOAuthState 生成 OAuth state 参数并存储到 Redis
@@ -207,9 +193,9 @@ func LinuxDoOAuthLogin(c *gin.Context, userInfo *LinuxDoUserInfo) (string, error
 func LinuxDoOAuthLoginAPI(c *gin.Context) {
 	if !isLinuxDoOAuthEnabled() {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"status": false,
-			"error":  "Linux.do OAuth 未启用",
-		})
+"status": false,
+"error":  "Linux.do OAuth 未启用",
+})
 		return
 	}
 
@@ -227,9 +213,9 @@ func LinuxDoOAuthLoginAPI(c *gin.Context) {
 	if strings.Contains(acceptHeader, "application/json") {
 		// 前端 API 调用,返回 JSON
 		c.JSON(http.StatusOK, gin.H{
-			"status": true,
-			"url":    authURL,
-		})
+"status": true,
+"url":    authURL,
+})
 	} else {
 		// 直接重定向到 Linux.do 授权页面
 		c.Redirect(http.StatusTemporaryRedirect, authURL)

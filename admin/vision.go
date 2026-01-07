@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"chat/channel"
 	"chat/utils"
 	"net/http"
 
@@ -15,9 +14,10 @@ type VisionConfigForm struct {
 
 // GetVisionConfigAPI 获取视觉模型配置
 func GetVisionConfigAPI(c *gin.Context) {
+	cfg := utils.GetVisionConfig()
 	c.JSON(http.StatusOK, gin.H{
 		"status": true,
-		"data":   channel.SystemInstance.Vision,
+		"data":   cfg,
 	})
 }
 
@@ -32,12 +32,8 @@ func UpdateVisionConfigAPI(c *gin.Context) {
 		return
 	}
 
-	// 更新配置
-	channel.SystemInstance.Vision.Models = form.Models
-	channel.SystemInstance.Vision.TreatAllAsVision = form.TreatAllAsVision
-
-	// 保存配置
-	err := channel.SystemInstance.SaveConfig()
+	// 使用独立配置保存函数
+	err := utils.UpdateVisionConfig(form.Models, form.TreatAllAsVision)
 
 	c.JSON(http.StatusOK, gin.H{
 		"status": err == nil,
@@ -48,10 +44,11 @@ func UpdateVisionConfigAPI(c *gin.Context) {
 // RefreshVisionConfigAPI 刷新视觉模型配置(使配置生效)
 func RefreshVisionConfigAPI(c *gin.Context) {
 	// 重新加载配置到内存
-	utils.RefreshCustomVisionModels(channel.SystemInstance.GetVisionModels())
+	cfg := utils.GetVisionConfig()
+	utils.RefreshCustomVisionModels(cfg.Models)
 
 	c.JSON(http.StatusOK, gin.H{
-		"status": true,
+		"status":  true,
 		"message": "Vision models configuration refreshed successfully",
 	})
 }

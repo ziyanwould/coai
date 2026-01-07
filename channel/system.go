@@ -84,21 +84,8 @@ type commonState struct {
 	PromptStore bool     `json:"prompt_store" mapstructure:"promptstore"`
 }
 
-type visionState struct {
-	Models           []string `json:"models" mapstructure:"models"`
-	TreatAllAsVision bool     `json:"treat_all_as_vision" mapstructure:"treat_all_as_vision"`
-}
-
-type linuxDoOAuthState struct {
-	Enabled      bool   `json:"enabled" mapstructure:"enabled"`
-	ClientID     string `json:"client_id" mapstructure:"client_id"`
-	ClientSecret string `json:"client_secret" mapstructure:"client_secret"`
-	RedirectURL  string `json:"redirect_url" mapstructure:"redirect_url"`
-}
-
-type oauthState struct {
-	LinuxDo linuxDoOAuthState `json:"linux_do" mapstructure:"linux_do"`
-}
+// visionState 和 oauthState 已迁移到独立配置文件
+// 参见 utils/vision_config.go 和 utils/oauth_config.go
 
 type SystemConfig struct {
 	General generalState `json:"general" mapstructure:"general"`
@@ -106,8 +93,7 @@ type SystemConfig struct {
 	Mail    mailState    `json:"mail" mapstructure:"mail"`
 	Search  SearchState  `json:"search" mapstructure:"search"`
 	Common  commonState  `json:"common" mapstructure:"common"`
-	Vision  visionState  `json:"vision" mapstructure:"vision"`
-	OAuth   oauthState   `json:"oauth" mapstructure:"oauth"`
+	// Vision 和 OAuth 已迁移到独立配置，不再包含在此结构体中
 }
 
 func NewSystemConfig() *SystemConfig {
@@ -148,11 +134,13 @@ func (c *SystemConfig) Load() {
 	globals.SearchImageProxy = c.GetImageProxy()
 	globals.SearchSafeSearch = c.Search.SafeSearch
 
-	// 设置全局视觉模型开关
-	globals.TreatAllAsVision = c.Vision.TreatAllAsVision
+	// 加载独立的视觉配置
+	visionCfg := utils.LoadVisionConfig()
+	globals.TreatAllAsVision = visionCfg.TreatAllAsVision
+	utils.RefreshCustomVisionModels(visionCfg.Models)
 
-	// 刷新视觉模型配置
-	utils.RefreshCustomVisionModels(c.Vision.Models)
+	// 加载独立的 OAuth 配置
+	utils.LoadOAuthConfig()
 }
 
 func (c *SystemConfig) SaveConfig() error {
@@ -194,8 +182,7 @@ func (c *SystemConfig) UpdateConfig(data *SystemConfig) error {
 	c.Mail = data.Mail
 	c.Search = data.Search
 	c.Common = data.Common
-	c.Vision = data.Vision
-	c.OAuth = data.OAuth
+	// Vision 和 OAuth 不再在此处更新，使用独立的更新函数
 
 	utils.ApplySeo(c.General.Title, c.General.Logo)
 	utils.ApplyPWAManifest(c.General.PWAManifest)
@@ -345,5 +332,5 @@ func (c *SystemConfig) SupportRelayPlan() bool {
 }
 
 func (c *SystemConfig) GetVisionModels() []string {
-	return c.Vision.Models
+	return utils.GetVisionModels()
 }

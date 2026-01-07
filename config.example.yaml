@@ -30,12 +30,6 @@ system:
   search:
     endpoint: https://duckduckgo-api.vercel.app
     query: 5
-  vision:
-    models: []
-    treat_all_as_vision: false
-  oauth:
-    linux_do:
-      enabled: true
-      client_id: ""
-      client_secret: ""
-      redirect_url: "https://coai.drawaspark.com/callback"
+  # vision 和 oauth 配置已迁移到独立文件:
+  # - config/vision.yaml  视觉模型配置
+  # - config/oauth.yaml   OAuth 配置 (如 Linux.do)

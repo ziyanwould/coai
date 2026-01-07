@@ -50,4 +50,7 @@ func Register(app *gin.RouterGroup) {
 	app.GET("/admin/vision/config", GetVisionConfigAPI)
 	app.POST("/admin/vision/config", UpdateVisionConfigAPI)
 	app.POST("/admin/vision/refresh", RefreshVisionConfigAPI)
+
+	app.GET("/admin/oauth/config", GetOAuthConfigAPI)
+	app.POST("/admin/oauth/config", UpdateOAuthConfigAPI)
 }
