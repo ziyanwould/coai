@@ -33,6 +33,7 @@ const Subscription = lazyFactor(
 );
 const Logger = lazyFactor(() => import("@/routes/admin/Logger.tsx"));
 const Vision = lazyFactor(() => import("@/routes/admin/Vision.tsx"));
+const OAuth = lazyFactor(() => import("@/routes/admin/OAuth.tsx"));
 
 const router = createBrowserRouter(
   [
@@ -212,6 +213,15 @@ const router = createBrowserRouter(
           element: (
             <Suspense>
               <Vision />
+            </Suspense>
+          ),
+        },
+        {
+          id: "admin-oauth",
+          path: "oauth",
+          element: (
+            <Suspense>
+              <OAuth />
             </Suspense>
           ),
         },

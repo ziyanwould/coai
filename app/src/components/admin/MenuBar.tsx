@@ -9,6 +9,7 @@ import {
   FileClock,
   Gauge,
   GitFork,
+  KeyRound,
   LogOut,
   Radio,
   Settings,
@@ -90,6 +91,11 @@ function MenuBar() {
         title={t("admin.vision.title")}
         icon={<Eye />}
         path={"/vision"}
+      />
+      <MenuItem
+        title={t("admin.oauth.title", "OAuth 配置")}
+        icon={<KeyRound />}
+        path={"/oauth"}
       />
       <MenuItem
         title={t("admin.logger.title")}
