@@ -34,6 +34,8 @@ var SearchEngines string    // e.g. "google,bing"
 var SearchImageProxy string // e.g. "True", "False"
 var SearchSafeSearch int    // e.g. 0: None, 1: Moderation, 2: Strict
 
+var TreatAllAsVision bool // 是否将所有模型都作为视觉模型处理
+
 func OriginIsAllowed(uri string) bool {
 	if len(AllowedOrigins) == 0 {
 		// if allowed origins is empty, allow all origins
@@ -146,6 +148,21 @@ const (
 	SkylarkChat                  = "skylark-chat"
 	DeepseekV3                   = "deepseek-chat"
 	DeepseekR1                   = "deepseek-reasoner"
+
+	// Cloudflare Workers AI models
+	CloudflareFlux1Schnell       = "@cf/black-forest-labs/flux-1-schnell"
+	CloudflareDreamshaperLCM     = "@cf/lykon/dreamshaper-8-lcm"
+	CloudflarePhoenix            = "@cf/leonardo/phoenix-1.0"
+	CloudflareLucidOrigin        = "@cf/leonardo/lucid-origin"
+	CloudflareSDInpainting       = "@cf/runwayml/stable-diffusion-v1-5-inpainting"
+	CloudflareSDXLLightning      = "@cf/bytedance/stable-diffusion-xl-lightning"
+	CloudflareSDXLBase           = "@cf/stabilityai/stable-diffusion-xl-base-1.0"
+	CloudflareSDImg2Img          = "@cf/runwayml/stable-diffusion-v1-5-img2img"
+
+	// SiliconFlow AI models
+	SiliconFlowQwenImage         = "Qwen/Qwen-Image"
+	SiliconFlowQwenImageEdit     = "Qwen/Qwen-Image-Edit"
+	SiliconFlowKolors            = "Kwai-Kolors/Kolors"
 )
 
 var OpenAIDalleModels = []string{
@@ -156,11 +173,38 @@ var GoogleImagenModels = []string{
 	GoogleImagen002,
 }
 
+var CloudflareImageModels = []string{
+	CloudflareFlux1Schnell,
+	CloudflareDreamshaperLCM,
+	CloudflarePhoenix,
+	CloudflareLucidOrigin,
+	CloudflareSDXLLightning,
+	CloudflareSDXLBase,
+	CloudflareSDInpainting,  // 支持输入图片的修复模型
+	CloudflareSDImg2Img,     // 支持图生图的模型
+}
+
+var CloudflareImg2ImgModels = []string{
+	CloudflareSDImg2Img,
+	CloudflareSDInpainting,
+}
+
+var SiliconFlowImageModels = []string{
+	SiliconFlowQwenImage,
+	SiliconFlowQwenImageEdit,
+	SiliconFlowKolors,
+}
+
+var SiliconFlowImg2ImgModels = []string{
+	SiliconFlowQwenImageEdit,
+}
+
 var VisionModels = []string{
 	GPT4VisionPreview, GPT41106VisionPreview, GPT4Turbo, GPT4Turbo20240409, GPT4O, GPT4O20240513, // openai
 	GeminiProVision, Gemini15ProLatest, Gemini15FlashLatest, // gemini
 	Claude3,             // anthropic
 	ZhiPuChatGLM4Vision, // chatglm
+	SiliconFlowQwenImageEdit, // siliconflow image editing (needs input image)
 }
 
 var VisionSkipModels = []string{
@@ -190,7 +234,31 @@ func IsGoogleImagenModel(model string) bool {
 	return in(model, GoogleImagenModels)
 }
 
+func IsCloudflareImageModel(model string) bool {
+	// using image generation api if model is in cloudflare models
+	return in(model, CloudflareImageModels)
+}
+
+func IsCloudflareImg2ImgModel(model string) bool {
+	// check if model supports image-to-image generation
+	return in(model, CloudflareImg2ImgModels)
+}
+
+func IsSiliconFlowImageModel(model string) bool {
+	// using image generation api if model is in siliconflow models
+	return in(model, SiliconFlowImageModels)
+}
+
+func IsSiliconFlowImg2ImgModel(model string) bool {
+	// check if model supports image-to-image editing
+	return in(model, SiliconFlowImg2ImgModels)
+}
+
 func IsVisionModel(model string) bool {
+	// 如果开启了全局视觉模型开关,所有模型都作为视觉模型处理
+	if TreatAllAsVision {
+		return true
+	}
 	return in(model, VisionModels) && !in(model, VisionSkipModels)
 }
 

@@ -1104,3 +1104,99 @@
 .markdown-body ::-webkit-calendar-picker-indicator {
   filter: invert(50%);
 }
+
+/* Custom styles for downloadable images */
+.markdown-body .markdown-image-wrapper {
+  position: relative;
+  display: inline-block;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+
+  &:hover .download-button {
+    opacity: 1;
+  }
+
+  .markdown-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    transition: filter 0.2s ease-in-out;
+  }
+
+  &:hover .markdown-image {
+    filter: brightness(0.95);
+  }
+
+  .download-button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    backdrop-filter: blur(4px);
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 1);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.12);
+    }
+  }
+}
+
+.dark .markdown-body .markdown-image-wrapper {
+  .download-button {
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.9);
+    }
+  }
+}
+
+/* Video player styles */
+.markdown-body .markdown-video-wrapper {
+  position: relative;
+  display: block;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+
+  video {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    background-color: #000;
+    border-radius: 0.5rem;
+  }
+
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.markdown-body .video-link-wrapper {
+  display: block;
+  margin: 1rem 0;
+
+  a {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+}
+
+.dark .markdown-body .markdown-video-wrapper {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  }
+}

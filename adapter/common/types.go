@@ -1,3 +1,13 @@
+/*
+ * @Author: Liu Jiarong
+ * @Date: 2024-07-28 22:02:34
+ * @LastEditors: Liu Jiarong
+ * @LastEditTime: 2024-11-20 12:58:10
+ * @FilePath: /chatnio/adapter/common/types.go
+ * @Description:
+ *
+ * Copyright (c) 2024 by ${git_name_email}, All Rights Reserved.
+ */
 package adaptercommon
 
 import (
@@ -43,6 +53,8 @@ type ChatProps struct {
 	Tools             *globals.FunctionTools `json:"tools,omitempty"`
 	ToolChoice        *interface{}           `json:"tool_choice,omitempty"`
 	Buffer            *utils.Buffer          `json:"-"`
+	User              interface{}            `json:"user,omitempty"`
+	Ip                string                 `json:"-"`
 }
 
 func (c *ChatProps) SetupBuffer(buf *utils.Buffer) {

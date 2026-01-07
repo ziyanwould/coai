@@ -223,7 +223,27 @@ func UserPaginationAPI(c *gin.Context) {
 
 	page, _ := strconv.Atoi(c.Query("page"))
 	search := strings.TrimSpace(c.Query("search"))
-	c.JSON(http.StatusOK, getUsersForm(db, int64(page), search))
+	isSubscribedStr := c.Query("is_subscribed")
+	isBannedStr := c.Query("is_banned")
+	sortKey := c.DefaultQuery("sort", "id") // 获取排序参数，默认为 "id"
+
+	var isSubscribedFilter *bool = nil
+	if isSubscribedStr != "" {
+		isSubscribed, err := strconv.ParseBool(isSubscribedStr)
+		if err == nil {
+			isSubscribedFilter = &isSubscribed
+		}
+	}
+
+	var isBannedFilter *bool = nil
+	if isBannedStr != "" {
+		isBanned, err := strconv.ParseBool(isBannedStr)
+		if err == nil {
+			isBannedFilter = &isBanned
+		}
+	}
+
+	c.JSON(http.StatusOK, getUsersForm(db, int64(page), search, isSubscribedFilter, isBannedFilter, sortKey)) // 传递 sortKey
 }
 
 func UpdatePasswordAPI(c *gin.Context) {
@@ -503,4 +523,22 @@ func ConsoleLoggerAPI(c *gin.Context) {
 		"status":  true,
 		"content": content,
 	})
+}
+func QuotaLogPaginationAPI(c *gin.Context) {
+	db := utils.GetDBFromContext(c)
+
+	page, _ := strconv.Atoi(c.Query("page"))
+	search := strings.TrimSpace(c.Query("search"))
+	userIDStr := c.Query("user_id")
+	sortKey := c.DefaultQuery("sort", "id") // 默认按 ID 排序
+
+	var userIDFilter *int64 = nil
+	if userIDStr != "" {
+		userID, err := strconv.ParseInt(userIDStr, 10, 64)
+		if err == nil {
+			userIDFilter = &userID
+		}
+	}
+
+	c.JSON(http.StatusOK, getQuotaLogs(db, int64(page), search, userIDFilter, sortKey))
 }

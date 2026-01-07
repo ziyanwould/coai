@@ -30,3 +30,6 @@ system:
   search:
     endpoint: https://duckduckgo-api.vercel.app
     query: 5
+  # vision 和 oauth 配置已迁移到独立文件:
+  # - config/vision.yaml  视觉模型配置
+  # - config/oauth.yaml   OAuth 配置 (如 Linux.do)

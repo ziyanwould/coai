@@ -75,7 +75,7 @@ func NewVideoRequest(conf globals.ChannelConfig, props *adaptercommon.VideoProps
 }
 
 func ClearMessages(model string, messages []globals.Message) []globals.Message {
-	if globals.IsVisionModel(model) {
+	if globals.IsVisionModel(model) || utils.IsCustomVisionModel(model) {
 		return messages
 	}
 

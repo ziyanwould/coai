@@ -28,6 +28,8 @@ const (
 	DeepseekChannelType    = "deepseek"
 	DifyChannelType        = "dify"
 	CozeChannelType        = "coze"
+	CloudflareChannelType  = "cloudflare"
+	SiliconFlowChannelType = "siliconflow"
 )
 
 const (

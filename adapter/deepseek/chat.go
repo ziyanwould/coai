@@ -68,6 +68,8 @@ func (c *ChatInstance) GetChatBody(props *adaptercommon.ChatProps, stream bool) 
 		TopP:             props.TopP,
 		PresencePenalty:  props.PresencePenalty,
 		FrequencyPenalty: props.FrequencyPenalty,
+		User:             props.User,
+		Userip:           props.Ip,
 	}
 }
 

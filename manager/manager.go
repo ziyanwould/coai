@@ -5,9 +5,10 @@ import (
 	"chat/manager/conversation"
 	"chat/utils"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 type WebsocketAuthForm struct {
@@ -83,7 +84,7 @@ func ChatAPI(c *gin.Context) {
 		switch form.Type {
 		case ChatType:
 			if instance.HandleMessage(db, form) {
-				response := ChatHandler(buf, user, instance, false)
+				response := ChatHandler(buf, user, instance, false, getClientIP(c))
 				instance.SaveResponse(db, response)
 			}
 		case StopType:
@@ -94,7 +95,7 @@ func ChatAPI(c *gin.Context) {
 			// reset the params if set
 			instance.ApplyParam(form)
 
-			response := ChatHandler(buf, user, instance, true)
+			response := ChatHandler(buf, user, instance, true, getClientIP(c))
 			instance.SaveResponse(db, response)
 		case MaskType:
 			instance.LoadMask(form.Message)
@@ -117,4 +118,24 @@ func ChatAPI(c *gin.Context) {
 
 		return nil
 	})
+}
+func getClientIP(c *gin.Context) string {
+	// 尝试从 X-Forwarded-For 头中获取 IP 地址
+	if forwardedFor := c.GetHeader("X-Forwarded-For"); forwardedFor != "" {
+		addresses := strings.Split(forwardedFor, ",")
+		// 获取第一个非空的 IP 地址
+		for _, addr := range addresses {
+			if ip := strings.TrimSpace(addr); ip != "" {
+				return ip
+			}
+		}
+	}
+
+	// 尝试从 X-Real-IP 头中获取 IP 地址
+	if realIP := c.GetHeader("X-Real-IP"); realIP != "" {
+		return realIP
+	}
+
+	// 如果以上方法都失败，则使用 c.ClientIP()
+	return c.ClientIP()
 }

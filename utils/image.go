@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"bytes"
 	"chat/globals"
 	"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
+	"image/png"
 	"io"
 	"math"
 	"net/http"
@@ -26,17 +28,32 @@ func NewImage(url string) (*Image, error) {
 	if strings.HasPrefix(url, "data:image/") {
 		data := SafeSplit(url, ",", 2)
 		if data[1] == "" {
-			return nil, nil
+			return nil, fmt.Errorf("base64 data is empty")
 		}
 
-		decoded, err := Base64Decode(data[1])
+		// Clean base64 string from any whitespace
+		cleanedBase64 := strings.ReplaceAll(data[1], " ", "")
+		cleanedBase64 = strings.ReplaceAll(cleanedBase64, "\n", "")
+		cleanedBase64 = strings.ReplaceAll(cleanedBase64, "\r", "")
+		cleanedBase64 = strings.ReplaceAll(cleanedBase64, "\t", "")
+
+		decoded, err := Base64Decode(cleanedBase64)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("base64 decode error: %v (base64 length: %d chars)", err, len(cleanedBase64))
 		}
 
-		img, _, err := image.Decode(strings.NewReader(string(decoded)))
+		if len(decoded) == 0 {
+			return nil, fmt.Errorf("decoded image data is empty (base64 length: %d chars)", len(cleanedBase64))
+		}
+
+		// Check if decoded data looks like a valid image (should be at least 100 bytes)
+		if len(decoded) < 100 {
+			return nil, fmt.Errorf("decoded image data too small (%d bytes), likely incomplete base64 data (original length: %d chars)", len(decoded), len(cleanedBase64))
+		}
+
+		img, format, err := image.Decode(bytes.NewReader(decoded))
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("image decode error (format: %s, size: %d bytes): %v", format, len(decoded), err)
 		}
 
 		return &Image{Object: img, Content: url}, nil
@@ -53,23 +70,28 @@ func NewImage(url string) (*Image, error) {
 	suffix := strings.ToLower(path.Ext(url))
 	switch suffix {
 	case ".png":
-		if img, _, err = image.Decode(res.Body); err != nil {
+		if img, err = png.Decode(res.Body); err != nil {
 			return nil, err
 		}
 	case ".jpg", ".jpeg":
 		if img, err = jpeg.Decode(res.Body); err != nil {
 			return nil, err
 		}
-	case "webp":
+	case ".webp":
 		if img, err = webp.Decode(res.Body); err != nil {
 			return nil, err
 		}
-	case "gif":
+	case ".gif":
 		ticks, err := gif.DecodeAll(res.Body)
 		if err != nil {
 			return nil, err
 		}
 		img = ticks.Image[0]
+	default:
+		// 尝试通用解码器
+		if img, _, err = image.Decode(res.Body); err != nil {
+			return nil, err
+		}
 	}
 
 	return &Image{Object: img, Content: url}, nil

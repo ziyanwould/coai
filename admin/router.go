@@ -44,4 +44,13 @@ func Register(app *gin.RouterGroup) {
 	app.GET("/admin/logger/download", DownloadLoggerAPI)
 	app.GET("/admin/logger/console", ConsoleLoggerAPI)
 	app.POST("/admin/logger/delete", DeleteLoggerAPI)
+
+	app.GET("/admin/user/quota/log", QuotaLogPaginationAPI)
+
+	app.GET("/admin/vision/config", GetVisionConfigAPI)
+	app.POST("/admin/vision/config", UpdateVisionConfigAPI)
+	app.POST("/admin/vision/refresh", RefreshVisionConfigAPI)
+
+	app.GET("/admin/oauth/config", GetOAuthConfigAPI)
+	app.POST("/admin/oauth/config", UpdateOAuthConfigAPI)
 }

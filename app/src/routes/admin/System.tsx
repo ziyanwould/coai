@@ -426,7 +426,21 @@ function Mail({ data, dispatch, onChange }: CompProps<MailState>) {
           className={cn("transition-all duration-300")}
         />
       </ParagraphItem>
-      <ParagraphSpace />
+      <ParagraphItem>
+        <Label>{t("admin.system.mailReplyTo")}</Label> 
+        <Input
+            value={data.reply_to ?? ""} 
+            onChange={(e) =>
+                dispatch({
+                    type: "update:mail.reply_to",
+                    value: e.target.value,
+                })
+            }
+            placeholder={t("admin.system.mailReplyToPlaceholder")} 
+        />
+      </ParagraphItem>
+
+      <ParagraphSpace/>
       <ParagraphItem>
         <Label>{t("admin.system.mailEnableWhitelist")}</Label>
         <Switch

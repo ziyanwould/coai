@@ -99,6 +99,7 @@ export function validateToken(
       });
 }
 
+export const selectToken = (state: RootState) => state.auth.token;
 export const selectAuthenticated = (state: RootState) =>
   state.auth.authenticated;
 export const selectUsername = (state: RootState) => state.auth.username;

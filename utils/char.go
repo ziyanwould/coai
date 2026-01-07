@@ -226,7 +226,8 @@ func ExtractUrls(data string) []string {
 func ExtractImages(data string, includeBase64 bool) (content string, images []string) {
 	ext := ExtractExternalImages(data)
 	if includeBase64 {
-		images = append(ext, ExtractBase64Images(data)...)
+		base64Images := ExtractBase64Images(data)
+		images = append(ext, base64Images...)
 	} else {
 		images = ext
 	}
@@ -262,13 +263,41 @@ func GetVideoMarkdown(url string, _desc ...string) string {
 
 func ExtractBase64FromMarkdown(data string) (images []string) {
 	// extract base64 images like `![image](data:image/png;base64,xxxxxx)`
-	re := regexp.MustCompile(`!\[.*?\]\((data:image/\w+;base64,[\w+/=]+)\)`)
-	matches := re.FindAllStringSubmatch(data, -1)
+	// Updated to handle multiline base64 strings and file blocks
 
-	for _, match := range matches {
-		// We only need the base64 data part
+	// Pattern 1: Standard markdown images
+	re1 := regexp.MustCompile(`(?s)!\[.*?\]\((data:image/[^;]+;base64,[A-Za-z0-9+/=\s]+)\)`)
+	matches1 := re1.FindAllStringSubmatch(data, -1)
+
+	// Pattern 2: File blocks
+	re2 := regexp.MustCompile("(?s)```file[^`]*?\\[\\[[^\\]]+\\]\\]\\s*(data:image/[^;]+;base64,[A-Za-z0-9+/=\\s]+)\\s*```")
+	matches2 := re2.FindAllStringSubmatch(data, -1)
+
+	// Process standard markdown matches
+	for _, match := range matches1 {
 		if len(match) > 1 {
-			images = append(images, match[1])
+			parts := strings.SplitN(match[1], ",", 2)
+			if len(parts) == 2 {
+				cleanedBase64 := regexp.MustCompile(`\s`).ReplaceAllString(parts[1], "")
+				cleanedMatch := parts[0] + "," + cleanedBase64
+				images = append(images, cleanedMatch)
+			} else {
+				images = append(images, match[1])
+			}
+		}
+	}
+
+	// Process file block matches
+	for _, match := range matches2 {
+		if len(match) > 1 {
+			parts := strings.SplitN(match[1], ",", 2)
+			if len(parts) == 2 {
+				cleanedBase64 := regexp.MustCompile(`\s`).ReplaceAllString(parts[1], "")
+				cleanedMatch := parts[0] + "," + cleanedBase64
+				images = append(images, cleanedMatch)
+			} else {
+				images = append(images, match[1])
+			}
 		}
 	}
 
@@ -276,9 +305,55 @@ func ExtractBase64FromMarkdown(data string) (images []string) {
 }
 
 func ExtractBase64Images(data string) []string {
-	// get base64 images from data (data:image/png;base64,xxxxxx) (\n \\n [space] \\t \\r \\v \\f break the base64 string)
-	re := regexp.MustCompile(`(data:image/\w+;base64,[\w+/=]+)`)
-	return re.FindAllString(data, -1)
+	// get base64 images from data (data:image/png;base64,xxxxxx)
+	// Updated regex to handle multiline base64 strings and more characters
+	// Also handle file blocks like ```file\n[[filename]]\ndata:image/...\n```
+
+	var cleanedMatches []string
+
+	// Pattern 1: Direct base64 images
+	re1 := regexp.MustCompile(`(?s)(data:image/[^;]+;base64,[A-Za-z0-9+/=\s]+)`)
+	matches1 := re1.FindAllString(data, -1)
+
+	// Pattern 2: Base64 images in file blocks
+	re2 := regexp.MustCompile("(?s)```file[^`]*?\\[\\[[^\\]]+\\]\\]\\s*(data:image/[^;]+;base64,[A-Za-z0-9+/=\\s]+)\\s*```")
+	matches2 := re2.FindAllStringSubmatch(data, -1)
+
+	// Process direct matches
+	for _, match := range matches1 {
+		parts := strings.SplitN(match, ",", 2)
+		if len(parts) == 2 {
+			cleanedBase64 := regexp.MustCompile(`\s`).ReplaceAllString(parts[1], "")
+			cleanedMatch := parts[0] + "," + cleanedBase64
+			cleanedMatches = append(cleanedMatches, cleanedMatch)
+		} else {
+			cleanedMatches = append(cleanedMatches, match)
+		}
+	}
+
+	// Process file block matches
+	for _, match := range matches2 {
+		if len(match) > 1 {
+			parts := strings.SplitN(match[1], ",", 2)
+			if len(parts) == 2 {
+				cleanedBase64 := regexp.MustCompile(`\s`).ReplaceAllString(parts[1], "")
+				cleanedMatch := parts[0] + "," + cleanedBase64
+				cleanedMatches = append(cleanedMatches, cleanedMatch)
+			}
+		}
+	}
+
+	// Remove duplicates
+	uniqueMatches := make([]string, 0)
+	seen := make(map[string]bool)
+	for _, match := range cleanedMatches {
+		if !seen[match] {
+			seen[match] = true
+			uniqueMatches = append(uniqueMatches, match)
+		}
+	}
+
+	return uniqueMatches
 }
 
 func ExtractExternalImages(data string) []string {

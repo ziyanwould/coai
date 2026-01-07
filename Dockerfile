@@ -2,7 +2,7 @@
 # License: Apache-2.0
 # Description: Dockerfile for chatnio
 
-FROM --platform=$TARGETPLATFORM golang:1.20-alpine AS backend
+FROM --platform=$TARGETPLATFORM golang:1.24-alpine AS backend
 
 WORKDIR /backend
 COPY . .
@@ -32,7 +32,7 @@ COPY ./app .
 
 RUN npm install -g pnpm && \
     pnpm install && \
-    pnpm run build && \
+    pnpm run fast-build && \
     rm -rf node_modules src
 
 

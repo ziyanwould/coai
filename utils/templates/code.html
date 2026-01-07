@@ -35,18 +35,33 @@
     color: #58a6ff;
     font-size: large;
   }
+  .auto-reply-notice {
+    color: gray;
+    font-size: 0.9em; /* 稍微小一点的字体 */
+    margin-top: 10px;  /* 与上方内容间距 */
+}
 </style>
 <body>
-<div class="main">
-  <div class="column"><img src="{{.Logo}}" alt=""><h1>{{.Title}}</h1></div>
-  <div class="column"><p>Your One-Time Password is <strong class="code">{{.Code}}</strong></p></div>
-  <div class="column" style="color:gray">
-    <span>The code will expire in <strong>10 minutes</strong>.</span><br>
-    <span>If it is not operated by yourself, please ignore it.</span><br>
+
+  <div class="main">
+    <div class="column"><img src="{{.Logo}}" alt=""><h1>{{.Title}}</h1></div>
+    <div class="column">
+      <p>Your One-Time Password is <strong class="code">{{.Code}}</strong></p>
+      <p>您的验证码是 <strong class="code">{{.Code}}</strong></p>  <!-- 中文 -->
+    </div>
+    <div class="column" style="color:gray">
+      <span>The code will expire in <strong>10 minutes</strong>.</span><br>
+      <span>验证码将在 <strong>10 分钟</strong>后过期。</span><br> <!-- 中文 -->
+      <span>If it is not operated by yourself, please ignore it.</span><br>
+      <span>如果不是您本人操作，请忽略此邮件。</span> <!-- 中文-->
+    </div>
+    <div class="column auto-reply-notice">
+      <span>This is an automatically generated email, please do not reply directly.</span><br>
+      <span>此邮件为系统自动发送，请勿直接回复。</span>
   </div>
-  <br>
-  <div class="column">
-    <a href="">&copy; {{.Title}}</a>
+    <br>
+    <div class="column">
+      <a href="https://chatnio.liujiarong.top">&copy; {{.Title}}</a>
+    </div>
   </div>
-</div>
 </body>

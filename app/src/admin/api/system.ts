@@ -39,6 +39,7 @@ export type MailState = {
   username: string;
   password: string;
   from: string;
+  reply_to?: string; // 将 reply_to 设置为可选
   white_list: whiteList;
 };
 

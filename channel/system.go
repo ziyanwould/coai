@@ -4,6 +4,7 @@ import (
 	"chat/globals"
 	"chat/utils"
 	"fmt"
+	"net/mail"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -60,6 +61,7 @@ type mailState struct {
 	Username  string    `json:"username" mapstructure:"username"`
 	Password  string    `json:"password" mapstructure:"password"`
 	From      string    `json:"from" mapstructure:"from"`
+	ReplyTo   string    `json:"reply_to" mapstructure:"replyto"` // 添加 ReplyTo
 	WhiteList whiteList `json:"white_list" mapstructure:"whitelist"`
 }
 
@@ -82,12 +84,16 @@ type commonState struct {
 	PromptStore bool     `json:"prompt_store" mapstructure:"promptstore"`
 }
 
+// visionState 和 oauthState 已迁移到独立配置文件
+// 参见 utils/vision_config.go 和 utils/oauth_config.go
+
 type SystemConfig struct {
 	General generalState `json:"general" mapstructure:"general"`
 	Site    siteState    `json:"site" mapstructure:"site"`
 	Mail    mailState    `json:"mail" mapstructure:"mail"`
 	Search  SearchState  `json:"search" mapstructure:"search"`
 	Common  commonState  `json:"common" mapstructure:"common"`
+	// Vision 和 OAuth 已迁移到独立配置，不再包含在此结构体中
 }
 
 func NewSystemConfig() *SystemConfig {
@@ -127,6 +133,14 @@ func (c *SystemConfig) Load() {
 	globals.SearchEngines = c.GetSearchEngines()
 	globals.SearchImageProxy = c.GetImageProxy()
 	globals.SearchSafeSearch = c.Search.SafeSearch
+
+	// 加载独立的视觉配置
+	visionCfg := utils.LoadVisionConfig()
+	globals.TreatAllAsVision = visionCfg.TreatAllAsVision
+	utils.RefreshCustomVisionModels(visionCfg.Models)
+
+	// 加载独立的 OAuth 配置
+	utils.LoadOAuthConfig()
 }
 
 func (c *SystemConfig) SaveConfig() error {
@@ -155,11 +169,20 @@ func (c *SystemConfig) AsInfo() ApiInfo {
 }
 
 func (c *SystemConfig) UpdateConfig(data *SystemConfig) error {
+	// 1. 数据验证 (重要!)
+	if data.Mail.ReplyTo != "" { // 只有在提供了 ReplyTo 时才验证
+		_, err := mail.ParseAddress(data.Mail.ReplyTo)
+		if err != nil {
+			return fmt.Errorf("invalid Reply-To address: %w", err)
+		}
+	}
+
 	c.General = data.General
 	c.Site = data.Site
 	c.Mail = data.Mail
 	c.Search = data.Search
 	c.Common = data.Common
+	// Vision 和 OAuth 不再在此处更新，使用独立的更新函数
 
 	utils.ApplySeo(c.General.Title, c.General.Logo)
 	utils.ApplyPWAManifest(c.General.PWAManifest)
@@ -305,4 +328,8 @@ func (c *SystemConfig) AcceptImageStore() bool {
 
 func (c *SystemConfig) SupportRelayPlan() bool {
 	return c.Site.RelayPlan
+}
+
+func (c *SystemConfig) GetVisionModels() []string {
+	return utils.GetVisionModels()
 }

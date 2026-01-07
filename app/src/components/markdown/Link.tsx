@@ -1,6 +1,7 @@
 import React from "react";
 import { Codepen, Codesandbox, Github, Twitter, Youtube } from "lucide-react";
 import { VirtualMessage } from "./VirtualMessage";
+import { MarkdownVideo } from "@/components/plugins/video.tsx";
 
 function getSocialIcon(url: string) {
   try {
@@ -38,6 +39,25 @@ export default function ({ href, children }: LinkProps) {
     const message = url.slice(20);
 
     return <VirtualMessage message={message}>{children}</VirtualMessage>;
+  }
+
+  // Check if this is a video URL
+  const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.m4v', '.ogv'];
+  const isVideo = videoExtensions.some(ext =>
+    url.toLowerCase().includes(ext) || url.toLowerCase().endsWith(ext)
+  );
+
+  if (isVideo) {
+    // Return both the link and the video player below it
+    return (
+      <div className="video-link-wrapper">
+        <a href={url} target={`_blank`} rel={`noopener noreferrer`} className="block mb-2">
+          {getSocialIcon(url)}
+          {children}
+        </a>
+        <MarkdownVideo src={url} alt={children?.toString()} />
+      </div>
+    );
   }
 
   return (
